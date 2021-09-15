@@ -24,7 +24,11 @@ public class ThirdPartyJars {
 
 	public static void copy(Path targetDir, String group, String artifact) throws Exception {
 		Path source = Stream.of(System.getProperty("thirdPartyJars").split(File.pathSeparator)) //
-				.filter(it -> it.replace(File.separator, "/").contains("/" + group + "/" + artifact + "/")) //
+				.filter(it -> {
+					var normalizedPath = it.replace(File.separator, "/");
+					return normalizedPath.contains("/" + group + "/" + artifact + "/") //
+							|| normalizedPath.contains("/" + group.replace('.', '/') + "/" + artifact + "/");
+				}) //
 				.map(Path::of) //
 				.findFirst() //
 				.orElseThrow(() -> new AssertionError("Failed to find JAR file for " + group + ":" + artifact));
