@@ -113,6 +113,7 @@ allprojects {
 				snapshotsOnly()
 			}
 		}
+		mavenLocal()
 	}
 }
 
