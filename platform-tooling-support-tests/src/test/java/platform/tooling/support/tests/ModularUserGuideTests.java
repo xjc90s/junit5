@@ -148,8 +148,8 @@ class ModularUserGuideTests {
 		command.add("--exclude-tag");
 		command.add("exclude");
 
-		// System.out.println("______________");
-		// command.forEach(System.out::println);
+		System.out.println("______________");
+		command.forEach(System.out::println);
 
 		var builder = new ProcessBuilder(command).directory(projectDir.toFile());
 		var java = builder.start();
