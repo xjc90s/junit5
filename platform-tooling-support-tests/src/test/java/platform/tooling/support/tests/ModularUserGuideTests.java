@@ -133,6 +133,8 @@ class ModularUserGuideTests {
 		Files.copy(projectDir.resolve("src/test/resources/two-column.csv"),
 			temp.resolve("destination/documentation/two-column.csv"));
 
+		command.add("-Dnet.bytebuddy.experimental=true");
+
 		command.add("--module");
 		command.add("org.junit.platform.console");
 
