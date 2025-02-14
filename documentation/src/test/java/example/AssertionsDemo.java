@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2023 the original author or authors.
+ * Copyright 2015-2025 the original author or authors.
  *
  * All rights reserved. This program and the accompanying materials are
  * made available under the terms of the Eclipse Public License v2.0 which
@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import example.domain.Person;
 import example.util.Calculator;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 class AssertionsDemo {
@@ -40,8 +41,9 @@ class AssertionsDemo {
 		assertEquals(2, calculator.add(1, 1));
 		assertEquals(4, calculator.multiply(2, 2),
 				"The optional failure message is now the last parameter");
-		assertTrue('a' < 'b', () -> "Assertion messages can be lazily evaluated -- "
-				+ "to avoid constructing complex messages unnecessarily.");
+
+		// Lazily evaluates generateFailureMessage('a','b').
+		assertTrue('a' < 'b', () -> generateFailureMessage('a','b'));
 	}
 
 	@Test
@@ -84,6 +86,9 @@ class AssertionsDemo {
 		);
 	}
 
+	// end::user_guide[]
+	@extensions.DisabledOnOpenJ9
+	// tag::user_guide[]
 	@Test
 	void exceptionTesting() {
 		Exception exception = assertThrows(ArithmeticException.class, () ->
@@ -91,6 +96,9 @@ class AssertionsDemo {
 		assertEquals("/ by zero", exception.getMessage());
 	}
 
+	// end::user_guide[]
+	@Tag("timeout")
+	// tag::user_guide[]
 	@Test
 	void timeoutNotExceeded() {
 		// The following assertion succeeds.
@@ -99,6 +107,9 @@ class AssertionsDemo {
 		});
 	}
 
+	// end::user_guide[]
+	@Tag("timeout")
+	// tag::user_guide[]
 	@Test
 	void timeoutNotExceededWithResult() {
 		// The following assertion succeeds, and returns the supplied object.
@@ -108,6 +119,9 @@ class AssertionsDemo {
 		assertEquals("a result", actualResult);
 	}
 
+	// end::user_guide[]
+	@Tag("timeout")
+	// tag::user_guide[]
 	@Test
 	void timeoutNotExceededWithMethod() {
 		// The following assertion invokes a method reference and returns an object.
@@ -116,6 +130,7 @@ class AssertionsDemo {
 	}
 
 	// end::user_guide[]
+	@Tag("timeout")
 	@extensions.ExpectToFail
 	// tag::user_guide[]
 	@Test
@@ -129,6 +144,7 @@ class AssertionsDemo {
 	}
 
 	// end::user_guide[]
+	@Tag("timeout")
 	@extensions.ExpectToFail
 	// tag::user_guide[]
 	@Test
@@ -145,6 +161,10 @@ class AssertionsDemo {
 		return "Hello, World!";
 	}
 
+	private static String generateFailureMessage(char a, char b) {
+		return "Assertion messages can be lazily evaluated -- "
+				+ "to avoid constructing complex messages unnecessarily." + (a < b);
+	}
 }
 // end::user_guide[]
 // @formatter:on
