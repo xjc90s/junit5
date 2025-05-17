@@ -1,4 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import junitbuild.extensions.javaModuleName
+import junitbuild.extensions.isSnapshot
 import junitbuild.java.ModuleCompileOptions
 import junitbuild.java.ModulePathArgumentProvider
 import junitbuild.java.PatchModuleArgumentProvider
@@ -274,8 +276,7 @@ tasks.compileJava {
 tasks.compileTestJava {
 	// See: https://docs.oracle.com/en/java/javase/12/tools/javac.html
 	options.compilerArgs.addAll(listOf(
-			"-Xlint", // Enables all recommended warnings.
-			"-Xlint:-overrides", // Disables "method overrides" warnings.
+			"-Xlint:all", // Enables all recommended warnings.
 			"-Werror", // Terminates compilation when warnings occur.
 			"-parameters" // Generates metadata for reflection on method parameters.
 	))

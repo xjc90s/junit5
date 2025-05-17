@@ -6,14 +6,14 @@ This repository is the home of _JUnit 5_.
 
 [![Support JUnit](https://img.shields.io/badge/%F0%9F%92%9A-Support%20JUnit-brightgreen.svg)](https://junit.org/sponsoring)
 
-* **Gold Sponsors:** [JetBrains](https://jb.gg/junit-logo)
+* **Gold Sponsors:** [JetBrains](https://jb.gg/junit-logo), [Netflix](https://www.netflix.com/)
 * **Silver Sponsors:** [Micromata](https://www.micromata.de), [Quo Card](https://quo-digital.jp)
-* **Bronze Sponsors:** [Premium Minds](https://www.premium-minds.com), [Testmo](https://www.testmo.com), [codefortynine](https://codefortynine.com), [Info Support](https://www.infosupport.com), [Stiltsoft](https://stiltsoft.com), [Code Intelligence](https://www.code-intelligence.com), [Route4Me](https://route4me.com/), [Testiny](https://www.testiny.io/)
+* **Bronze Sponsors:** [Premium Minds](https://www.premium-minds.com), [codefortynine](https://codefortynine.com), [Info Support](https://www.infosupport.com), [Code Intelligence](https://www.code-intelligence.com), [Route4Me](https://route4me.com/), [Testiny](https://www.testiny.io/)
 
 ## Latest Releases
 
 - General Availability (GA): [JUnit 5.12.2](https://github.com/junit-team/junit5/releases/tag/r5.12.2) (April 11, 2025)
-- Preview (Milestone/Release Candidate): [JUnit 5.13.0-M2](https://github.com/junit-team/junit5/releases/tag/r5.13.0-M2) (March 24, 2025)
+- Preview (Milestone/Release Candidate): [JUnit 5.13.0-RC1](https://github.com/junit-team/junit5/releases/tag/r5.13.0-RC1) (May 16, 2025)
 
 ## Documentation
 
@@ -94,7 +94,7 @@ Consult the [Dependency Metadata] section of the [User Guide] for a list of all 
 of the JUnit Platform, JUnit Jupiter, and JUnit Vintage.
 
 See also <https://repo1.maven.org/maven2/org/junit/> for releases and
-<https://oss.sonatype.org/content/repositories/snapshots/org/junit/> for snapshots.
+<https://central.sonatype.com/repository/maven-snapshots/org/junit/> for snapshots.
 
 
 [Codecov]: https://codecov.io/gh/junit-team/junit5

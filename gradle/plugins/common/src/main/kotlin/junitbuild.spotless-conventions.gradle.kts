@@ -1,3 +1,5 @@
+import junitbuild.extensions.requiredVersionFromLibs
+
 plugins {
 	id("com.diffplug.spotless")
 }
@@ -9,7 +11,7 @@ spotless {
 	format("misc") {
 		target("*.gradle.kts", "gradle/plugins/**/*.gradle.kts", "*.gitignore")
 		targetExclude("gradle/plugins/**/build/**")
-		indentWithTabs()
+		leadingSpacesToTabs()
 		trimTrailingWhitespace()
 		endWithNewline()
 	}

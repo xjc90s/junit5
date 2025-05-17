@@ -1,6 +1,6 @@
-
 import com.gradle.develocity.agent.gradle.internal.test.TestDistributionConfigurationInternal
 import junitbuild.extensions.capitalized
+import junitbuild.extensions.dependencyProject
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.kotlin.dsl.support.listFilesOrdered
 import java.time.Duration
@@ -191,12 +191,6 @@ val test by testing.suites.getting(JvmTestSuite::class) {
 				jvmArgumentProviders += JarPath(project, thirdPartyJarsClasspath.get(), "thirdPartyJars")
 				jvmArgumentProviders += JarPath(project, antJarsClasspath.get(), "antJars")
 				jvmArgumentProviders += MavenDistribution(project, unzipMavenDistribution, mavenDistributionDir)
-
-				if (buildParameters.javaToolchain.version.getOrElse(21) < 24) {
-					(options as JUnitPlatformOptions).apply {
-						includeEngines("archunit")
-					}
-				}
 
 				inputs.apply {
 					dir("projects").withPathSensitivity(RELATIVE)
