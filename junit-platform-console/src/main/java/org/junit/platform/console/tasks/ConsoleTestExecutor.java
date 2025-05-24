@@ -50,29 +50,46 @@ public class ConsoleTestExecutor {
 	private final TestDiscoveryOptions discoveryOptions;
 	private final TestConsoleOutputOptions outputOptions;
 	private final Supplier<Launcher> launcherSupplier;
+	private final CustomClassLoaderCloseStrategy classLoaderCloseStrategy;
 
 	public ConsoleTestExecutor(TestDiscoveryOptions discoveryOptions, TestConsoleOutputOptions outputOptions) {
-		this(discoveryOptions, outputOptions, LauncherFactory::create);
+		this(discoveryOptions, outputOptions, CustomClassLoaderCloseStrategy.CLOSE_AFTER_CALLING_LAUNCHER);
+	}
+
+	public ConsoleTestExecutor(TestDiscoveryOptions discoveryOptions, TestConsoleOutputOptions outputOptions,
+			CustomClassLoaderCloseStrategy classLoaderCloseStrategy) {
+		this(discoveryOptions, outputOptions, classLoaderCloseStrategy, LauncherFactory::create);
 	}
 
 	// for tests only
 	ConsoleTestExecutor(TestDiscoveryOptions discoveryOptions, TestConsoleOutputOptions outputOptions,
 			Supplier<Launcher> launcherSupplier) {
+		this(discoveryOptions, outputOptions, CustomClassLoaderCloseStrategy.CLOSE_AFTER_CALLING_LAUNCHER,
+			launcherSupplier);
+	}
+
+	private ConsoleTestExecutor(TestDiscoveryOptions discoveryOptions, TestConsoleOutputOptions outputOptions,
+			CustomClassLoaderCloseStrategy classLoaderCloseStrategy, Supplier<Launcher> launcherSupplier) {
 		this.discoveryOptions = discoveryOptions;
 		this.outputOptions = outputOptions;
 		this.launcherSupplier = launcherSupplier;
+		this.classLoaderCloseStrategy = classLoaderCloseStrategy;
 	}
 
 	public void discover(PrintWriter out) {
-		new CustomContextClassLoaderExecutor(createCustomClassLoader()).invoke(() -> {
+		createCustomContextClassLoaderExecutor().invoke(() -> {
 			discoverTests(out);
 			return null;
 		});
 	}
 
 	public TestExecutionSummary execute(PrintWriter out, Optional<Path> reportsDir) {
-		return new CustomContextClassLoaderExecutor(createCustomClassLoader()) //
+		return createCustomContextClassLoaderExecutor() //
 				.invoke(() -> executeTests(out, reportsDir));
+	}
+
+	private CustomContextClassLoaderExecutor createCustomContextClassLoaderExecutor() {
+		return new CustomContextClassLoaderExecutor(createCustomClassLoader(), classLoaderCloseStrategy);
 	}
 
 	private void discoverTests(PrintWriter out) {
@@ -163,21 +180,16 @@ public class ConsoleTestExecutor {
 	private Optional<DetailsPrintingListener> createDetailsPrintingListener(PrintWriter out) {
 		ColorPalette colorPalette = getColorPalette();
 		Theme theme = outputOptions.getTheme();
-		switch (outputOptions.getDetails()) {
-			case SUMMARY:
-				// summary listener is always created and registered
-				return Optional.empty();
-			case FLAT:
-				return Optional.of(new FlatPrintingListener(out, colorPalette));
-			case TREE:
-				return Optional.of(new TreePrintingListener(out, colorPalette, theme));
-			case VERBOSE:
-				return Optional.of(new VerboseTreePrintingListener(out, colorPalette, 16, theme));
-			case TESTFEED:
-				return Optional.of(new TestFeedPrintingListener(out, colorPalette));
-			default:
-				return Optional.empty();
-		}
+		return switch (outputOptions.getDetails()) {
+			case SUMMARY ->
+					// summary listener is always created and registered
+					Optional.empty();
+			case FLAT -> Optional.of(new FlatPrintingListener(out, colorPalette));
+			case TREE -> Optional.of(new TreePrintingListener(out, colorPalette, theme));
+			case VERBOSE -> Optional.of(new VerboseTreePrintingListener(out, colorPalette, 16, theme));
+			case TESTFEED -> Optional.of(new TestFeedPrintingListener(out, colorPalette));
+			case NONE -> Optional.empty();
+		};
 	}
 
 	private ColorPalette getColorPalette() {

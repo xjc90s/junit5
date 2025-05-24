@@ -25,6 +25,7 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPacka
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectUniqueId;
 import static org.junit.platform.fakes.FaultyTestEngines.createEngineThatCannotResolveAnything;
 import static org.junit.platform.fakes.FaultyTestEngines.createEngineThatFailsToResolveAnything;
+import static org.junit.platform.launcher.LauncherConstants.DISCOVERY_ISSUE_FAILURE_PHASE_PROPERTY_NAME;
 import static org.junit.platform.launcher.LauncherConstants.DRY_RUN_PROPERTY_NAME;
 import static org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder.DEFAULT_DISCOVERY_LISTENER_CONFIGURATION_PROPERTY_NAME;
 import static org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder.request;
@@ -128,6 +129,7 @@ class DefaultLauncherTests {
 	void discoverTestPlanForEngineThatReturnsNullForItsRootDescriptor() {
 		TestEngine engine = new TestEngineStub("some-engine-id") {
 
+			@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 			@Override
 			public TestDescriptor discover(EngineDiscoveryRequest discoveryRequest, UniqueId uniqueId) {
 				return null;
@@ -148,6 +150,7 @@ class DefaultLauncherTests {
 	void discoverErrorTestDescriptorForEngineThatThrowsInDiscoveryPhase(Class<? extends Throwable> throwableClass) {
 		TestEngine engine = new TestEngineStub("my-engine-id") {
 
+			@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 			@Override
 			public TestDescriptor discover(EngineDiscoveryRequest discoveryRequest, UniqueId uniqueId) {
 				try {
@@ -420,34 +423,29 @@ class DefaultLauncherTests {
 	}
 
 	@Test
-	@SuppressWarnings("deprecation")
 	void withoutConfigurationParameters_LauncherPassesEmptyConfigurationParametersIntoTheExecutionRequest() {
 		var engine = new TestEngineSpy();
 
 		var launcher = createLauncher(engine);
 		launcher.execute(request().build());
 
-		var configurationParameters = engine.requestForExecution.getConfigurationParameters();
+		var configurationParameters = requireNonNull(engine.requestForExecution).getConfigurationParameters();
 		assertThat(configurationParameters.get("key")).isNotPresent();
-		assertThat(configurationParameters.size()).isEqualTo(0);
 	}
 
 	@Test
-	@SuppressWarnings("deprecation")
 	void withConfigurationParameters_LauncherPassesPopulatedConfigurationParametersIntoTheExecutionRequest() {
 		var engine = new TestEngineSpy();
 
 		var launcher = createLauncher(engine);
 		launcher.execute(request().configurationParameter("key", "value").build());
 
-		var configurationParameters = engine.requestForExecution.getConfigurationParameters();
-		assertThat(configurationParameters.size()).isEqualTo(1);
+		var configurationParameters = requireNonNull(engine.requestForExecution).getConfigurationParameters();
 		assertThat(configurationParameters.get("key")).isPresent();
 		assertThat(configurationParameters.get("key")).contains("value");
 	}
 
 	@Test
-	@SuppressWarnings("deprecation")
 	void withoutConfigurationParameters_LookupFallsBackToSystemProperty() {
 		System.setProperty(FOO, BAR);
 
@@ -457,8 +455,7 @@ class DefaultLauncherTests {
 			var launcher = createLauncher(engine);
 			launcher.execute(request().build());
 
-			var configurationParameters = engine.requestForExecution.getConfigurationParameters();
-			assertThat(configurationParameters.size()).isEqualTo(0);
+			var configurationParameters = requireNonNull(engine.requestForExecution).getConfigurationParameters();
 			var optionalFoo = configurationParameters.get(FOO);
 			assertTrue(optionalFoo.isPresent(), "foo should have been picked up via system property");
 			assertEquals(BAR, optionalFoo.get(), "foo property");
@@ -598,25 +595,6 @@ class DefaultLauncherTests {
 
 		var e = assertThrows(PreconditionViolationException.class, () -> launcher.execute(testPlan));
 		assertEquals("TestPlan must only be executed once", e.getMessage());
-	}
-
-	@Test
-	@SuppressWarnings("deprecation")
-	void testPlanThrowsExceptionWhenModified() {
-		TestEngine engine = new TestEngineSpy();
-		var launcher = createLauncher(engine);
-		var testPlan = launcher.discover(request().build());
-		var engineIdentifier = getOnlyElement(testPlan.getRoots());
-		var engineUniqueId = engineIdentifier.getUniqueIdObject();
-		assertThat(testPlan.getChildren(engineIdentifier)).hasSize(1);
-
-		var addedIdentifier = TestIdentifier.from(
-			new TestDescriptorStub(engineUniqueId.append("test", "test2"), "test2"));
-
-		var exception = assertThrows(JUnitException.class, () -> testPlan.add(addedIdentifier));
-		assertThat(exception).hasMessage("Unsupported attempt to modify the TestPlan was detected. "
-				+ "Please contact your IDE/tool vendor and request a fix or downgrade to JUnit 5.7.x (see https://github.com/junit-team/junit5/issues/1732 for details).");
-		assertThat(testPlan.getChildren(engineIdentifier)).hasSize(1).doesNotContain(addedIdentifier);
 	}
 
 	@Test
@@ -948,6 +926,55 @@ class DefaultLauncherTests {
 					LauncherConstants.CRITICAL_DISCOVERY_ISSUE_SEVERITY_PROPERTY_NAME);
 	}
 
+	@Test
+	void failsDuringDiscoveryIfConfigurationParameterIsSetAccordingly() {
+
+		var engine = new TestEngineStub("engine-id") {
+			@Override
+			public TestDescriptor discover(EngineDiscoveryRequest discoveryRequest, UniqueId uniqueId) {
+				var listener = discoveryRequest.getDiscoveryListener();
+				listener.issueEncountered(uniqueId, DiscoveryIssue.create(Severity.ERROR, "error"));
+				return new EngineDescriptor(uniqueId, "Engine");
+			}
+		};
+
+		var exception = assertThrows(DiscoveryIssueException.class, () -> execute(engine, request -> request //
+				.configurationParameter(LauncherConstants.DISCOVERY_ISSUE_FAILURE_PHASE_PROPERTY_NAME, "discovery")));
+
+		assertThat(exception) //
+				.isInstanceOf(DiscoveryIssueException.class) //
+				.hasMessageStartingWith(
+					"TestEngine with ID 'engine-id' encountered a critical issue during test discovery") //
+				.hasMessageContaining("(1) [ERROR] error");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "discovery", "execution" })
+	void logsNonCriticalIssuesOnlyOnce(String phase, @TrackLogRecords LogRecordListener listener) {
+
+		var engine = new TestEngineStub("engine-id") {
+			@Override
+			public TestDescriptor discover(EngineDiscoveryRequest discoveryRequest, UniqueId uniqueId) {
+				var listener = discoveryRequest.getDiscoveryListener();
+				listener.issueEncountered(uniqueId, DiscoveryIssue.create(Severity.WARNING, "warning"));
+				return new EngineDescriptor(uniqueId, "Engine");
+			}
+
+			@Override
+			public void execute(ExecutionRequest request) {
+				var executionListener = request.getEngineExecutionListener();
+				var engineDescriptor = request.getRootTestDescriptor();
+				executionListener.executionStarted(engineDescriptor);
+				executionListener.executionFinished(engineDescriptor, successful());
+			}
+		};
+
+		execute(engine, request -> request //
+				.configurationParameter(LauncherConstants.DISCOVERY_ISSUE_FAILURE_PHASE_PROPERTY_NAME, phase));
+
+		assertThat(listener.stream(DiscoveryIssueNotifier.class, Level.WARNING)).hasSize(1);
+	}
+
 	private static ReportedData execute(TestEngine engine) {
 		return execute(engine, identity());
 	}
@@ -969,6 +996,7 @@ class DefaultLauncherTests {
 
 		var builder = request() //
 				.enableImplicitConfigurationParameters(false) //
+				.configurationParameter(DISCOVERY_ISSUE_FAILURE_PHASE_PROPERTY_NAME, "execution") //
 				.configurationParameter(DEFAULT_DISCOVERY_LISTENER_CONFIGURATION_PROPERTY_NAME, "logging");
 		var request = configurer.apply(builder).build();
 		var launcher = createLauncher(engine);

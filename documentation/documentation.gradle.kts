@@ -2,10 +2,14 @@ import junitbuild.exec.CaptureJavaExecOutput
 import junitbuild.exec.ClasspathSystemPropertyProvider
 import junitbuild.exec.GenerateStandaloneConsoleLauncherShadowedArtifactsFile
 import junitbuild.exec.RunConsoleLauncher
+import junitbuild.extensions.dependencyProject
+import junitbuild.extensions.isSnapshot
+import junitbuild.extensions.javaModuleName
 import junitbuild.javadoc.ModuleSpecificJavadocFileOption
 import org.asciidoctor.gradle.base.AsciidoctorAttributeProvider
 import org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
+import org.ysb33r.grolifant.api.core.jvm.ExecutionMode.JAVA_EXEC
 
 plugins {
 	alias(libs.plugins.asciidoctorConvert)
@@ -14,6 +18,7 @@ plugins {
 	alias(libs.plugins.plantuml)
 	id("junitbuild.build-parameters")
 	id("junitbuild.java-multi-release-test-sources")
+	id("junitbuild.java-nullability-conventions")
 	id("junitbuild.kotlin-library-conventions")
 	id("junitbuild.testing-conventions")
 }
@@ -25,8 +30,8 @@ val modularProjects: List<Project> by rootProject
 modularProjects.forEach { evaluationDependsOn(it.path) }
 
 javaLibrary {
-	mainJavaVersion = JavaVersion.VERSION_1_8
-	testJavaVersion = JavaVersion.VERSION_1_8
+	mainJavaVersion = JavaVersion.VERSION_17
+	testJavaVersion = JavaVersion.VERSION_17
 }
 
 val apiReport = configurations.dependencyScope("apiReport")
@@ -62,11 +67,12 @@ dependencies {
 
 	testImplementation(projects.junitJupiterMigrationsupport)
 	testImplementation(projects.junitPlatformConsole)
-	testImplementation(projects.junitPlatformRunner)
 	testImplementation(projects.junitPlatformSuite)
 	testImplementation(projects.junitPlatformTestkit)
 	testImplementation(projects.junitVintageEngine)
 	testImplementation(kotlin("stdlib"))
+	testRuntimeOnly(libs.kotlinx.coroutines)
+	testRuntimeOnly(kotlin("reflect"))
 
 	toolsImplementation(projects.junitPlatformCommons)
 	toolsImplementation(libs.classgraph)
@@ -247,7 +253,8 @@ tasks {
 	val generateApiTables by registering(JavaExec::class) {
 		classpath = tools.runtimeClasspath
 		mainClass = "org.junit.api.tools.ApiReportGenerator"
-		jvmArgumentProviders += ClasspathSystemPropertyProvider("api.classpath", apiReportClasspath.get())
+		systemProperty("api.moduleNames", modularProjects.map { it.javaModuleName }.sorted().joinToString(","))
+		jvmArgumentProviders += ClasspathSystemPropertyProvider("api.modulePath", apiReportClasspath.get())
 		argumentProviders += CommandLineArgumentProvider {
 			listOf(
 				"DEPRECATED=${deprecatedApisTableFile.get().asFile.absolutePath}",
@@ -295,15 +302,9 @@ tasks {
 		// Temporary workaround for https://github.com/asciidoctor/asciidoctor-gradle-plugin/issues/599
 		inputs.dir(sourceDir).withPropertyName("sourceDir").withPathSensitivity(RELATIVE)
 
-		val platformVersion: String by project
-		val vintageVersion: String by project
-
 		attributeProviders += AsciidoctorAttributeProvider {
 			mapOf(
-				"jupiter-version" to version,
-				"platform-version" to platformVersion,
-				"vintage-version" to vintageVersion,
-				"bom-version" to version,
+				"version" to version,
 				"junit4-version" to libs.versions.junit4.get(),
 				"apiguardian-version" to libs.versions.apiguardian.get(),
 				"ota4j-version" to libs.versions.opentest4j.get(),
@@ -377,6 +378,7 @@ tasks {
 	}
 
 	asciidoctorPdf {
+		setExecutionMode(JAVA_EXEC) // Avoid classpath conflicts with other Gradle plugins (e.g. JReleaser)
 		sources {
 			include("user-guide/index.adoc")
 		}
@@ -424,6 +426,7 @@ tasks {
 			this as StandardJavadocDocletOptions
 			splitIndex(true)
 			addBooleanOption("Xdoclint:all,-missing", true)
+			addBooleanOption("Werror", true)
 			addBooleanOption("html5", true)
 			addMultilineStringsOption("tag").value = listOf(
 					"apiNote:a:API Note:",
@@ -446,19 +449,20 @@ tasks {
 			noTimestamp(true)
 
 			addStringsOption("-module", ",").value = modularProjects.map { it.javaModuleName }
-			val moduleSourcePathOption = addPathOption("-module-source-path")
-			moduleSourcePathOption.value = modularProjects.map { it.file("src/module") }
-			moduleSourcePathOption.value.forEach { inputs.dir(it) }
-			addOption(ModuleSpecificJavadocFileOption("-patch-module", modularProjects.associate { project ->
-				project.javaModuleName to files(
-					project.sourceSets.named { it.startsWith("main") }.map { it.allJava.srcDirs }
-				).asPath
+			addOption(ModuleSpecificJavadocFileOption("-module-source-path", modularProjects.associate { project ->
+				project.javaModuleName to provider {
+					files(
+						project.sourceSets.named { it.startsWith("main") }.map {
+							it.allJava.srcDirs.filter { it.exists() }
+						}
+					).asPath
+				}
 			}))
 			addStringOption("-add-modules", "info.picocli,org.opentest4j.reporting.events")
 			addOption(ModuleSpecificJavadocFileOption("-add-reads", mapOf(
-					"org.junit.platform.console" to "info.picocli",
-					"org.junit.platform.reporting" to "org.opentest4j.reporting.events",
-					"org.junit.jupiter.params" to "univocity.parsers"
+					"org.junit.platform.console" to provider { "info.picocli" },
+					"org.junit.platform.reporting" to provider { "org.opentest4j.reporting.events" },
+					"org.junit.jupiter.params" to provider { "univocity.parsers" }
 			)))
 		}
 
@@ -469,10 +473,6 @@ tasks {
 
 		setMaxMemory("1024m")
 		options.destinationDirectory = layout.buildDirectory.dir("docs/javadoc").get().asFile
-
-		doFirst {
-			(options as CoreJavadocOptions).modulePath = classpath.files.toList()
-		}
 	}
 
 	val fixJavadoc by registering(Copy::class) {
