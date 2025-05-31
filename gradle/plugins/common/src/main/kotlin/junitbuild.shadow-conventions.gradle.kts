@@ -1,5 +1,3 @@
-import junitbuild.java.ModuleCompileOptions
-
 plugins {
 	id("junitbuild.java-library-conventions")
 	id("com.gradleup.shadow")
@@ -21,28 +19,13 @@ configurations {
 			}
 		}
 	}
-}
-
-sourceSets {
-	main {
-		compileClasspath += shadowedClasspath.get()
-	}
-	test {
-		runtimeClasspath += shadowedClasspath.get()
+	compileClasspath {
+		extendsFrom(shadowed.get())
 	}
 }
 
-eclipse {
-	classpath {
-		plusConfigurations.add(shadowedClasspath.get())
-	}
-}
-
-idea {
-	module {
-		scopes["PROVIDED"]!!["plus"]!!.add(shadowedClasspath.get())
-	}
-}
+val javaComponent = components["java"] as AdhocComponentWithVariants
+javaComponent.withVariantsFromConfiguration(configurations.shadowRuntimeElements.get()) { skip() }
 
 tasks {
 	javadoc {
@@ -64,14 +47,5 @@ tasks {
 	named<Jar>("codeCoverageClassesJar") {
 		from(shadowJar.map { zipTree(it.archiveFile) })
 		exclude("**/shadow/**")
-	}
-	test {
-		dependsOn(shadowJar)
-		// in order to run the test against the shadowJar
-		classpath -= sourceSets.main.get().output
-		classpath += files(shadowJar.map { it.archiveFile })
-	}
-	named<JavaCompile>("compileModule") {
-		the<ModuleCompileOptions>().modulePath.from(shadowedClasspath.get())
 	}
 }

@@ -1,3 +1,6 @@
+import junitbuild.extensions.dependencyFromLibs
+import junitbuild.extensions.requiredVersionFromLibs
+
 plugins {
 	id("junitbuild.checkstyle-conventions")
 }
@@ -12,6 +15,10 @@ configurations.checkstyle {
 			// Workaround for CVE-2024-12798 and CVE-2024-12801
 			if (requested.group == "ch.qos.logback") {
 				useVersion(requiredVersionFromLibs("logback"))
+			}
+			// Workaround for CVE-2025-48734
+			if (requested.group == "commons-beanutils") {
+				useVersion("1.11.0")
 			}
 		}
 	}

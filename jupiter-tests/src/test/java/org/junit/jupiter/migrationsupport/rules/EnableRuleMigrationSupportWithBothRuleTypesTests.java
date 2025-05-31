@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.migrationsupport.rules.FailAfterAllHelper.fail;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.Rule;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,7 @@ public class EnableRuleMigrationSupportWithBothRuleTypesTests {
 				numberOfRule2InstancesCreated++;
 			}
 
+			@Nullable
 			private Object instance;
 
 			@Override
@@ -63,7 +65,7 @@ public class EnableRuleMigrationSupportWithBothRuleTypesTests {
 			@Override
 			protected void after() {
 				assertNotNull(instance);
-				assertSame(instance, this);
+				assertSame(this, instance);
 				afterOfRule2WasExecuted = true;
 			}
 		};
@@ -78,10 +80,12 @@ public class EnableRuleMigrationSupportWithBothRuleTypesTests {
 	static void afterMethodsOfBothRulesWereExecuted() {
 		assertEquals(1, numberOfRule1InstancesCreated);
 		assertEquals(1, numberOfRule2InstancesCreated);
-		if (!afterOfRule1WasExecuted)
+		if (!afterOfRule1WasExecuted) {
 			fail();
-		if (!afterOfRule2WasExecuted)
+		}
+		if (!afterOfRule2WasExecuted) {
 			fail();
+		}
 	}
 
 }

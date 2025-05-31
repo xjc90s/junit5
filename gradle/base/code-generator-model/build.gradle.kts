@@ -1,9 +1,14 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     `kotlin-dsl`
 }
 
-group = "junitbuild.base"
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
-repositories {
-    gradlePluginPortal()
+kotlin {
+    compilerOptions.jvmTarget = JvmTarget.JVM_17
 }

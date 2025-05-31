@@ -1,10 +1,13 @@
-
 import junitbuild.extensions.capitalized
+import junitbuild.extensions.dependencyProject
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.internal.os.OperatingSystem
+import org.gradle.plugins.ide.eclipse.model.Classpath
+import org.gradle.plugins.ide.eclipse.model.SourceFolder
 
 plugins {
 	id("junitbuild.java-library-conventions")
+	id("junitbuild.java-nullability-conventions")
 	id("junitbuild.junit4-compatibility")
 	id("junitbuild.testing-conventions")
 	id("junitbuild.jmh-conventions")
@@ -39,7 +42,6 @@ dependencies {
 	testImplementation(projects.junitPlatformSuiteEngine)
 
 	// --- Things we are testing with ---------------------------------------------
-	testImplementation(projects.junitPlatformRunner)
 	testImplementation(projects.junitPlatformTestkit)
 	testImplementation(testFixtures(projects.junitPlatformCommons))
 	testImplementation(testFixtures(projects.junitPlatformEngine))
@@ -132,7 +134,7 @@ tasks {
 		dependsOn(testWoodstox)
 	}
 	named<JavaCompile>(processStarter.compileJavaTaskName).configure {
-		options.release = javaLibrary.testJavaVersion.majorVersion.toInt()
+		options.release = javaLibrary.testJavaVersion.map { it.majorVersion.toInt() }
 	}
 	named<Checkstyle>("checkstyle${processStarter.name.capitalized()}").configure {
 		config = resources.text.fromFile(checkstyle.configDirectory.file("checkstyleMain.xml"))
@@ -142,6 +144,15 @@ tasks {
 eclipse {
 	classpath {
 		plusConfigurations.add(dependencyProject(projects.junitPlatformConsole).configurations["shadowedClasspath"])
+	}
+	classpath.file.whenMerged {
+		this as Classpath
+		entries.filterIsInstance<SourceFolder>().forEach {
+			if (it.path == "src/test/resources") {
+				// Exclude Foo.java and FooBar.java in the modules-2500 folder.
+				it.excludes.add("**/Foo*.java")
+			}
+		}
 	}
 }
 

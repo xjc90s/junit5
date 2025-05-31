@@ -1,6 +1,5 @@
 :testDir: ../../../../src/test/java
 :testResourcesDir: ../../../../src/test/resources
-:testRelease21Dir: ../../../../src/test/java21
 :kotlinTestDir: ../../../../src/test/kotlin
 
 [[writing-tests]]
@@ -271,7 +270,7 @@ lifecycle methods. For further information on runtime semantics, see
 <<extensions-execution-order-wrapping-behavior>>.
 
 [source,java,indent=0]
-.A standard test class
+.A standard Java test class
 ----
 include::{testDir}/example/StandardTests.java[tags=user_guide]
 ----
@@ -282,8 +281,24 @@ following example.
 [source,java,indent=0]
 .A test class written as a Java record
 ----
-include::{testRelease21Dir}/example/MyFirstJUnitJupiterRecordTests.java[tags=user_guide]
+include::{testDir}/example/MyFirstJUnitJupiterRecordTests.java[tags=user_guide]
 ----
+
+Test and lifecycle methods may be written in Kotlin and may optionally use the `suspend`
+keyword for testing code using coroutines.
+
+[source,kotlin]
+.A test class written in Kotlin
+----
+include::{kotlinTestDir}/example/KotlinCoroutinesDemo.kt[tags=user_guide]
+----
+
+NOTE: Using suspending functions as test or lifecycle methods requires
+https://central.sonatype.com/artifact/org.jetbrains.kotlin/kotlin-stdlib[`kotlin-stdlib`],
+https://central.sonatype.com/artifact/org.jetbrains.kotlin/kotlin-reflect[`kotlin-reflect`],
+and
+https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core[`kotlinx-coroutines-core`]
+to be present on the classpath or module path.
 
 [[writing-tests-display-names]]
 === Display Names
@@ -974,9 +989,6 @@ following built-in `MethodOrderer` implementations.
   specified via the `{Order}` annotation
 * `{MethodOrderer_Random}`: orders test methods _pseudo-randomly_ and supports
   configuration of a custom _seed_
-* `{MethodOrderer_Alphanumeric}`: sorts test methods _alphanumerically_ based on their
-  names and formal parameter lists; **deprecated in favor of `{MethodOrderer_MethodName}`,
-  to be removed in 6.0**
 
 NOTE: See also: <<extensions-execution-order-wrapping-behavior>>
 
@@ -1275,9 +1287,8 @@ include::{testDir}/example/TestInfoDemo.java[tags=user_guide]
   method, respectively. This allows them to be viewed in IDEs or included in reports.
 +
 In JUnit Jupiter you should use `TestReporter` where you used to print information to
-`stdout` or `stderr` in JUnit 4. Using `@RunWith(JUnitPlatform.class)` will output all
-reported entries to `stdout`. In addition, some IDEs print report entries to `stdout` or
-display them in the user interface for test results.
+`stdout` or `stderr` in JUnit 4. Some IDEs print report entries to `stdout` or display
+them in the user interface for test results.
 
 [source,java,indent=0]
 ----
@@ -1583,7 +1594,7 @@ _Parameterized tests_ make it possible to run a test method multiple times with 
 arguments. They are declared just like regular `@Test` methods but use the
 `{ParameterizedTest}` annotation instead.
 
-_Parameterized classes_ make it possible to run _all_ tests in test class, including
+_Parameterized classes_ make it possible to run _all_ tests in a test class, including
 <<writing-tests-nested>>, multiple times with different arguments. They are declared just
 like regular test classes and may contain any supported test method type (including
 `@ParameterizedTest`) but annotated with the `{ParameterizedClass}` annotation.
@@ -1707,7 +1718,7 @@ boilerplate code of declaring a test class constructor.
 
 [source,java,indent=0]
 ----
-include::{testRelease21Dir}/example/ParameterizedRecordDemo.java[tags=example]
+include::{testDir}/example/ParameterizedRecordDemo.java[tags=example]
 ----
 
 [[writing-tests-parameterized-tests-consuming-arguments-field-injection]]
@@ -1949,10 +1960,11 @@ of the annotated `@ParameterizedClass` or `@ParameterizedTest`. Generally speaki
 translates to a `Stream` of `Arguments` (i.e., `Stream<Arguments>`); however, the actual
 concrete return type can take on many forms. In this context, a "stream" is anything that
 JUnit can reliably convert into a `Stream`, such as `Stream`, `DoubleStream`,
-`LongStream`, `IntStream`, `Collection`, `Iterator`, `Iterable`, an array of objects, or
-an array of primitives. The "arguments" within the stream can be supplied as an instance
-of `Arguments`, an array of objects (e.g., `Object[]`), or a single value if the
-parameterized class or test method accepts a single argument.
+`LongStream`, `IntStream`, `Collection`, `Iterator`, `Iterable`, an array of objects or
+primitives, or any type that provides an `iterator(): Iterator` method (such as, for
+example, a `kotlin.sequences.Sequence`). The "arguments" within the stream can be supplied
+as an instance of `Arguments`, an array of objects (e.g., `Object[]`), or a single value
+if the parameterized class or test method accepts a single argument.
 
 If the return type is `Stream` or one of the primitive streams,
 JUnit will properly close it by calling `BaseStream.close()`,
@@ -2038,10 +2050,11 @@ In this context, a "stream" is anything that JUnit can reliably convert to a `St
 however, the actual concrete field type can take on many forms. Generally speaking this
 translates to a `Collection`, an `Iterable`, a `Supplier` of a stream (`Stream`,
 `DoubleStream`, `LongStream`, or `IntStream`), a `Supplier` of an `Iterator`, an array of
-objects, or an array of primitives. Each set of "arguments" within the "stream" can be
-supplied as an instance of `Arguments`, an array of objects (for example, `Object[]`,
-`String[]`, etc.), or a single value if the parameterized class or test method accepts a
-single argument.
+objects or primitives, or any type that provides an `iterator(): Iterator` method (such
+as, for example, a `kotlin.sequences.Sequence`). Each set of "arguments" within the
+"stream" can be supplied as an instance of `Arguments`, an array of objects (for example,
+`Object[]`, `String[]`, etc.), or a single value if the parameterized class or test method accepts
+a single argument.
 
 [WARNING]
 ====
@@ -2817,7 +2830,7 @@ by the following example.
 [source,java,indent=0]
 .Using parameterized class lifecycle methods
 ----
-include::{testRelease21Dir}/example/ParameterizedLifecycleDemo.java[tags=example]
+include::{testDir}/example/ParameterizedLifecycleDemo.java[tags=example]
 ----
 <1> Initialization of the argument _before_ each invocation of the parameterized class
 <2> Usage of the previously initialized argument in a test method
@@ -2870,7 +2883,11 @@ generated at runtime by a factory method that is annotated with `@TestFactory`.
 In contrast to `@Test` methods, a `@TestFactory` method is not itself a test case but
 rather a factory for test cases. Thus, a dynamic test is the product of a factory.
 Technically speaking, a `@TestFactory` method must return a single `DynamicNode` or a
-`Stream`, `Collection`, `Iterable`, `Iterator`, or array of `DynamicNode` instances.
+_stream_ of `DynamicNode` instances or any of its subclasses. In this context, a "stream"
+is anything that JUnit can reliably convert into a `Stream`, such as `Stream`,
+`Collection`, `Iterator`, `Iterable`, an array of objects, or any type that provides an
+`iterator(): Iterator` method (such as, for example, a `kotlin.sequences.Sequence`).
+
 Instantiable subclasses of `DynamicNode` are `DynamicContainer` and `DynamicTest`.
 `DynamicContainer` instances are composed of a _display name_ and a list of dynamic child
 nodes, enabling the creation of arbitrarily nested hierarchies of dynamic nodes.
@@ -2944,7 +2961,7 @@ interface along with `Named` via the `NamedExecutable` base class.
 
 [source,java]
 ----
-include::{testRelease21Dir}/example/DynamicTestsNamedDemo.java[tags=user_guide]
+include::{testDir}/example/DynamicTestsNamedDemo.java[tags=user_guide]
 ----
 
 [[writing-tests-dynamic-tests-uri-test-source]]
@@ -3188,6 +3205,17 @@ thread-safe; in the latter, concurrent execution might conflict with the configu
 execution order. Thus, in both cases, test methods in such test classes are only executed
 concurrently if the `@Execution(CONCURRENT)` annotation is present on the test class or
 method.
+
+You can use the `@Execution` annotation to explicitly configure the execution mode for a
+test class or method:
+
+[source,java]
+----
+include::{testDir}/example/ExplicitExecutionModeDemo.java[]
+----
+
+This allows test classes or methods to opt in or out of concurrent execution regardless of
+the globally configured default.
 
 When parallel execution is enabled and a default `{ClassOrderer}` is registered (see
 <<writing-tests-test-execution-order-classes>> for details), top-level test classes will
@@ -3518,11 +3546,6 @@ You can inject multiple temporary directories by specifying multiple annotated p
 ----
 include::{testDir}/example/TempDirectoryDemo.java[tags=user_guide_multiple_directories]
 ----
-
-WARNING: To revert to the old behavior of using a single temporary directory for the
-entire test class or method (depending on which level the annotation is used), you can set
-the `junit.jupiter.tempdir.scope` configuration parameter to `per_context`. However,
-please note that this option is deprecated and will be removed in a future release.
 
 The following example stores a _shared_ temporary directory in a `static` field. This
 allows the same `sharedTempDir` to be used in all lifecycle methods and test methods of
