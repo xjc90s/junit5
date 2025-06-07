@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.opentest4j.AssertionFailedError;
 
 /**
@@ -73,10 +74,11 @@ class FailAssertionsTests {
 		}
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void failWithNullMessageSupplier() {
 		try {
-			fail((Supplier<String>) null);
+			fail((Supplier<@Nullable String>) null);
 			expectAssertionFailedError();
 		}
 		catch (AssertionFailedError ex) {

@@ -10,19 +10,17 @@
 
 package org.junit.platform.launcher.core;
 
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.TemporaryClasspathExecutor.withAdditionalClasspathRoot;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 import static org.junit.platform.launcher.LauncherConstants.DEACTIVATE_LISTENERS_PATTERN_PROPERTY_NAME;
 import static org.junit.platform.launcher.LauncherConstants.ENABLE_LAUNCHER_INTERCEPTORS;
 import static org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder.request;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.LogRecord;
 
@@ -65,6 +63,7 @@ import org.junit.platform.launcher.listeners.UnusedTestExecutionListener;
  */
 class LauncherFactoryTests {
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void preconditions() {
 		assertThrows(PreconditionViolationException.class, () -> LauncherFactory.create(null));
@@ -331,7 +330,7 @@ class LauncherFactoryTests {
 				}
 			});
 
-			assertThat(result.get().getThrowable().orElseThrow()) //
+			assertThat(requireNonNull(result.get()).getThrowable().orElseThrow()) //
 					.hasRootCauseMessage("from execution") //
 					.hasStackTraceContaining(TestLauncherInterceptor1.class.getName() + ".intercept(") //
 					.hasStackTraceContaining(TestLauncherInterceptor2.class.getName() + ".intercept(");
@@ -434,18 +433,7 @@ class LauncherFactoryTests {
 	}
 
 	private static void withTestServices(Runnable runnable) {
-		var current = Thread.currentThread().getContextClassLoader();
-		var url = LauncherFactoryTests.class.getClassLoader().getResource("testservices/");
-		try (var classLoader = new URLClassLoader(new URL[] { url }, current)) {
-			Thread.currentThread().setContextClassLoader(classLoader);
-			runnable.run();
-		}
-		catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-		finally {
-			Thread.currentThread().setContextClassLoader(current);
-		}
+		withAdditionalClasspathRoot("testservices/", runnable);
 	}
 
 	private LauncherDiscoveryRequest createLauncherDiscoveryRequestForBothStandardEngineExampleClasses() {
@@ -453,6 +441,7 @@ class LauncherFactoryTests {
 		return request()
 				.selectors(selectClass(JUnit4Example.class))
 				.selectors(selectClass(JUnit5Example.class))
+				.enableImplicitConfigurationParameters(false)
 				.build();
 		// @formatter:on
 	}
@@ -591,6 +580,7 @@ class LauncherFactoryTests {
 					.getStore() //
 					.get(Namespace.GLOBAL, "sessionResource", CloseTrackingResource.class);
 
+			assertThat(sessionResource).isNotNull();
 			assertThat(sessionResource.isClosed()).isFalse();
 		}
 	}

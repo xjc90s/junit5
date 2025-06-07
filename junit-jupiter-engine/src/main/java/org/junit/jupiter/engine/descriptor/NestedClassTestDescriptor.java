@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.extension.TestInstances;
 import org.junit.jupiter.api.parallel.ResourceLocksProvider;
 import org.junit.jupiter.engine.config.JupiterConfiguration;
@@ -87,11 +88,10 @@ public class NestedClassTestDescriptor extends ClassBasedTestDescriptor {
 	}
 
 	@API(status = INTERNAL, since = "5.12")
-	public static List<Class<?>> getEnclosingTestClasses(TestDescriptor parent) {
-		if (parent instanceof TestClassAware) {
-			TestClassAware parentClassDescriptor = (TestClassAware) parent;
-			List<Class<?>> result = new ArrayList<>(parentClassDescriptor.getEnclosingTestClasses());
-			result.add(parentClassDescriptor.getTestClass());
+	public static List<Class<?>> getEnclosingTestClasses(@Nullable TestDescriptor parent) {
+		if (parent instanceof TestClassAware testClassAwareParent) {
+			List<Class<?>> result = new ArrayList<>(testClassAwareParent.getEnclosingTestClasses());
+			result.add(testClassAwareParent.getTestClass());
 			return result;
 		}
 		return emptyList();

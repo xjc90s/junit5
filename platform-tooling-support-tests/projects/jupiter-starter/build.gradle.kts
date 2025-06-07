@@ -2,17 +2,22 @@ plugins {
 	java
 }
 
-val jupiterVersion: String by project
-val platformVersion: String by project
+val junitVersion: String by project
 
 repositories {
 	maven { url = uri(file(System.getProperty("maven.repo"))) }
 	mavenCentral()
+	maven(url = "https://central.sonatype.com/repository/maven-snapshots/") {
+		mavenContent {
+			snapshotsOnly()
+			includeGroup("org.opentest4j.reporting")
+		}
+	}
 }
 
 dependencies {
-	testImplementation("org.junit.jupiter:junit-jupiter:$jupiterVersion")
-	testRuntimeOnly("org.junit.platform:junit-platform-reporting:$platformVersion")
+	testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
+	testRuntimeOnly("org.junit.platform:junit-platform-reporting:$junitVersion")
 }
 
 java {

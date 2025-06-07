@@ -35,11 +35,12 @@ class ResourceAutoClosingTests {
 		NamespacedHierarchicalStoreProviders.dummyNamespacedHierarchicalStore());
 
 	@Test
+	@SuppressWarnings("resource")
 	void shouldCloseAutoCloseableWhenIsClosingStoredAutoCloseablesEnabledIsTrue() throws Exception {
 		AutoCloseableResource resource = new AutoCloseableResource();
 		when(configuration.isClosingStoredAutoCloseablesEnabled()).thenReturn(true);
 
-		ExtensionContext extensionContext = new JupiterEngineExtensionContext(null, testDescriptor, configuration,
+		ExtensionContext extensionContext = new JupiterEngineExtensionContext(mock(), testDescriptor, configuration,
 			extensionRegistry, launcherStoreFacade);
 		ExtensionContext.Store store = extensionContext.getStore(ExtensionContext.Namespace.GLOBAL);
 		store.put("resource", resource);
@@ -50,11 +51,12 @@ class ResourceAutoClosingTests {
 	}
 
 	@Test
+	@SuppressWarnings("resource")
 	void shouldNotCloseAutoCloseableWhenIsClosingStoredAutoCloseablesEnabledIsFalse() throws Exception {
 		AutoCloseableResource resource = new AutoCloseableResource();
 		when(configuration.isClosingStoredAutoCloseablesEnabled()).thenReturn(false);
 
-		ExtensionContext extensionContext = new JupiterEngineExtensionContext(null, testDescriptor, configuration,
+		ExtensionContext extensionContext = new JupiterEngineExtensionContext(mock(), testDescriptor, configuration,
 			extensionRegistry, launcherStoreFacade);
 		ExtensionContext.Store store = extensionContext.getStore(ExtensionContext.Namespace.GLOBAL);
 		store.put("resource", resource);
@@ -65,6 +67,7 @@ class ResourceAutoClosingTests {
 	}
 
 	@Test
+	@SuppressWarnings("resource")
 	void shouldLogWarningWhenResourceImplementsCloseableResourceButNotAutoCloseableAndConfigIsTrue(
 			@TrackLogRecords LogRecordListener listener) throws Exception {
 		ExecutionRecorder executionRecorder = new ExecutionRecorder();
@@ -84,6 +87,7 @@ class ResourceAutoClosingTests {
 	}
 
 	@Test
+	@SuppressWarnings("resource")
 	void shouldNotLogWarningWhenResourceImplementsCloseableResourceAndAutoCloseableAndConfigIsFalse(
 			@TrackLogRecords LogRecordListener listener) throws Exception {
 		ExecutionRecorder executionRecorder = new ExecutionRecorder();

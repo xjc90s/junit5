@@ -10,11 +10,13 @@
 
 package org.junit.jupiter.engine;
 
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -22,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 class NestedWithSeparateInheritanceTests extends SuperClass1 {
 
-	static List<String> lifecycleInvokingClassNames;
+	static @Nullable List<String> lifecycleInvokingClassNames;
 
 	static String OUTER = NestedWithSeparateInheritanceTests.class.getSimpleName();
 	static String NESTED = NestedClass.class.getSimpleName();
@@ -59,7 +61,7 @@ class SuperClass1 {
 	@BeforeEach
 	public void beforeEach() {
 		String invokingClass = this.getClass().getSimpleName();
-		NestedWithSeparateInheritanceTests.lifecycleInvokingClassNames.add(invokingClass);
+		requireNonNull(NestedWithSeparateInheritanceTests.lifecycleInvokingClassNames).add(invokingClass);
 	}
 
 }
@@ -74,7 +76,7 @@ class SuperClass2 {
 	@BeforeEach
 	public void beforeEach() {
 		String invokingClass = this.getClass().getSimpleName();
-		NestedWithSeparateInheritanceTests.lifecycleInvokingClassNames.add(invokingClass);
+		requireNonNull(NestedWithSeparateInheritanceTests.lifecycleInvokingClassNames).add(invokingClass);
 	}
 
 }
@@ -89,7 +91,7 @@ class SuperClass3 {
 	@BeforeEach
 	public void beforeEach() {
 		String invokingClass = this.getClass().getSimpleName();
-		NestedWithSeparateInheritanceTests.lifecycleInvokingClassNames.add(invokingClass);
+		requireNonNull(NestedWithSeparateInheritanceTests.lifecycleInvokingClassNames).add(invokingClass);
 	}
 
 }

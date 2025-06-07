@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -334,12 +335,14 @@ class AnnotationUtilsTests {
 			() -> "Extensions found for class " + clazz.getName());
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void findAnnotatedMethodsForNullClass() {
 		assertThrows(PreconditionViolationException.class,
 			() -> findAnnotatedMethods(null, Annotation1.class, TOP_DOWN));
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void findAnnotatedMethodsForNullAnnotationType() {
 		assertThrows(PreconditionViolationException.class,
@@ -420,18 +423,21 @@ class AnnotationUtilsTests {
 
 	// === findAnnotatedFields() ===============================================
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void findAnnotatedFieldsForNullClass() {
 		assertThrows(PreconditionViolationException.class,
 			() -> findAnnotatedFields(null, Annotation1.class, isStringField, TOP_DOWN));
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void findAnnotatedFieldsForNullAnnotationType() {
 		assertThrows(PreconditionViolationException.class,
 			() -> findAnnotatedFields(ClassWithAnnotatedFields.class, null, isStringField, TOP_DOWN));
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void findAnnotatedFieldsForNullPredicate() {
 		assertThrows(PreconditionViolationException.class,
@@ -498,23 +504,6 @@ class AnnotationUtilsTests {
 				.containsExactly("interface", "interface-shadow");
 	}
 
-	@Test
-	void findAnnotatedFieldsForShadowedFieldsInLegacyMode() {
-		try {
-			ReflectionUtils.useLegacySearchSemantics = true;
-
-			assertThat(findShadowingAnnotatedFields(Annotation1.class))//
-					.containsExactly("super-shadow", "foo-shadow", "baz-shadow");
-			assertThat(findShadowingAnnotatedFields(Annotation2.class))//
-					.containsExactly("bar-shadow", "baz-shadow");
-			assertThat(findShadowingAnnotatedFields(Annotation3.class))//
-					.containsExactly("interface-shadow");
-		}
-		finally {
-			ReflectionUtils.useLegacySearchSemantics = false;
-		}
-	}
-
 	private List<String> findShadowingAnnotatedFields(Class<? extends Annotation> annotationType) {
 		var fields = findAnnotatedFields(ClassWithShadowedAnnotatedFields.class, annotationType, isStringField);
 		var values = ReflectionUtils.readFieldValues(fields, new ClassWithShadowedAnnotatedFields());
@@ -545,18 +534,21 @@ class AnnotationUtilsTests {
 
 	// === findPublicAnnotatedFields() =========================================
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void findPublicAnnotatedFieldsForNullClass() {
 		assertThrows(PreconditionViolationException.class,
 			() -> findPublicAnnotatedFields(null, String.class, Annotation1.class));
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void findPublicAnnotatedFieldsForNullFieldType() {
 		assertThrows(PreconditionViolationException.class,
 			() -> findPublicAnnotatedFields(getClass(), null, Annotation1.class));
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void findPublicAnnotatedFieldsForNullAnnotationType() {
 		assertThrows(PreconditionViolationException.class,
@@ -1004,13 +996,13 @@ class AnnotationUtilsTests {
 	// -------------------------------------------------------------------------
 
 	@Annotation1
-	private Boolean privateDirectlyAnnotatedField;
+	private @Nullable Boolean privateDirectlyAnnotatedField;
 
 	@Annotation1
-	public String directlyAnnotatedField;
+	public @Nullable String directlyAnnotatedField;
 
 	@ComposedAnnotation
-	public Integer metaAnnotatedField;
+	public @Nullable Integer metaAnnotatedField;
 
 	interface InterfaceWithAnnotatedFields {
 

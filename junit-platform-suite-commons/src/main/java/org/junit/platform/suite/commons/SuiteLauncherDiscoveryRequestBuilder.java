@@ -10,7 +10,7 @@
 
 package org.junit.platform.suite.commons;
 
-import static java.util.stream.Collectors.toList;
+import static org.apiguardian.api.API.Status.DEPRECATED;
 import static org.apiguardian.api.API.Status.INTERNAL;
 import static org.junit.platform.commons.support.AnnotationSupport.findAnnotation;
 import static org.junit.platform.commons.support.AnnotationSupport.findRepeatableAnnotations;
@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.util.Preconditions;
 import org.junit.platform.commons.util.StringUtils;
 import org.junit.platform.engine.ConfigurationParameters;
@@ -112,14 +113,16 @@ import org.junit.platform.suite.api.SelectUris;
  * @see org.junit.platform.launcher.EngineFilter
  * @see org.junit.platform.launcher.TagFilter
  */
-@API(status = INTERNAL, since = "1.8", consumers = { "org.junit.platform.suite.engine", "org.junit.platform.runner" })
+@API(status = INTERNAL, since = "1.8", consumers = "org.junit.platform.suite.engine")
 public final class SuiteLauncherDiscoveryRequestBuilder {
 
 	private final LauncherDiscoveryRequestBuilder delegate = LauncherDiscoveryRequestBuilder.request();
 	private final Set<String> selectedClassNames = new LinkedHashSet<>();
 	private boolean includeClassNamePatternsUsed;
 	private boolean filterStandardClassNamePatterns = false;
-	private ConfigurationParameters parentConfigurationParameters;
+
+	private @Nullable ConfigurationParameters parentConfigurationParameters;
+
 	private boolean enableParentConfigurationParameters = true;
 
 	private SuiteLauncherDiscoveryRequestBuilder() {
@@ -286,6 +289,7 @@ public final class SuiteLauncherDiscoveryRequestBuilder {
 	 * {@link #applySelectorsAndFiltersFromSuite}
 	 */
 	@Deprecated
+	@API(status = DEPRECATED, since = "1.11")
 	public SuiteLauncherDiscoveryRequestBuilder suite(Class<?> suiteClass) {
 		Preconditions.notNull(suiteClass, "Suite class must not be null");
 		applyConfigurationParametersFromSuite(suiteClass);
@@ -456,12 +460,12 @@ public final class SuiteLauncherDiscoveryRequestBuilder {
 		return toClassSelectors(suiteClass, annotation) //
 				.distinct() //
 				.peek(selector -> this.selectedClassNames.add(selector.getClassName())) //
-				.collect(toList());
+				.toList();
 	}
 
 	private static Stream<ClassSelector> toClassSelectors(Class<?> suiteClass, SelectClasses annotation) {
 		Preconditions.condition(annotation.value().length > 0 || annotation.names().length > 0,
-			() -> String.format("@SelectClasses on class [%s] must declare at least one class reference or name",
+			() -> "@SelectClasses on class [%s] must declare at least one class reference or name".formatted(
 				suiteClass.getName()));
 		return Stream.concat(//
 			AdditionalDiscoverySelectors.selectClasses(annotation.value()), //
@@ -514,14 +518,16 @@ public final class SuiteLauncherDiscoveryRequestBuilder {
 		return DiscoverySelectors.selectMethod(annotation.value());
 	}
 
-	private static MethodSelector toMethodSelector(Class<?> suiteClass, Class<?> type, String typeName,
-			Class<?>[] parameterTypes, String methodName, String parameterTypeNames) {
+	private static MethodSelector toMethodSelector(Class<?> suiteClass, @Nullable Class<?> type,
+			@Nullable String typeName, Class<?> @Nullable [] parameterTypes, String methodName,
+			String parameterTypeNames) {
 		if (type == null) {
-			Preconditions.notBlank(typeName, () -> prefixErrorMessageForInvalidSelectMethodUsage(suiteClass,
-				"type must be set or type name must not be blank"));
+			String nonBlankTypeName = Preconditions.notBlank(typeName,
+				() -> prefixErrorMessageForInvalidSelectMethodUsage(suiteClass,
+					"type must be set or type name must not be blank"));
 			return parameterTypes == null //
-					? DiscoverySelectors.selectMethod(typeName, methodName, parameterTypeNames) //
-					: DiscoverySelectors.selectMethod(typeName, methodName, parameterTypes);
+					? DiscoverySelectors.selectMethod(nonBlankTypeName, methodName, parameterTypeNames) //
+					: DiscoverySelectors.selectMethod(nonBlankTypeName, methodName, parameterTypes);
 		}
 		else {
 			Preconditions.condition(typeName == null, () -> prefixErrorMessageForInvalidSelectMethodUsage(suiteClass,
@@ -533,7 +539,7 @@ public final class SuiteLauncherDiscoveryRequestBuilder {
 	}
 
 	private static String prefixErrorMessageForInvalidSelectMethodUsage(Class<?> suiteClass, String detailMessage) {
-		return String.format("@SelectMethod on class [%s]: %s", suiteClass.getName(), detailMessage);
+		return "@SelectMethod on class [%s]: %s".formatted(suiteClass.getName(), detailMessage);
 	}
 
 	private ClassNameFilter createIncludeClassNameFilter(String... patterns) {
