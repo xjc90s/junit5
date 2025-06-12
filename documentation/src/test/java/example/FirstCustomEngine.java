@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.ServerSocket;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.engine.EngineDiscoveryRequest;
 import org.junit.platform.engine.ExecutionRequest;
 import org.junit.platform.engine.TestDescriptor;
@@ -32,6 +33,9 @@ import org.junit.platform.engine.support.store.NamespacedHierarchicalStore;
  */
 public class FirstCustomEngine implements TestEngine {
 
+	//end::user_guide[]
+	@Nullable
+	//tag::user_guide[]
 	public ServerSocket socket;
 
 	@Override
@@ -44,6 +48,9 @@ public class FirstCustomEngine implements TestEngine {
 		return new EngineDescriptor(uniqueId, "First Custom Test Engine");
 	}
 
+	//end::user_guide[]
+	@SuppressWarnings("NullAway")
+	//tag::user_guide[]
 	@Override
 	public void execute(ExecutionRequest request) {
 		request.getEngineExecutionListener()

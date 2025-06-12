@@ -10,6 +10,7 @@
 
 package org.junit.jupiter.engine.execution;
 
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -25,6 +26,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -45,7 +47,8 @@ class ParameterResolutionUtilsTests {
 	private static final String ENIGMA = "enigma";
 
 	private final MethodSource instance = mock();
-	private Method method;
+
+	private @Nullable Method method;
 
 	private final ExtensionContext extensionContext = mock();
 
@@ -59,6 +62,7 @@ class ParameterResolutionUtilsTests {
 		register(new StringParameterResolver());
 
 		Class<ConstructorInjectionTestCase> topLevelClass = ConstructorInjectionTestCase.class;
+		@Nullable
 		Object[] arguments = resolveConstructorParameters(topLevelClass, null);
 
 		assertThat(arguments).containsExactly(ENIGMA);
@@ -72,6 +76,7 @@ class ParameterResolutionUtilsTests {
 		ConstructorInjectionTestCase outer = ReflectionSupport.newInstance(outerClass, "str");
 
 		Class<ConstructorInjectionTestCase.NestedTestCase> innerClass = ConstructorInjectionTestCase.NestedTestCase.class;
+		@Nullable
 		Object[] arguments = resolveConstructorParameters(innerClass, outer);
 
 		assertThat(arguments).containsExactly(outer, 42);
@@ -97,6 +102,7 @@ class ParameterResolutionUtilsTests {
 		testMethodWithNoParameters();
 		throwDuringParameterResolution(new RuntimeException("boom!"));
 
+		@Nullable
 		Object[] arguments = resolveMethodParameters();
 
 		assertThat(arguments).isEmpty();
@@ -107,6 +113,7 @@ class ParameterResolutionUtilsTests {
 		testMethodWithASingleStringParameter();
 		thereIsAParameterResolverThatResolvesTheParameterTo("argument");
 
+		@Nullable
 		Object[] arguments = resolveMethodParameters();
 
 		assertThat(arguments).containsExactly("argument");
@@ -116,16 +123,14 @@ class ParameterResolutionUtilsTests {
 	void resolveMultipleArguments() {
 		testMethodWith("multipleParameters", String.class, Integer.class, Double.class);
 		register(ConfigurableParameterResolver.supportsAndResolvesTo(parameterContext -> {
-			switch (parameterContext.getIndex()) {
-				case 0:
-					return "0";
-				case 1:
-					return 1;
-				default:
-					return 2.0;
-			}
+			return switch (parameterContext.getIndex()) {
+				case 0 -> "0";
+				case 1 -> 1;
+				default -> 2.0;
+			};
 		}));
 
+		@Nullable
 		Object[] arguments = resolveMethodParameters();
 
 		assertThat(arguments).containsExactly("0", 1, 2.0);
@@ -137,11 +142,13 @@ class ParameterResolutionUtilsTests {
 		thereIsAParameterResolverThatDoesNotSupportThisParameter();
 		thereIsAParameterResolverThatResolvesTheParameterTo("something");
 
+		@Nullable
 		Object[] arguments = resolveMethodParameters();
 
 		assertThat(arguments).containsExactly("something");
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void passContextInformationToParameterResolverMethods() {
 		anyTestMethodWithAtLeastOneParameter();
@@ -152,10 +159,10 @@ class ParameterResolutionUtilsTests {
 
 		assertSame(extensionContext, extension.supportsArguments.extensionContext);
 		assertEquals(0, extension.supportsArguments.parameterContext.getIndex());
-		assertSame(instance, extension.supportsArguments.parameterContext.getTarget().get());
+		assertSame(instance, extension.supportsArguments.parameterContext.getTarget().orElseThrow());
 		assertSame(extensionContext, extension.resolveArguments.extensionContext);
 		assertEquals(0, extension.resolveArguments.parameterContext.getIndex());
-		assertSame(instance, extension.resolveArguments.parameterContext.getTarget().get());
+		assertSame(instance, extension.resolveArguments.parameterContext.getTarget().orElseThrow());
 		assertThat(extension.resolveArguments.parameterContext.toString())//
 				.contains("parameter", String.class.getTypeName(), "index", "0", "target", "Mock");
 	}
@@ -165,6 +172,7 @@ class ParameterResolutionUtilsTests {
 		testMethodWithASinglePrimitiveIntParameter();
 		thereIsAParameterResolverThatResolvesTheParameterTo(42);
 
+		@Nullable
 		Object[] arguments = resolveMethodParameters();
 
 		assertThat(arguments).containsExactly(42);
@@ -175,6 +183,7 @@ class ParameterResolutionUtilsTests {
 		testMethodWithASingleStringParameter();
 		thereIsAParameterResolverThatResolvesTheParameterTo(null);
 
+		@Nullable
 		Object[] arguments = resolveMethodParameters();
 
 		assertThat(arguments).hasSize(1);
@@ -289,7 +298,7 @@ class ParameterResolutionUtilsTests {
 		register(ConfigurableParameterResolver.onAnyCallThrow(parameterResolutionException));
 	}
 
-	private void thereIsAParameterResolverThatResolvesTheParameterTo(Object argument) {
+	private void thereIsAParameterResolverThatResolvesTheParameterTo(@Nullable Object argument) {
 		register(ConfigurableParameterResolver.supportsAndResolvesTo(parameterContext -> argument));
 	}
 
@@ -323,14 +332,14 @@ class ParameterResolutionUtilsTests {
 		}
 	}
 
-	private <T> Object[] resolveConstructorParameters(Class<T> clazz, Object outerInstance) {
+	private <T> @Nullable Object[] resolveConstructorParameters(Class<T> clazz, @Nullable Object outerInstance) {
 		Constructor<T> constructor = ReflectionUtils.getDeclaredConstructor(clazz);
 		return ParameterResolutionUtils.resolveParameters(constructor, Optional.empty(),
 			Optional.ofNullable(outerInstance), extensionContext, extensionRegistry);
 	}
 
-	private Object[] resolveMethodParameters() {
-		return ParameterResolutionUtils.resolveParameters(this.method, Optional.of(this.instance),
+	private @Nullable Object[] resolveMethodParameters() {
+		return ParameterResolutionUtils.resolveParameters(requireNonNull(this.method), Optional.of(this.instance),
 			this.extensionContext, this.extensionRegistry);
 	}
 
@@ -338,18 +347,10 @@ class ParameterResolutionUtilsTests {
 
 	static class ArgumentRecordingParameterResolver implements ParameterResolver {
 
-		ArgumentRecordingParameterResolver.Arguments supportsArguments;
-		ArgumentRecordingParameterResolver.Arguments resolveArguments;
+		ArgumentRecordingParameterResolver.@Nullable Arguments supportsArguments;
+		ArgumentRecordingParameterResolver.@Nullable Arguments resolveArguments;
 
-		static class Arguments {
-
-			final ParameterContext parameterContext;
-			final ExtensionContext extensionContext;
-
-			Arguments(ParameterContext parameterContext, ExtensionContext extensionContext) {
-				this.parameterContext = parameterContext;
-				this.extensionContext = extensionContext;
-			}
+		record Arguments(ParameterContext parameterContext, ExtensionContext extensionContext) {
 		}
 
 		@Override
@@ -359,7 +360,7 @@ class ParameterResolutionUtilsTests {
 		}
 
 		@Override
-		public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
+		public @Nullable Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
 			resolveArguments = new ArgumentRecordingParameterResolver.Arguments(parameterContext, extensionContext);
 			return null;
 		}
@@ -375,7 +376,7 @@ class ParameterResolutionUtilsTests {
 			});
 		}
 
-		static ParameterResolver supportsAndResolvesTo(Function<ParameterContext, Object> resolve) {
+		static ParameterResolver supportsAndResolvesTo(Function<ParameterContext, @Nullable Object> resolve) {
 			return new ConfigurableParameterResolver(parameterContext -> true, resolve);
 		}
 
@@ -386,10 +387,10 @@ class ParameterResolutionUtilsTests {
 		}
 
 		private final Predicate<ParameterContext> supports;
-		private final Function<ParameterContext, Object> resolve;
+		private final Function<ParameterContext, @Nullable Object> resolve;
 
 		private ConfigurableParameterResolver(Predicate<ParameterContext> supports,
-				Function<ParameterContext, Object> resolve) {
+				Function<ParameterContext, @Nullable Object> resolve) {
 			this.supports = supports;
 			this.resolve = resolve;
 		}
@@ -400,7 +401,7 @@ class ParameterResolutionUtilsTests {
 		}
 
 		@Override
-		public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
+		public @Nullable Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
 			return resolve.apply(parameterContext);
 		}
 	}

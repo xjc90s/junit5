@@ -1,5 +1,8 @@
+import junitbuild.extensions.javaModuleName
+
 plugins {
 	id("junitbuild.java-library-conventions")
+	id("junitbuild.java-nullability-conventions")
 	id("junitbuild.shadow-conventions")
 	`java-test-fixtures`
 }
@@ -10,8 +13,10 @@ dependencies {
 	api(platform(projects.junitBom))
 	api(projects.junitPlatformLauncher)
 
+	implementation(libs.openTestReporting.tooling.spi)
+
 	compileOnlyApi(libs.apiguardian)
-	compileOnlyApi(libs.openTestReporting.tooling.spi)
+	compileOnly(libs.jspecify)
 
 	shadowed(libs.openTestReporting.events)
 
@@ -33,10 +38,16 @@ tasks {
 			into("META-INF")
 		}
 	}
-	compileModule {
+	compileJava {
 		options.compilerArgs.addAll(listOf(
 			"--add-modules", "org.opentest4j.reporting.events",
 			"--add-reads", "${javaModuleName}=org.opentest4j.reporting.events"
 		))
+	}
+	javadoc {
+		(options as StandardJavadocDocletOptions).apply {
+			addStringOption("-add-modules", "org.opentest4j.reporting.events")
+			addStringOption("-add-reads", "${javaModuleName}=org.opentest4j.reporting.events")
+		}
 	}
 }

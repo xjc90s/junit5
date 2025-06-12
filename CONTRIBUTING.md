@@ -120,6 +120,14 @@ See [`ExtensionContext`](junit-jupiter-api/src/main/java/org/junit/jupiter/api/e
 [`ParameterContext`](junit-jupiter-api/src/main/java/org/junit/jupiter/api/extension/ParameterContext.java) for example Javadoc.
 
 
+### Nullability
+
+This project uses JSpecify's annotation to indicate nullability. In general, the approach
+is as follows:
+
+- All packages are annotated with `@NullMarked`
+- Types of fields, parameters, return types etc. may be annotated with `@Nullable`
+
 ### Tests
 
 #### Naming
@@ -151,7 +159,7 @@ See [`ExtensionContext`](junit-jupiter-api/src/main/java/org/junit/jupiter/api/e
 
 ### Deprecation
 
-The JUnit 5 project uses the `@API` annotation from [API Guardian](https://github.com/apiguardian-team/apiguardian).
+The JUnit project uses the `@API` annotation from [API Guardian](https://github.com/apiguardian-team/apiguardian).
 Publicly available interfaces, classes, and methods have a defined lifecycle
 which is described in detail in the [User Guide](https://junit.org/junit5/docs/current/user-guide/#api-evolution).
 

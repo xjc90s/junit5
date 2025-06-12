@@ -41,6 +41,7 @@ public final class AnnotationConsumerInitializer {
 	private static final List<AnnotationConsumingMethodSignature> annotationConsumingMethodSignatures = asList( //
 		new AnnotationConsumingMethodSignature("accept", 1, 0), //
 		new AnnotationConsumingMethodSignature("provideArguments", 3, 2), //
+		new AnnotationConsumingMethodSignature("provideArguments", 2, 1), //
 		new AnnotationConsumingMethodSignature("convert", 3, 2));
 
 	private AnnotationConsumerInitializer() {
@@ -49,7 +50,7 @@ public final class AnnotationConsumerInitializer {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <T> T initialize(AnnotatedElement annotatedElement, T annotationConsumerInstance) {
-		if (annotationConsumerInstance instanceof AnnotationConsumer) {
+		if (annotationConsumerInstance instanceof AnnotationConsumer consumer) {
 			Class<? extends Annotation> annotationType = findConsumedAnnotationType(annotationConsumerInstance);
 			List<? extends Annotation> annotations = findAnnotations(annotatedElement, annotationType);
 
@@ -58,8 +59,7 @@ public final class AnnotationConsumerInitializer {
 						+ " must be used with an annotation of type " + annotationType.getName());
 			}
 
-			annotations.forEach(annotation -> initializeAnnotationConsumer(
-				(AnnotationConsumer) annotationConsumerInstance, annotation));
+			annotations.forEach(annotation -> initializeAnnotationConsumer(consumer, annotation));
 		}
 		return annotationConsumerInstance;
 	}
@@ -85,7 +85,7 @@ public final class AnnotationConsumerInitializer {
 		int annotationIndex = annotationConsumingMethodSignatures.stream() //
 				.filter(signature -> signature.isMatchingWith(method)) //
 				.findFirst() //
-				.map(AnnotationConsumingMethodSignature::getAnnotationParameterIndex) //
+				.map(AnnotationConsumingMethodSignature::annotationParameterIndex) //
 				.orElse(0);
 
 		return (Class<? extends Annotation>) method.getParameterTypes()[annotationIndex];
@@ -101,26 +101,13 @@ public final class AnnotationConsumerInitializer {
 		}
 	}
 
-	private static class AnnotationConsumingMethodSignature {
-
-		private final String methodName;
-		private final int parameterCount;
-		private final int annotationParameterIndex;
-
-		AnnotationConsumingMethodSignature(String methodName, int parameterCount, int annotationParameterIndex) {
-			this.methodName = methodName;
-			this.parameterCount = parameterCount;
-			this.annotationParameterIndex = annotationParameterIndex;
-		}
+	private record AnnotationConsumingMethodSignature(String methodName, int parameterCount,
+			int annotationParameterIndex) {
 
 		boolean isMatchingWith(Method method) {
 			return method.getName().equals(methodName) //
 					&& method.getParameterCount() == parameterCount //
 					&& method.getParameterTypes()[annotationParameterIndex].isAnnotation();
-		}
-
-		int getAnnotationParameterIndex() {
-			return annotationParameterIndex;
 		}
 
 	}

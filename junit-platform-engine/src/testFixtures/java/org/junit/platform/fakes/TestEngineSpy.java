@@ -10,6 +10,7 @@
 
 package org.junit.platform.fakes;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.engine.EngineDiscoveryRequest;
 import org.junit.platform.engine.ExecutionRequest;
 import org.junit.platform.engine.TestDescriptor;
@@ -23,7 +24,7 @@ public class TestEngineSpy implements TestEngine {
 
 	private final String id;
 
-	public ExecutionRequest requestForExecution;
+	public @Nullable ExecutionRequest requestForExecution;
 
 	public TestEngineSpy() {
 		this(TestEngineSpy.class.getSimpleName());
