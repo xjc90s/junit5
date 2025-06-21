@@ -1,6 +1,8 @@
-
 import com.gradle.develocity.agent.gradle.internal.test.PredictiveTestSelectionConfigurationInternal
 import com.gradle.develocity.agent.gradle.test.PredictiveTestSelectionMode
+import junitbuild.extensions.bundleFromLibs
+import junitbuild.extensions.dependencyFromLibs
+import junitbuild.extensions.trackOperationSystemAsInput
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
@@ -20,6 +22,10 @@ var javaAgentClasspath = configurations.resolvable("javaAgentClasspath") {
 var openTestReportingCli = configurations.dependencyScope("openTestReportingCli")
 var openTestReportingCliClasspath = configurations.resolvable("openTestReportingCliClasspath") {
 	extendsFrom(openTestReportingCli.get())
+	attributes {
+		// Avoid using the shadowed variant of junit-platform-reporting
+		attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling::class, Bundling.EXTERNAL))
+	}
 }
 
 val generateOpenTestHtmlReport by tasks.registering(JavaExec::class) {
@@ -104,6 +110,8 @@ tasks.withType<Test>().configureEach {
 	systemProperty("log4j2.julLoggerAdapter", "org.apache.logging.log4j.jul.CoreLoggerAdapter")
 	// Avoid overhead (see https://logging.apache.org/log4j/2.x/manual/jmx.html#enabling-jmx)
 	systemProperty("log4j2.disableJmx", "true")
+	// https://github.com/raphw/byte-buddy/issues/1803
+	systemProperty("net.bytebuddy.safe", true)
 	// Required until ASM officially supports the JDK 14
 	systemProperty("net.bytebuddy.experimental", true)
 	if (buildParameters.testing.enableJFR) {

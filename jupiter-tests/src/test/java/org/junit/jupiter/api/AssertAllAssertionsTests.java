@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -38,21 +37,25 @@ import org.opentest4j.MultipleFailuresError;
  */
 class AssertAllAssertionsTests {
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void assertAllWithNullExecutableArray() {
 		assertPrecondition("executables array must not be null or empty", () -> assertAll((Executable[]) null));
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void assertAllWithNullExecutableCollection() {
 		assertPrecondition("executables collection must not be null", () -> assertAll((Collection<Executable>) null));
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void assertAllWithNullExecutableStream() {
 		assertPrecondition("executables stream must not be null", () -> assertAll((Stream<Executable>) null));
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void assertAllWithNullInExecutableArray() {
 		assertPrecondition("individual executables must not be null", () -> assertAll((Executable) null));
@@ -63,6 +66,7 @@ class AssertAllAssertionsTests {
 		assertPrecondition("individual executables must not be null", () -> assertAll(asList((Executable) null)));
 	}
 
+	@SuppressWarnings("DataFlowIssue")
 	@Test
 	void assertAllWithNullInExecutableStream() {
 		assertPrecondition("individual executables must not be null", () -> assertAll(Stream.of((Executable) null)));
@@ -103,8 +107,8 @@ class AssertAllAssertionsTests {
 		// @formatter:off
 		MultipleFailuresError multipleFailuresError = assertThrows(MultipleFailuresError.class, () ->
 			assertAll(
-				() -> fail(),
-				() -> fail()
+				Assertions::fail,
+				Assertions::fail
 			)
 		);
 		// @formatter:on
@@ -117,8 +121,8 @@ class AssertAllAssertionsTests {
 		// @formatter:off
 		MultipleFailuresError multipleFailuresError = assertThrows(MultipleFailuresError.class, () ->
 			assertAll(asList(
-				() -> fail(),
-				() -> fail()
+				Assertions::fail,
+				Assertions::fail
 			))
 		);
 		// @formatter:on
@@ -131,8 +135,8 @@ class AssertAllAssertionsTests {
 		// @formatter:off
 		MultipleFailuresError multipleFailuresError = assertThrows(MultipleFailuresError.class, () ->
 			assertAll(Stream.of(
-				() -> fail(),
-				() -> fail()
+				Assertions::fail,
+				Assertions::fail
 			))
 		);
 		// @formatter:on

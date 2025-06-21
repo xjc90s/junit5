@@ -10,6 +10,11 @@
 
 package org.junit.platform.launcher.core;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.Optional;
+
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.engine.EngineExecutionListener;
 import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.TestExecutionResult;
@@ -25,9 +30,12 @@ class OutcomeDelayingEngineExecutionListener extends DelegatingEngineExecutionLi
 	private final TestDescriptor engineDescriptor;
 
 	private volatile boolean engineStarted;
-	private volatile Outcome outcome;
-	private volatile String skipReason;
-	private volatile TestExecutionResult executionResult;
+
+	private volatile @Nullable Outcome outcome;
+
+	private volatile @Nullable String skipReason;
+
+	private volatile @Nullable TestExecutionResult executionResult;
 
 	OutcomeDelayingEngineExecutionListener(EngineExecutionListener delegate, TestDescriptor engineDescriptor) {
 		super(delegate);
@@ -66,10 +74,10 @@ class OutcomeDelayingEngineExecutionListener extends DelegatingEngineExecutionLi
 
 	void reportEngineOutcome() {
 		if (outcome == Outcome.FINISHED) {
-			super.executionFinished(engineDescriptor, executionResult);
+			super.executionFinished(engineDescriptor, requireNonNull(executionResult));
 		}
 		else if (outcome == Outcome.SKIPPED) {
-			super.executionSkipped(engineDescriptor, skipReason);
+			super.executionSkipped(engineDescriptor, requireNonNull(skipReason));
 		}
 	}
 
@@ -80,9 +88,9 @@ class OutcomeDelayingEngineExecutionListener extends DelegatingEngineExecutionLi
 	}
 
 	void reportEngineFailure(Throwable throwable) {
-		if (executionResult != null && executionResult.getThrowable().isPresent()) {
-			throwable.addSuppressed(executionResult.getThrowable().get());
-		}
+		Optional.ofNullable(this.executionResult) //
+				.flatMap(TestExecutionResult::getThrowable) //
+				.ifPresent(throwable::addSuppressed);
 		super.executionFinished(engineDescriptor, TestExecutionResult.failed(throwable));
 	}
 

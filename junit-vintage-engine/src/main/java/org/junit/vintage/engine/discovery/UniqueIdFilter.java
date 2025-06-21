@@ -33,7 +33,10 @@ class UniqueIdFilter extends Filter {
 	private final RunnerTestDescriptor runnerTestDescriptor;
 	private final UniqueId uniqueId;
 
+	@SuppressWarnings({ "NullAway.Init", "NotNullFieldNotInitialized" })
 	private Deque<Description> path;
+
+	@SuppressWarnings({ "NullAway.Init", "NotNullFieldNotInitialized" })
 	private Set<Description> descendants;
 
 	UniqueIdFilter(RunnerTestDescriptor runnerTestDescriptor, UniqueId uniqueId) {
@@ -41,6 +44,7 @@ class UniqueIdFilter extends Filter {
 		this.uniqueId = uniqueId;
 	}
 
+	@SuppressWarnings("ConstantValue")
 	private void ensureInitialized() {
 		if (descendants == null) {
 			Optional<? extends TestDescriptor> identifiedTestDescriptor = runnerTestDescriptor.findByUniqueId(uniqueId);

@@ -2,8 +2,7 @@ plugins {
 	java
 }
 
-val jupiterVersion: String by project
-val platformVersion: String by project
+val junitVersion: String by project
 
 repositories {
 	maven { url = uri(file(System.getProperty("maven.repo"))) }
@@ -11,14 +10,14 @@ repositories {
 }
 
 dependencies {
-	testImplementation("org.junit.jupiter:junit-jupiter:$jupiterVersion")
-	testImplementation("org.junit.jupiter:junit-jupiter-engine:$jupiterVersion")
-	testRuntimeOnly("org.junit.platform:junit-platform-reporting:$platformVersion")
+	testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
+	testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+	testRuntimeOnly("org.junit.platform:junit-platform-launcher:$junitVersion")
 }
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(8)
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
@@ -31,13 +30,5 @@ tasks.test {
 
 	reports {
 		html.required = true
-	}
-
-	val outputDir = reports.junitXml.outputLocation
-	jvmArgumentProviders += CommandLineArgumentProvider {
-		listOf(
-			"-Djunit.platform.reporting.open.xml.enabled=true",
-			"-Djunit.platform.reporting.output.dir=${outputDir.get().asFile.absolutePath}"
-		)
 	}
 }

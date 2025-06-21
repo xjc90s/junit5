@@ -49,12 +49,12 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.ClassTemplate;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -99,7 +99,8 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 	private final JupiterConfiguration configuration = mock();
 	private final LauncherDiscoveryListener discoveryListener = mock();
-	private TestDescriptor engineDescriptor;
+
+	private @Nullable TestDescriptor engineDescriptor;
 
 	@BeforeEach
 	void setUp() {
@@ -112,7 +113,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 	void nonTestClassResolution() {
 		resolve(request().selectors(selectClass(NonTestClass.class)));
 
-		assertTrue(engineDescriptor.getDescendants().isEmpty());
+		assertTrue(requireNonNull(engineDescriptor).getDescendants().isEmpty());
 	}
 
 	@Test
@@ -120,7 +121,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 		var methodSelector = selectMethod(NonTestClass.class, "doesNotExist");
 		resolve(request().selectors(methodSelector));
 
-		assertTrue(engineDescriptor.getDescendants().isEmpty());
+		assertTrue(requireNonNull(engineDescriptor).getDescendants().isEmpty());
 		assertUnresolved(methodSelector);
 	}
 
@@ -128,7 +129,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 	void abstractClassResolution() {
 		resolve(request().selectors(selectClass(AbstractTestClass.class)));
 
-		assertTrue(engineDescriptor.getDescendants().isEmpty());
+		assertTrue(requireNonNull(engineDescriptor).getDescendants().isEmpty());
 		assertUnresolved(selectClass(AbstractTestClass.class));
 	}
 
@@ -138,7 +139,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(4, engineDescriptor.getDescendants().size());
+		assertEquals(4, requireNonNull(engineDescriptor).getDescendants().size());
 		assertUniqueIdsForMyTestClass(uniqueIds());
 	}
 
@@ -148,7 +149,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertTrue(engineDescriptor.getDescendants().isEmpty());
+		assertTrue(requireNonNull(engineDescriptor).getDescendants().isEmpty());
 		var result = verifySelectorProcessed(selector);
 		assertThat(result.getStatus()).isEqualTo(FAILED);
 		assertThat(result.getThrowable().orElseThrow()).hasMessageContaining("Could not load class with name");
@@ -161,7 +162,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 			selectClass(MyTestClass.class) //
 		));
 
-		assertEquals(4, engineDescriptor.getDescendants().size());
+		assertEquals(4, requireNonNull(engineDescriptor).getDescendants().size());
 		assertUniqueIdsForMyTestClass(uniqueIds());
 	}
 
@@ -172,7 +173,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector1, selector2));
 
-		assertEquals(7, engineDescriptor.getDescendants().size());
+		assertEquals(7, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertUniqueIdsForMyTestClass(uniqueIds);
 		assertThat(uniqueIds).contains(uniqueIdForClass(YourTestClass.class));
@@ -193,7 +194,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(3, engineDescriptor.getDescendants().size());
+		assertEquals(3, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertThat(uniqueIds).contains(uniqueIdForClass(OtherTestClass.NestedTestClass.class));
 		assertThat(uniqueIds).contains(uniqueIdForMethod(OtherTestClass.NestedTestClass.class, "test5()"));
@@ -218,7 +219,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		assertThat(verified.get()).describedAs("filter can see descendants").isTrue();
 
-		TestDescriptor classTemplateDescriptor = getOnlyElement(engineDescriptor.getChildren());
+		TestDescriptor classTemplateDescriptor = getOnlyElement(requireNonNull(engineDescriptor).getChildren());
 		assertThat(classTemplateDescriptor.mayRegisterTests()).isTrue();
 		assertThat(classTemplateDescriptor.getDescendants()).isEmpty();
 
@@ -234,17 +235,17 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertThat(engineDescriptor.getChildren()).hasSize(1);
+		assertThat(requireNonNull(engineDescriptor).getChildren()).hasSize(1);
 
-		TestDescriptor classTemplateDescriptor = getOnlyElement(engineDescriptor.getChildren());
+		TestDescriptor classTemplateDescriptor = getOnlyElement(requireNonNull(engineDescriptor).getChildren());
 
 		classTemplateDescriptor.prune();
-		assertThat(engineDescriptor.getChildren()).hasSize(1);
+		assertThat(requireNonNull(engineDescriptor).getChildren()).hasSize(1);
 		assertThat(classTemplateDescriptor.mayRegisterTests()).isTrue();
 		assertThat(classTemplateDescriptor.getDescendants()).isEmpty();
 
 		classTemplateDescriptor.prune();
-		assertThat(engineDescriptor.getChildren()).hasSize(1);
+		assertThat(requireNonNull(engineDescriptor).getChildren()).hasSize(1);
 		assertThat(classTemplateDescriptor.mayRegisterTests()).isTrue();
 		assertThat(classTemplateDescriptor.getDescendants()).isEmpty();
 	}
@@ -256,7 +257,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(2, engineDescriptor.getDescendants().size());
+		assertEquals(2, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertThat(uniqueIds).contains(uniqueIdForClass(MyTestClass.class));
 		assertThat(uniqueIds).contains(uniqueIdForMethod(MyTestClass.class, "test1()"));
@@ -268,7 +269,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(2, engineDescriptor.getDescendants().size());
+		assertEquals(2, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertThat(uniqueIds).contains(uniqueIdForClass(HerTestClass.class));
 		assertThat(uniqueIds).contains(uniqueIdForMethod(HerTestClass.class, "test1()"));
@@ -281,7 +282,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertTrue(engineDescriptor.getDescendants().isEmpty());
+		assertTrue(requireNonNull(engineDescriptor).getDescendants().isEmpty());
 	}
 
 	@Test
@@ -292,7 +293,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertTrue(engineDescriptor.getDescendants().isEmpty());
+		assertTrue(requireNonNull(engineDescriptor).getDescendants().isEmpty());
 		var result = verifySelectorProcessed(selector);
 		assertThat(result.getStatus()).isEqualTo(FAILED);
 		assertThat(result.getThrowable().orElseThrow())//
@@ -306,7 +307,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertTrue(engineDescriptor.getDescendants().isEmpty());
+		assertTrue(requireNonNull(engineDescriptor).getDescendants().isEmpty());
 		var result = verifySelectorProcessed(selector);
 		assertThat(result.getStatus()).isEqualTo(FAILED);
 		assertThat(result.getThrowable().orElseThrow()).hasMessageContaining("Could not find method");
@@ -318,7 +319,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(4, engineDescriptor.getDescendants().size());
+		assertEquals(4, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertUniqueIdsForMyTestClass(uniqueIds);
 	}
@@ -329,7 +330,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(3, engineDescriptor.getDescendants().size());
+		assertEquals(3, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertThat(uniqueIds).contains(uniqueIdForClass(OtherTestClass.NestedTestClass.class));
 		assertThat(uniqueIds).contains(uniqueIdForMethod(OtherTestClass.NestedTestClass.class, "test5()"));
@@ -343,7 +344,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(2, engineDescriptor.getDescendants().size());
+		assertEquals(2, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertThat(uniqueIds).contains(uniqueIdForClass(OtherTestClass.NestedTestClass.class));
 		assertThat(uniqueIds).contains(uniqueIdForMethod(OtherTestClass.NestedTestClass.class, "test5()"));
@@ -356,7 +357,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertTrue(engineDescriptor.getDescendants().isEmpty());
+		assertTrue(requireNonNull(engineDescriptor).getDescendants().isEmpty());
 		assertUnresolved(selector);
 	}
 
@@ -366,7 +367,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertThat(engineDescriptor.getDescendants()).isEmpty();
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).isEmpty();
 		assertUnresolved(selector);
 	}
 
@@ -376,7 +377,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selectUniqueId(uniqueId)));
 
-		assertTrue(engineDescriptor.getDescendants().isEmpty());
+		assertTrue(requireNonNull(engineDescriptor).getDescendants().isEmpty());
 		var result = verifySelectorProcessed(selectUniqueId(uniqueId));
 		assertThat(result.getStatus()).isEqualTo(FAILED);
 		assertThat(result.getThrowable().orElseThrow())//
@@ -390,7 +391,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selectUniqueId(uniqueId)));
 
-		assertThat(engineDescriptor.getDescendants()).isEmpty();
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).isEmpty();
 		var result = verifySelectorProcessed(selectUniqueId(uniqueId));
 		assertThat(result.getStatus()).isEqualTo(FAILED);
 		assertThat(result.getThrowable().orElseThrow())//
@@ -404,7 +405,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selectUniqueId(uniqueId)));
 
-		assertTrue(engineDescriptor.getDescendants().isEmpty());
+		assertTrue(requireNonNull(engineDescriptor).getDescendants().isEmpty());
 		var result = verifySelectorProcessed(selectUniqueId(uniqueId));
 		assertThat(result.getStatus()).isEqualTo(FAILED);
 		assertThat(result.getThrowable().orElseThrow())//
@@ -419,7 +420,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(2, engineDescriptor.getDescendants().size());
+		assertEquals(2, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertThat(uniqueIds).contains(uniqueIdForClass(MyTestClass.class));
 		assertThat(uniqueIds).contains(uniqueIdForMethod(MyTestClass.class, "test1()"));
@@ -431,7 +432,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(2, engineDescriptor.getDescendants().size());
+		assertEquals(2, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 
 		assertThat(uniqueIds).contains(uniqueIdForClass(HerTestClass.class));
@@ -445,7 +446,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(2, engineDescriptor.getDescendants().size());
+		assertEquals(2, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertThat(uniqueIds).contains(uniqueIdForClass(HerTestClass.class));
 		assertThat(uniqueIds).contains(uniqueIdForMethod(HerTestClass.class, "test7(java.lang.String)"));
@@ -458,7 +459,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selectUniqueId(uniqueId)));
 
-		assertTrue(engineDescriptor.getDescendants().isEmpty());
+		assertTrue(requireNonNull(engineDescriptor).getDescendants().isEmpty());
 		assertUnresolved(selectUniqueId(uniqueId));
 	}
 
@@ -470,7 +471,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 		// adding same selector twice should have no effect
 		resolve(request().selectors(selector1, selector2, selector2));
 
-		assertEquals(3, engineDescriptor.getDescendants().size());
+		assertEquals(3, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertThat(uniqueIds).contains(uniqueIdForClass(MyTestClass.class));
 		assertThat(uniqueIds).contains(uniqueIdForMethod(MyTestClass.class, "test1()"));
@@ -491,7 +492,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(6, engineDescriptor.getDescendants().size());
+		assertEquals(6, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertThat(uniqueIds).contains(uniqueIdForClass(Class1WithTestCases.class));
 		assertThat(uniqueIds).contains(uniqueIdForMethod(Class1WithTestCases.class, "test1()"));
@@ -506,7 +507,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 		resolve(request().selectors(selectPackage("")));
 
 		// 150 is completely arbitrary. The actual number is likely much higher.
-		assertThat(engineDescriptor.getDescendants())//
+		assertThat(requireNonNull(engineDescriptor).getDescendants())//
 				.describedAs("Too few test descriptors in classpath")//
 				.hasSizeGreaterThan(150);
 
@@ -522,7 +523,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 	@Test
 	void classpathResolution() throws Exception {
-		Path classpath = Paths.get(
+		Path classpath = Path.of(
 			DiscoverySelectorResolverTests.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 
 		List<ClasspathRootSelector> selectors = selectClasspathRoots(singleton(classpath));
@@ -530,14 +531,14 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 		resolve(request().selectors(selectors));
 
 		// 150 is completely arbitrary. The actual number is likely much higher.
-		assertThat(engineDescriptor.getDescendants())//
+		assertThat(requireNonNull(engineDescriptor).getDescendants())//
 				.describedAs("Too few test descriptors in classpath")//
 				.hasSizeGreaterThan(150);
 
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertThat(uniqueIds)//
 				.describedAs("Failed to pick up DefaultPackageTestCase via classpath scanning")//
-				.contains(uniqueIdForClass(ReflectionSupport.tryToLoadClass("DefaultPackageTestCase").get()));
+				.contains(uniqueIdForClass(ReflectionSupport.tryToLoadClass("DefaultPackageTestCase").getNonNull()));
 		assertThat(uniqueIds).contains(uniqueIdForClass(Class1WithTestCases.class));
 		assertThat(uniqueIds).contains(uniqueIdForMethod(Class1WithTestCases.class, "test1()"));
 		assertThat(uniqueIds).contains(uniqueIdForClass(Class2WithTestCases.class));
@@ -549,7 +550,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 	@Test
 	void classpathResolutionForJarFiles() throws Exception {
 		URL jarUrl = requireNonNull(getClass().getResource("/jupiter-testjar.jar"));
-		Path path = Paths.get(jarUrl.toURI());
+		Path path = Path.of(jarUrl.toURI());
 		List<ClasspathRootSelector> selectors = selectClasspathRoots(singleton(path));
 
 		ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
@@ -642,7 +643,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selector));
 
-		assertEquals(4, engineDescriptor.getDescendants().size());
+		assertEquals(4, requireNonNull(engineDescriptor).getDescendants().size());
 		List<UniqueId> uniqueIds = uniqueIds();
 		assertThat(uniqueIds).contains(uniqueIdForClass(TestCaseWithNesting.class));
 		assertThat(uniqueIds).contains(uniqueIdForClass(TestCaseWithNesting.NestedTestCase.class));
@@ -672,7 +673,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selectUniqueId(factoryUid)));
 
-		assertThat(engineDescriptor.getDescendants()).hasSize(2);
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).hasSize(2);
 		assertThat(uniqueIds()).containsSequence(uniqueIdForClass(clazz), factoryUid);
 	}
 
@@ -683,7 +684,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selectUniqueId(templateUid)));
 
-		assertThat(engineDescriptor.getDescendants()).hasSize(2);
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).hasSize(2);
 		assertThat(uniqueIds()).containsSequence(uniqueIdForClass(clazz), templateUid);
 	}
 
@@ -696,9 +697,9 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selectUniqueId(dynamicTestUid)));
 
-		assertThat(engineDescriptor.getDescendants()).hasSize(2);
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).hasSize(2);
 		assertThat(uniqueIds()).containsSequence(uniqueIdForClass(clazz), factoryUid);
-		TestDescriptor testClassDescriptor = getOnlyElement(engineDescriptor.getChildren());
+		TestDescriptor testClassDescriptor = getOnlyElement(requireNonNull(engineDescriptor).getChildren());
 
 		TestDescriptor testFactoryDescriptor = getOnlyElement(testClassDescriptor.getChildren());
 		DynamicDescendantFilter dynamicDescendantFilter = getDynamicDescendantFilter(testFactoryDescriptor);
@@ -719,9 +720,9 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selectUniqueId(dynamicTestUid)));
 
-		assertThat(engineDescriptor.getDescendants()).hasSize(2);
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).hasSize(2);
 		assertThat(uniqueIds()).containsSequence(uniqueIdForClass(clazz), factoryUid);
-		TestDescriptor testClassDescriptor = getOnlyElement(engineDescriptor.getChildren());
+		TestDescriptor testClassDescriptor = getOnlyElement(requireNonNull(engineDescriptor).getChildren());
 
 		TestDescriptor testFactoryDescriptor = getOnlyElement(testClassDescriptor.getChildren());
 		DynamicDescendantFilter dynamicDescendantFilter = getDynamicDescendantFilter(testFactoryDescriptor);
@@ -740,9 +741,9 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selectUniqueId(dynamicTestUid), selectMethod(clazz, "dynamicTest")));
 
-		assertThat(engineDescriptor.getDescendants()).hasSize(2);
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).hasSize(2);
 		assertThat(uniqueIds()).containsSequence(uniqueIdForClass(clazz), factoryUid);
-		TestDescriptor testClassDescriptor = getOnlyElement(engineDescriptor.getChildren());
+		TestDescriptor testClassDescriptor = getOnlyElement(requireNonNull(engineDescriptor).getChildren());
 		TestDescriptor testFactoryDescriptor = getOnlyElement(testClassDescriptor.getChildren());
 		DynamicDescendantFilter dynamicDescendantFilter = getDynamicDescendantFilter(testFactoryDescriptor);
 		assertThat(dynamicDescendantFilter.test(UniqueId.root("foo", "bar"), 42)).isTrue();
@@ -761,7 +762,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 
 		resolve(request().selectors(selectUniqueId(invocationUid)));
 
-		assertThat(engineDescriptor.getDescendants()).hasSize(2);
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).hasSize(2);
 		assertThat(uniqueIds()).containsSequence(uniqueIdForClass(clazz), templateUid);
 	}
 
@@ -770,7 +771,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 		resolve(request().selectors(selectClass(MatchingClass.class)).filters(
 			includePackageNames("org.junit.jupiter.engine.unknown")));
 
-		assertThat(engineDescriptor.getDescendants()).isEmpty();
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).isEmpty();
 	}
 
 	@Test
@@ -778,7 +779,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 		resolve(request().selectors(selectClass(MatchingClass.class)).filters(
 			includePackageNames("org.junit.jupiter.engine")));
 
-		assertThat(engineDescriptor.getDescendants()).hasSize(3);
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).hasSize(3);
 	}
 
 	@Test
@@ -786,7 +787,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 		resolve(request().selectors(selectClass(MatchingClass.class)).filters(
 			excludePackageNames("org.junit.jupiter.engine")));
 
-		assertThat(engineDescriptor.getDescendants()).isEmpty();
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).isEmpty();
 	}
 
 	@Test
@@ -794,7 +795,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 		resolve(request().selectors(selectClass(MatchingClass.class)).filters(
 			excludePackageNames("org.junit.jupiter.engine.unknown")));
 
-		assertThat(engineDescriptor.getDescendants()).hasSize(3);
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).hasSize(3);
 	}
 
 	@Test
@@ -802,7 +803,7 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 		resolve(request().selectors(selectClass(MatchingClass.class), selectClass(OtherClass.class)).filters(
 			includeClassNamePatterns(".*MatchingClass")));
 
-		assertThat(engineDescriptor.getDescendants()).hasSize(3);
+		assertThat(requireNonNull(engineDescriptor).getDescendants()).hasSize(3);
 	}
 
 	private void resolve(LauncherDiscoveryRequestBuilder builder) {
@@ -810,16 +811,16 @@ class DiscoverySelectorResolverTests extends AbstractJupiterTestEngineTests {
 	}
 
 	private TestDescriptor descriptorByUniqueId(UniqueId uniqueId) {
-		return engineDescriptor.getDescendants().stream().filter(
+		return requireNonNull(engineDescriptor).getDescendants().stream().filter(
 			d -> d.getUniqueId().equals(uniqueId)).findFirst().orElseThrow();
 	}
 
 	private List<UniqueId> uniqueIds() {
-		return engineDescriptor.getDescendants().stream().map(TestDescriptor::getUniqueId).toList();
+		return requireNonNull(engineDescriptor).getDescendants().stream().map(TestDescriptor::getUniqueId).toList();
 	}
 
 	private LauncherDiscoveryRequestBuilder request() {
-		return LauncherDiscoveryRequestBuilder.request() //
+		return defaultRequest() //
 				.configurationParameter(DEFAULT_DISCOVERY_LISTENER_CONFIGURATION_PROPERTY_NAME, "logging") //
 				.listeners(discoveryListener);
 	}

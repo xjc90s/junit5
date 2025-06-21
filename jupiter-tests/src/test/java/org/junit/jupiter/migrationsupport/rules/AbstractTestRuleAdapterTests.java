@@ -26,6 +26,7 @@ import org.junit.rules.Verifier;
 /**
  * @since 5.0
  */
+@SuppressWarnings("removal")
 public class AbstractTestRuleAdapterTests {
 
 	@Test
@@ -65,13 +66,7 @@ public class AbstractTestRuleAdapterTests {
 		}
 	}
 
-	private static class SimpleRuleAnnotatedMember implements TestRuleAnnotatedMember {
-
-		private final TestRule testRule;
-
-		SimpleRuleAnnotatedMember(TestRule testRule) {
-			this.testRule = testRule;
-		}
+	private record SimpleRuleAnnotatedMember(TestRule testRule) implements TestRuleAnnotatedMember {
 
 		@Override
 		public TestRule getTestRule() {

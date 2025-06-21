@@ -42,6 +42,8 @@ import junit.runner.Version;
 import org.assertj.core.api.Condition;
 import org.junit.AssumptionViolatedException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIf;
+import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.engine.EngineExecutionListener;
 import org.junit.platform.engine.ExecutionRequest;
 import org.junit.platform.engine.TestDescriptor;
@@ -98,7 +100,6 @@ import org.junit.vintage.engine.samples.junit4.PlainJUnit4TestCaseWithLifecycleM
 import org.junit.vintage.engine.samples.junit4.PlainJUnit4TestCaseWithSingleTestWhichFails;
 import org.junit.vintage.engine.samples.junit4.PlainJUnit4TestCaseWithSingleTestWhichIsIgnored;
 import org.junit.vintage.engine.samples.junit4.PlainJUnit4TestCaseWithTwoTestMethods;
-import org.junit.vintage.engine.samples.spock.SpockTestCaseWithUnrolledAndRegularFeatureMethods;
 import org.opentest4j.MultipleFailuresError;
 
 /**
@@ -786,8 +787,10 @@ class VintageTestEngineExecutionTests {
 	@Test
 	void executesCompletelyDynamicTestCaseDiscoveredByUniqueId() {
 		Class<?> testClass = CompletelyDynamicTestCase.class;
-		var request = LauncherDiscoveryRequestBuilder.request().selectors(
-			selectUniqueId(VintageUniqueIdBuilder.uniqueIdForClass(testClass))).build();
+		var request = LauncherDiscoveryRequestBuilder.request() //
+				.selectors(selectUniqueId(VintageUniqueIdBuilder.uniqueIdForClass(testClass))) //
+				.enableImplicitConfigurationParameters(false) //
+				.build();
 
 		execute(request).allEvents().assertEventsMatchExactly( //
 			event(engine(), started()), //
@@ -862,13 +865,18 @@ class VintageTestEngineExecutionTests {
 	}
 
 	@Test
+	@DisabledIf("runningInEclipse")
 	void executesUnrolledSpockFeatureMethod() {
-		Class<?> testClass = SpockTestCaseWithUnrolledAndRegularFeatureMethods.class;
-		var request = LauncherDiscoveryRequestBuilder.request().selectors(
-			selectMethod(testClass, "unrolled feature for #input")).build();
+		// Load Groovy class via reflection to avoid compilation errors in Eclipse IDE.
+		String testClassName = "org.junit.vintage.engine.samples.spock.SpockTestCaseWithUnrolledAndRegularFeatureMethods";
+		Class<?> testClass = ReflectionUtils.loadRequiredClass(testClassName, getClass().getClassLoader());
+		var request = LauncherDiscoveryRequestBuilder.request() //
+				.selectors(selectMethod(testClass, "unrolled feature for #input"))//
+				.enableImplicitConfigurationParameters(false) //
+				.build();
 		execute(request).allEvents().assertEventsMatchExactly( //
 			event(engine(), started()), //
-			event(uniqueIdSubstring(testClass.getName()), started()), //
+			event(uniqueIdSubstring(testClassName), started()), //
 			event(dynamicTestRegistered("unrolled feature for 23")), //
 			event(test("unrolled feature for 23"), started()), //
 			event(test("unrolled feature for 23"), finishedWithFailure()), //
@@ -880,9 +888,15 @@ class VintageTestEngineExecutionTests {
 	}
 
 	@Test
+	@DisabledIf("runningInEclipse")
 	void executesRegularSpockFeatureMethod() {
-		Class<?> testClass = SpockTestCaseWithUnrolledAndRegularFeatureMethods.class;
-		var request = LauncherDiscoveryRequestBuilder.request().selectors(selectMethod(testClass, "regular")).build();
+		// Load Groovy class via reflection to avoid compilation errors in Eclipse IDE.
+		String testClassName = "org.junit.vintage.engine.samples.spock.SpockTestCaseWithUnrolledAndRegularFeatureMethods";
+		Class<?> testClass = ReflectionUtils.loadRequiredClass(testClassName, getClass().getClassLoader());
+		var request = LauncherDiscoveryRequestBuilder.request() //
+				.selectors(selectMethod(testClass, "regular")) //
+				.enableImplicitConfigurationParameters(false) //
+				.build();
 		execute(request).allEvents().assertEventsMatchExactly( //
 			event(engine(), started()), //
 			event(container(testClass), started()), //
@@ -917,10 +931,12 @@ class VintageTestEngineExecutionTests {
 		return execute(request(testClass));
 	}
 
+	@SuppressWarnings("deprecation")
 	private static EngineExecutionResults execute(LauncherDiscoveryRequest request) {
 		return EngineTestKit.execute(new VintageTestEngine(), request);
 	}
 
+	@SuppressWarnings("deprecation")
 	private static void execute(Class<?> testClass, EngineExecutionListener listener) {
 		TestEngine testEngine = new VintageTestEngine();
 		var discoveryRequest = request(testClass);
@@ -931,11 +947,22 @@ class VintageTestEngineExecutionTests {
 	}
 
 	private static LauncherDiscoveryRequest request(Class<?> testClass) {
-		return LauncherDiscoveryRequestBuilder.request().selectors(selectClass(testClass)).build();
+		return LauncherDiscoveryRequestBuilder.request() //
+				.selectors(selectClass(testClass)) //
+				.enableImplicitConfigurationParameters(false) //
+				.build();
 	}
 
 	private static boolean atLeastJUnit4_13() {
 		return JUnit4VersionCheck.parseVersion(Version.id()).compareTo(new BigDecimal("4.13")) >= 0;
+	}
+
+	/**
+	 * Determine if the current code is running in the Eclipse IDE.
+	 */
+	static boolean runningInEclipse() {
+		return StackWalker.getInstance().walk(
+			stream -> stream.anyMatch(stackFrame -> stackFrame.getClassName().startsWith("org.eclipse.jdt")));
 	}
 
 }

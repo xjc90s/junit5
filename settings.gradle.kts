@@ -57,7 +57,7 @@ buildCache {
 	if (useDevelocityInstance) {
 		remote(develocity.buildCache) {
 			server = buildCacheServer.orNull
-			val authenticated = System.getenv("DEVELOCITY_ACCESS_KEY") != null
+			val authenticated = !System.getenv("DEVELOCITY_ACCESS_KEY").isNullOrEmpty()
 			isPush = buildParameters.ci && authenticated
 		}
 	} else {
@@ -84,7 +84,6 @@ include("junit-platform-engine")
 include("junit-platform-jfr")
 include("junit-platform-launcher")
 include("junit-platform-reporting")
-include("junit-platform-runner")
 include("junit-platform-suite")
 include("junit-platform-suite-api")
 include("junit-platform-suite-commons")

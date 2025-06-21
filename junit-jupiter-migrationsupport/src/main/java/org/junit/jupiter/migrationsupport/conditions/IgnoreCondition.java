@@ -10,12 +10,13 @@
 
 package org.junit.jupiter.migrationsupport.conditions;
 
-import static org.apiguardian.api.API.Status.STABLE;
+import static org.apiguardian.api.API.Status.DEPRECATED;
 import static org.junit.platform.commons.support.AnnotationSupport.findAnnotation;
 
 import java.lang.reflect.AnnotatedElement;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.Ignore;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
@@ -31,8 +32,10 @@ import org.junit.platform.commons.util.StringUtils;
  * @see org.junit.jupiter.api.Disabled @Disabled
  * @see #evaluateExecutionCondition(ExtensionContext)
  * @see org.junit.jupiter.migrationsupport.EnableJUnit4MigrationSupport
+ * @deprecated Please use {@link org.junit.jupiter.api.Disabled @Disabled} instead.
  */
-@API(status = STABLE, since = "5.7")
+@API(status = DEPRECATED, since = "6.0")
+@Deprecated(since = "6.0", forRemoval = true)
 public class IgnoreCondition implements ExecutionCondition {
 
 	private static final ConditionEvaluationResult ENABLED = //
@@ -53,7 +56,7 @@ public class IgnoreCondition implements ExecutionCondition {
 				.orElse(ENABLED);
 	}
 
-	private ConditionEvaluationResult toResult(AnnotatedElement element, Ignore annotation) {
+	private ConditionEvaluationResult toResult(@Nullable AnnotatedElement element, Ignore annotation) {
 		String value = annotation.value();
 		String reason = StringUtils.isNotBlank(value) ? value : element + " is disabled via @org.junit.Ignore";
 		return ConditionEvaluationResult.disabled(reason);

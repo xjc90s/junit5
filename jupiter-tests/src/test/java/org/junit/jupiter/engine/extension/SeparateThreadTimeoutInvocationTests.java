@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.condition.OS.WINDOWS;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout.ThreadMode;
@@ -43,7 +44,7 @@ class SeparateThreadTimeoutInvocationTests {
 		var invocation = aSeparateThreadInvocation(() -> {
 			threadName.set(Thread.currentThread().getName());
 			Thread.sleep(PREEMPTIVE_TIMEOUT_MILLIS * 2);
-			return null;
+			return "ignored";
 		});
 
 		assertThatThrownBy(invocation::proceed) //
@@ -70,7 +71,8 @@ class SeparateThreadTimeoutInvocationTests {
 				.hasMessage("hi!");
 	}
 
-	private static <T> SeparateThreadTimeoutInvocation<T> aSeparateThreadInvocation(Invocation<T> invocation) {
+	private static <T extends @Nullable Object> SeparateThreadTimeoutInvocation<T> aSeparateThreadInvocation(
+			Invocation<T> invocation) {
 		var namespace = ExtensionContext.Namespace.create(SeparateThreadTimeoutInvocationTests.class);
 		var store = new NamespaceAwareStore(new NamespacedHierarchicalStore<>(null),
 			Namespace.create(namespace.getParts()));
