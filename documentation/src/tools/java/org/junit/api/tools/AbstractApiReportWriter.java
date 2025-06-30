@@ -16,6 +16,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -39,7 +40,7 @@ abstract class AbstractApiReportWriter implements ApiReportWriter {
 		out.println(h1("@API Declarations"));
 		out.println();
 		out.println(paragraph(
-			format("Discovered %d types with %s declarations.", this.apiReport.types().size(), code("@API"))));
+			"Discovered %d types with %s declarations.".formatted(this.apiReport.types().size(), code("@API"))));
 		out.println();
 	}
 
@@ -52,22 +53,27 @@ abstract class AbstractApiReportWriter implements ApiReportWriter {
 	protected void printDeclarationSection(Set<Status> statuses, Status status, List<Declaration> declarations,
 			PrintWriter out) {
 		printDeclarationSectionHeader(statuses, status, declarations, out);
-		declarations.stream() //
-				.collect(groupingBy(Declaration::moduleName, TreeMap::new, toList())) //
-				.forEach((moduleName, moduleDeclarations) -> {
-					out.println(h4("Module " + moduleName));
-					out.println();
-					moduleDeclarations.stream() //
-							.collect(groupingBy(Declaration::packageName, TreeMap::new, toList())) //
-							.forEach((packageName, packageDeclarations) -> {
-								out.println(h5("Package " + packageName));
-								out.println();
-								printDeclarationTableHeader(out);
-								packageDeclarations.forEach(it -> printDeclarationTableRow(it, out));
-								printDeclarationTableFooter(out);
-								out.println();
-							});
-				});
+		Map<String, List<Declaration>> declarationsByModule = declarations.stream() //
+				.collect(groupingBy(Declaration::moduleName, TreeMap::new, toList()));
+		if (declarationsByModule.isEmpty()) {
+			out.println(paragraph("NOTE: There are currently no APIs annotated with %s.".formatted(
+				code("@API(status = %s)".formatted(status.name())))));
+			return;
+		}
+		declarationsByModule.forEach((moduleName, moduleDeclarations) -> {
+			out.println(h4("Module " + moduleName));
+			out.println();
+			moduleDeclarations.stream() //
+					.collect(groupingBy(Declaration::packageName, TreeMap::new, toList())) //
+					.forEach((packageName, packageDeclarations) -> {
+						out.println(h5("Package " + packageName));
+						out.println();
+						printDeclarationTableHeader(out);
+						packageDeclarations.forEach(it -> printDeclarationTableRow(it, out));
+						printDeclarationTableFooter(out);
+						out.println();
+					});
+		});
 	}
 
 	protected void printDeclarationSectionHeader(Set<Status> statuses, Status status, List<Declaration> declarations,
@@ -76,7 +82,7 @@ abstract class AbstractApiReportWriter implements ApiReportWriter {
 			// omit section header when only a single status is printed
 			return;
 		}
-		out.println(h2(format("@API(%s)", status)));
+		out.println(h2("@API(%s)".formatted(status)));
 		out.println();
 		out.println(
 			paragraph(format("Discovered %d " + code("@API(%s)") + " declarations.", declarations.size(), status)));

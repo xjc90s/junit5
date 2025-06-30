@@ -39,13 +39,10 @@ class HelperTests {
 			"junit-platform-commons", //
 			"junit-platform-console", //
 			"junit-platform-engine", //
-			"junit-platform-jfr", //
 			"junit-platform-launcher", //
 			"junit-platform-reporting", //
-			"junit-platform-runner", //
 			"junit-platform-suite", //
 			"junit-platform-suite-api", //
-			"junit-platform-suite-commons", //
 			"junit-platform-suite-engine", //
 			"junit-platform-testkit", //
 			"junit-vintage-engine"//
@@ -54,9 +51,7 @@ class HelperTests {
 
 	@Test
 	void version() {
-		assertNotNull(Helper.version("junit-jupiter"));
-		assertNotNull(Helper.version("junit-vintage"));
-		assertNotNull(Helper.version("junit-platform"));
+		assertNotNull(Helper.version());
 	}
 
 	@Test
@@ -65,7 +60,7 @@ class HelperTests {
 	}
 
 	@ParameterizedTest
-	@ValueSource(ints = 8)
+	@ValueSource(ints = 17)
 	void checkJavaHome(int version) {
 		var home = Helper.getJavaHome(version);
 		assumeTrue(home.isPresent(), "No 'jdk' element found in Maven toolchain for: " + version);

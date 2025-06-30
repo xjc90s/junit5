@@ -12,7 +12,6 @@ package org.junit.jupiter.engine.discovery.predicates;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -24,7 +23,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.TestTemplate;
-import org.junit.platform.commons.JUnitException;
 import org.junit.platform.engine.DiscoveryIssue;
 import org.junit.platform.engine.DiscoveryIssue.Severity;
 import org.junit.platform.engine.support.descriptor.ClassSource;
@@ -214,11 +212,11 @@ public class TestClassPredicatesTests {
 		}
 
 		/*
-		 * see https://github.com/junit-team/junit5/issues/2249
+		 * see https://github.com/junit-team/junit-framework/issues/2249
 		 */
 		@Test
 		void recursiveHierarchies() {
-			assertThrows(JUnitException.class, () -> predicates.looksLikeIntendedTestClass(TestCases.OuterClass.class));
+			assertTrue(predicates.looksLikeIntendedTestClass(TestCases.OuterClass.class));
 			assertTrue(predicates.isValidStandaloneTestClass(TestCases.OuterClass.class));
 			assertThat(discoveryIssues).isEmpty();
 
@@ -404,6 +402,7 @@ public class TestClassPredicatesTests {
 			@SuppressWarnings("InnerClassMayBeStatic")
 			class RecursiveInnerClass extends OuterClass {
 			}
+
 		}
 
 		private static class NestedClassesTestCase {

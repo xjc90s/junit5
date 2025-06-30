@@ -19,13 +19,17 @@ import static org.junit.platform.commons.util.ReflectionUtils.isInnerClass;
 import static org.junit.platform.commons.util.ReflectionUtils.isMethodPresent;
 import static org.junit.platform.commons.util.ReflectionUtils.isNestedClassPresent;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import org.apiguardian.api.API;
 import org.junit.jupiter.api.ClassTemplate;
 import org.junit.jupiter.api.Nested;
 import org.junit.platform.commons.util.ReflectionUtils;
+import org.junit.platform.commons.util.ReflectionUtils.CycleErrorHandling;
 import org.junit.platform.engine.DiscoveryIssue;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.discovery.DiscoveryIssueReporter;
@@ -39,8 +43,9 @@ import org.junit.platform.engine.support.discovery.DiscoveryIssueReporter.Condit
 @API(status = INTERNAL, since = "5.13")
 public class TestClassPredicates {
 
-	public final Predicate<Class<?>> isAnnotatedWithNested = testClass -> isAnnotated(testClass, Nested.class);
-	public final Predicate<Class<?>> isAnnotatedWithClassTemplate = testClass -> isAnnotated(testClass,
+	public final Predicate<Class<?>> isAnnotatedWithNested = candidate -> isAnnotatedButNotComposed(candidate,
+		Nested.class);
+	public final Predicate<Class<?>> isAnnotatedWithClassTemplate = candidate -> isAnnotatedButNotComposed(candidate,
 		ClassTemplate.class);
 
 	public final Predicate<Class<?>> isAnnotatedWithNestedAndValid = candidate -> this.isAnnotatedWithNested.test(
@@ -60,14 +65,21 @@ public class TestClassPredicates {
 				.and(isInner(issueReporter));
 		this.isValidStandaloneTestClass = isNotPrivateUnlessAbstract("Test", issueReporter) //
 				.and(isNotLocal(issueReporter)) //
-				.and(isNotInner(issueReporter)) // or should be annotated with @Nested!
+				.and(isNotInnerUnlessAbstract(issueReporter)) //
 				.and(isNotAnonymous(issueReporter));
 	}
 
 	public boolean looksLikeIntendedTestClass(Class<?> candidate) {
-		return this.isAnnotatedWithClassTemplate.test(candidate) //
-				|| hasTestOrTestFactoryOrTestTemplateMethods(candidate) //
-				|| hasNestedTests(candidate);
+		return looksLikeIntendedTestClass(candidate, new HashSet<>());
+	}
+
+	private boolean looksLikeIntendedTestClass(Class<?> candidate, Set<Class<?>> seen) {
+		if (seen.add(candidate)) {
+			return this.isAnnotatedWithClassTemplate.test(candidate) //
+					|| hasTestOrTestFactoryOrTestTemplateMethods(candidate) //
+					|| hasNestedTests(candidate, seen);
+		}
+		return false;
 	}
 
 	public boolean isValidNestedTestClass(Class<?> candidate) {
@@ -84,15 +96,17 @@ public class TestClassPredicates {
 		return isMethodPresent(candidate, this.isTestOrTestFactoryOrTestTemplateMethod);
 	}
 
-	private boolean hasNestedTests(Class<?> candidate) {
+	private boolean hasNestedTests(Class<?> candidate, Set<Class<?>> seen) {
+		var hasAnnotatedClass = isNestedClassPresent(candidate, this.isAnnotatedWithNested,
+			CycleErrorHandling.THROW_EXCEPTION);
+		if (hasAnnotatedClass) {
+			return true;
+		}
 		return isNestedClassPresent( //
 			candidate, //
-			isNotSame(candidate).and(
-				this.isAnnotatedWithNested.or(it -> isInnerClass(it) && looksLikeIntendedTestClass(it))));
-	}
-
-	private static Predicate<Class<?>> isNotSame(Class<?> candidate) {
-		return clazz -> candidate != clazz;
+			it -> isInnerClass(it) && looksLikeIntendedTestClass(it, seen), //
+			CycleErrorHandling.ABORT_VISIT //
+		);
 	}
 
 	private static Condition<Class<?>> isNotPrivateUnlessAbstract(String prefix, DiscoveryIssueReporter issueReporter) {
@@ -115,8 +129,8 @@ public class TestClassPredicates {
 		});
 	}
 
-	private static Condition<Class<?>> isNotInner(DiscoveryIssueReporter issueReporter) {
-		return issueReporter.createReportingCondition(testClass -> !isInnerClass(testClass),
+	private static Condition<Class<?>> isNotInnerUnlessAbstract(DiscoveryIssueReporter issueReporter) {
+		return issueReporter.createReportingCondition(testClass -> !isInnerClass(testClass) || isAbstract(testClass),
 			testClass -> createIssue("Test", testClass, "must not be an inner class unless annotated with @Nested"));
 	}
 
@@ -126,10 +140,14 @@ public class TestClassPredicates {
 	}
 
 	private static DiscoveryIssue createIssue(String prefix, Class<?> testClass, String detailMessage) {
-		String message = String.format("%s class '%s' %s. It will not be executed.", prefix, testClass.getName(),
+		String message = "%s class '%s' %s. It will not be executed.".formatted(prefix, testClass.getName(),
 			detailMessage);
 		return DiscoveryIssue.builder(DiscoveryIssue.Severity.WARNING, message) //
 				.source(ClassSource.from(testClass)) //
 				.build();
+	}
+
+	private static boolean isAnnotatedButNotComposed(Class<?> candidate, Class<? extends Annotation> annotationType) {
+		return !candidate.isAnnotation() && isAnnotated(candidate, annotationType);
 	}
 }

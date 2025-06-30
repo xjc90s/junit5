@@ -10,7 +10,7 @@
 
 package org.junit.jupiter.api.condition;
 
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
+import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.apiguardian.api.API.Status.STABLE;
 
 import java.lang.annotation.Documented;
@@ -96,7 +96,7 @@ public @interface EnabledForJreRange {
 	 * {@link #minVersion() minVersion} instead.
 	 *
 	 * <p>Defaults to {@link JRE#UNDEFINED UNDEFINED}, which will be interpreted
-	 * as {@link JRE#JAVA_8 JAVA_8} if the {@link #minVersion() minVersion} is
+	 * as {@link JRE#JAVA_17 JAVA_17} if the {@link #minVersion() minVersion} is
 	 * not set.
 	 *
 	 * @see JRE
@@ -138,7 +138,7 @@ public @interface EnabledForJreRange {
 	 * @see JRE#version()
 	 * @see Runtime.Version#feature()
 	 */
-	@API(status = EXPERIMENTAL, since = "5.12")
+	@API(status = MAINTAINED, since = "5.13.3")
 	int minVersion() default -1;
 
 	/**
@@ -157,7 +157,7 @@ public @interface EnabledForJreRange {
 	 * @see JRE#version()
 	 * @see Runtime.Version#feature()
 	 */
-	@API(status = EXPERIMENTAL, since = "5.12")
+	@API(status = MAINTAINED, since = "5.13.3")
 	int maxVersion() default -1;
 
 	/**

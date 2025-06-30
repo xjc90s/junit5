@@ -13,9 +13,11 @@ package org.junit.platform.engine;
 import static org.apiguardian.api.API.Status.DEPRECATED;
 import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.INTERNAL;
+import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.apiguardian.api.API.Status.STABLE;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.PreconditionViolationException;
 import org.junit.platform.commons.util.Preconditions;
 import org.junit.platform.engine.reporting.OutputDirectoryProvider;
@@ -41,8 +43,10 @@ public class ExecutionRequest {
 	private final TestDescriptor rootTestDescriptor;
 	private final EngineExecutionListener engineExecutionListener;
 	private final ConfigurationParameters configurationParameters;
-	private final OutputDirectoryProvider outputDirectoryProvider;
-	private final NamespacedHierarchicalStore<Namespace> requestLevelStore;
+
+	private final @Nullable OutputDirectoryProvider outputDirectoryProvider;
+
+	private final @Nullable NamespacedHierarchicalStore<Namespace> requestLevelStore;
 
 	@Deprecated
 	@API(status = DEPRECATED, since = "1.11")
@@ -52,8 +56,8 @@ public class ExecutionRequest {
 	}
 
 	private ExecutionRequest(TestDescriptor rootTestDescriptor, EngineExecutionListener engineExecutionListener,
-			ConfigurationParameters configurationParameters, OutputDirectoryProvider outputDirectoryProvider,
-			NamespacedHierarchicalStore<Namespace> requestLevelStore) {
+			ConfigurationParameters configurationParameters, @Nullable OutputDirectoryProvider outputDirectoryProvider,
+			@Nullable NamespacedHierarchicalStore<Namespace> requestLevelStore) {
 		this.rootTestDescriptor = Preconditions.notNull(rootTestDescriptor, "rootTestDescriptor must not be null");
 		this.engineExecutionListener = Preconditions.notNull(engineExecutionListener,
 			"engineExecutionListener must not be null");
@@ -144,7 +148,7 @@ public class ExecutionRequest {
 	 * is not available
 	 * @since 1.12
 	 */
-	@API(status = EXPERIMENTAL, since = "1.12")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public OutputDirectoryProvider getOutputDirectoryProvider() {
 		return Preconditions.notNull(this.outputDirectoryProvider,
 			"No OutputDirectoryProvider was configured for this request");
@@ -161,7 +165,7 @@ public class ExecutionRequest {
 	 * @since 1.13
 	 * @see NamespacedHierarchicalStore
 	 */
-	@API(status = EXPERIMENTAL, since = "1.13")
+	@API(status = EXPERIMENTAL, since = "6.0")
 	public NamespacedHierarchicalStore<Namespace> getStore() {
 		return Preconditions.notNull(this.requestLevelStore,
 			"No NamespacedHierarchicalStore was configured for this request");

@@ -10,6 +10,7 @@
 
 package org.junit.platform.engine.support.store;
 
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -189,6 +190,7 @@ public class NamespacedHierarchicalStoreTests {
 			assertEquals(value, requiredTypeValue);
 		}
 
+		@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 		@Test
 		void getWithTypeSafetyAndPrimitiveValueType() {
 			String key = "enigma";
@@ -239,6 +241,7 @@ public class NamespacedHierarchicalStoreTests {
 			assertEquals(value, computedValue);
 		}
 
+		@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 		@Test
 		void getOrComputeIfAbsentWithTypeSafetyAndPrimitiveValueType() {
 			String key = "enigma";
@@ -285,6 +288,7 @@ public class NamespacedHierarchicalStoreTests {
 			assertNull(store.get(namespace, key));
 		}
 
+		@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 		@Test
 		void removeWithTypeSafetyAndPrimitiveValueType() {
 			String key = "enigma";
@@ -320,7 +324,8 @@ public class NamespacedHierarchicalStoreTests {
 
 			try (var localStore = new NamespacedHierarchicalStore<>(null)) {
 				values = executeConcurrently(threads, //
-					() -> localStore.getOrComputeIfAbsent(namespace, key, it -> counter.incrementAndGet()));
+					() -> requireNonNull(
+						localStore.getOrComputeIfAbsent(namespace, key, it -> counter.incrementAndGet())));
 			}
 
 			assertEquals(1, counter.get());
@@ -520,7 +525,7 @@ public class NamespacedHierarchicalStoreTests {
 		}
 
 		/**
-		 * @see <a href="https://github.com/junit-team/junit5/issues/3944">#3944</a>
+		 * @see <a href="https://github.com/junit-team/junit-framework/issues/3944">#3944</a>
 		 */
 		@Test
 		void acceptsQueryAfterClose() {

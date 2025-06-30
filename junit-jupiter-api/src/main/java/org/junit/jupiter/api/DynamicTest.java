@@ -12,7 +12,6 @@ package org.junit.jupiter.api;
 
 import static java.util.Spliterator.ORDERED;
 import static java.util.Spliterators.spliteratorUnknownSize;
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.MAINTAINED;
 
 import java.net.URI;
@@ -22,6 +21,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.api.function.ThrowingConsumer;
 import org.junit.platform.commons.util.Preconditions;
@@ -78,7 +78,7 @@ public class DynamicTest extends DynamicNode {
 	 * @since 5.3
 	 * @see #stream(Iterator, Function, ThrowingConsumer)
 	 */
-	public static DynamicTest dynamicTest(String displayName, URI testSourceUri, Executable executable) {
+	public static DynamicTest dynamicTest(String displayName, @Nullable URI testSourceUri, Executable executable) {
 		return new DynamicTest(displayName, testSourceUri, executable);
 	}
 
@@ -249,7 +249,7 @@ public class DynamicTest extends DynamicNode {
 	 * @see #stream(Stream)
 	 * @see NamedExecutable
 	 */
-	@API(status = EXPERIMENTAL, since = "5.11")
+	@API(status = MAINTAINED, since = "5.13.3")
 	public static <T extends Named<E>, E extends Executable> Stream<DynamicTest> stream(
 			Iterator<? extends T> iterator) {
 		Preconditions.notNull(iterator, "iterator must not be null");
@@ -279,7 +279,7 @@ public class DynamicTest extends DynamicNode {
 	 * @see #stream(Iterator)
 	 * @see NamedExecutable
 	 */
-	@API(status = EXPERIMENTAL, since = "5.11")
+	@API(status = MAINTAINED, since = "5.13.3")
 	public static <T extends Named<E>, E extends Executable> Stream<DynamicTest> stream(
 			Stream<? extends T> inputStream) {
 		Preconditions.notNull(inputStream, "inputStream must not be null");
@@ -290,7 +290,7 @@ public class DynamicTest extends DynamicNode {
 
 	private final Executable executable;
 
-	private DynamicTest(String displayName, URI testSourceUri, Executable executable) {
+	private DynamicTest(String displayName, @Nullable URI testSourceUri, Executable executable) {
 		super(displayName, testSourceUri);
 		this.executable = Preconditions.notNull(executable, "executable must not be null");
 	}

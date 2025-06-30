@@ -10,13 +10,14 @@
 
 package org.junit.platform.engine.reporting;
 
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
+import static org.apiguardian.api.API.Status.MAINTAINED;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.util.Preconditions;
 import org.junit.platform.commons.util.ToStringBuilder;
 
@@ -27,7 +28,7 @@ import org.junit.platform.commons.util.ToStringBuilder;
  * @since 1.12
  * @see #from(Path, String)
  */
-@API(status = EXPERIMENTAL, since = "1.12")
+@API(status = MAINTAINED, since = "1.13.3")
 public final class FileEntry {
 
 	/**
@@ -38,15 +39,16 @@ public final class FileEntry {
 	 * @param mediaType the media type of the path to publish; may be
 	 * {@code null}
 	 */
-	public static FileEntry from(Path path, String mediaType) {
+	public static FileEntry from(Path path, @Nullable String mediaType) {
 		return new FileEntry(path, mediaType);
 	}
 
 	private final LocalDateTime timestamp = LocalDateTime.now();
 	private final Path path;
-	private final String mediaType;
 
-	private FileEntry(Path path, String mediaType) {
+	private final @Nullable String mediaType;
+
+	private FileEntry(Path path, @Nullable String mediaType) {
 		this.path = Preconditions.notNull(path, "path must not be null");
 		this.mediaType = mediaType;
 	}

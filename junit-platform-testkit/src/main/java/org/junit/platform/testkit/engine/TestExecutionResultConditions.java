@@ -11,8 +11,6 @@
 package org.junit.platform.testkit.engine;
 
 import static java.util.function.Predicate.isEqual;
-import static java.util.stream.Collectors.toList;
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.junit.platform.commons.util.FunctionUtils.where;
 
@@ -24,6 +22,8 @@ import java.util.function.Predicate;
 import org.apiguardian.api.API;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Condition;
+import org.jspecify.annotations.Nullable;
+import org.junit.platform.commons.util.FunctionUtils;
 import org.junit.platform.commons.util.Preconditions;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestExecutionResult.Status;
@@ -63,7 +63,7 @@ public final class TestExecutionResultConditions {
 	public static Condition<TestExecutionResult> throwable(Condition<Throwable>... conditions) {
 		List<Condition<TestExecutionResult>> list = Arrays.stream(conditions)//
 				.map(TestExecutionResultConditions::throwable)//
-				.collect(toList());
+				.toList();
 
 		return Assertions.allOf(list);
 	}
@@ -81,7 +81,7 @@ public final class TestExecutionResultConditions {
 	public static Condition<Throwable> cause(Condition<Throwable>... conditions) {
 		List<Condition<Throwable>> list = Arrays.stream(conditions)//
 				.map(TestExecutionResultConditions::cause)//
-				.collect(toList());
+				.toList();
 
 		return Assertions.allOf(list);
 	}
@@ -95,13 +95,13 @@ public final class TestExecutionResultConditions {
 	 * @see #cause(Condition...)
 	 * @see #suppressed(int, Condition...)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.11")
+	@API(status = MAINTAINED, since = "1.13.3")
 	@SafeVarargs
 	@SuppressWarnings("varargs")
 	public static Condition<Throwable> rootCause(Condition<Throwable>... conditions) {
 		List<Condition<Throwable>> list = Arrays.stream(conditions)//
 				.map(TestExecutionResultConditions::rootCause)//
-				.collect(toList());
+				.toList();
 
 		return Assertions.allOf(list);
 	}
@@ -119,7 +119,7 @@ public final class TestExecutionResultConditions {
 	public static Condition<Throwable> suppressed(int index, Condition<Throwable>... conditions) {
 		List<Condition<Throwable>> list = Arrays.stream(conditions)//
 				.map(condition -> suppressed(index, condition))//
-				.collect(toList());
+				.toList();
 
 		return Assertions.allOf(list);
 	}
@@ -139,8 +139,9 @@ public final class TestExecutionResultConditions {
 	 * to the supplied {@link String}.
 	 */
 	public static Condition<Throwable> message(String expectedMessage) {
-		return new Condition<>(where(Throwable::getMessage, isEqual(expectedMessage)), "message is '%s'",
-			expectedMessage);
+		return new Condition<>(
+			FunctionUtils.<Throwable, @Nullable String> where(Throwable::getMessage, isEqual(expectedMessage)),
+			"message is '%s'", expectedMessage);
 	}
 
 	/**
@@ -149,7 +150,9 @@ public final class TestExecutionResultConditions {
 	 * the supplied {@link Predicate}.
 	 */
 	public static Condition<Throwable> message(Predicate<String> expectedMessagePredicate) {
-		return new Condition<>(where(Throwable::getMessage, expectedMessagePredicate), "message matches predicate");
+		return new Condition<>(
+			FunctionUtils.<Throwable, @Nullable String> where(Throwable::getMessage, expectedMessagePredicate),
+			"message matches predicate");
 	}
 
 	private static Condition<TestExecutionResult> throwable(Condition<? super Throwable> condition) {

@@ -30,6 +30,8 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
@@ -304,7 +306,7 @@ class TestWatcherTests extends AbstractJupiterTestEngineTests {
 		@TestFactory
 		@Disabled
 		Stream<DynamicTest> skippedTest() {
-			return Stream.of("A", "B").map(text -> dynamicTest(text, () -> fail()));
+			return Stream.of("A", "B").map(text -> dynamicTest(text, Assertions::fail));
 		}
 
 	}
@@ -385,12 +387,12 @@ class TestWatcherTests extends AbstractJupiterTestEngineTests {
 		}
 
 		@Override
-		public void testAborted(ExtensionContext context, Throwable cause) {
+		public void testAborted(ExtensionContext context, @Nullable Throwable cause) {
 			trackResult("testAborted", context);
 		}
 
 		@Override
-		public void testFailed(ExtensionContext context, Throwable cause) {
+		public void testFailed(ExtensionContext context, @Nullable Throwable cause) {
 			trackResult("testFailed", context);
 		}
 
@@ -419,12 +421,12 @@ class TestWatcherTests extends AbstractJupiterTestEngineTests {
 		}
 
 		@Override
-		public void testAborted(ExtensionContext context, Throwable cause) {
+		public void testAborted(ExtensionContext context, @Nullable Throwable cause) {
 			throw new JUnitException("Exception in testAborted()");
 		}
 
 		@Override
-		public void testFailed(ExtensionContext context, Throwable cause) {
+		public void testFailed(ExtensionContext context, @Nullable Throwable cause) {
 			throw new JUnitException("Exception in testFailed()");
 		}
 
@@ -432,7 +434,7 @@ class TestWatcherTests extends AbstractJupiterTestEngineTests {
 
 	/**
 	 * {@link TestWatcher} that retrieves data from the {@link ExtensionContext.Store}.
-	 * @see <a href="https://github.com/junit-team/junit5/issues/3944">#3944</a>
+	 * @see <a href="https://github.com/junit-team/junit-framework/issues/3944">#3944</a>
 	 */
 	static class DataRetrievingTestWatcher implements BeforeTestExecutionCallback, TestWatcher {
 
@@ -440,7 +442,7 @@ class TestWatcherTests extends AbstractJupiterTestEngineTests {
 
 		private static final String KEY = "key";
 
-		private static final Map<String, String> results = new HashMap<>();
+		private static final Map<String, @Nullable String> results = new HashMap<>();
 
 		@Override
 		public void beforeTestExecution(ExtensionContext context) throws Exception {

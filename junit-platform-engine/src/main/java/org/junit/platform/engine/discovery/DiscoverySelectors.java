@@ -10,10 +10,8 @@
 
 package org.junit.platform.engine.discovery;
 
-import static java.util.stream.Collectors.toList;
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
+import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.apiguardian.api.API.Status.STABLE;
-import static org.junit.platform.commons.util.CollectionUtils.toUnmodifiableList;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.PreconditionViolationException;
 import org.junit.platform.commons.support.ReflectionSupport;
 import org.junit.platform.commons.support.Resource;
@@ -153,7 +152,7 @@ public final class DiscoverySelectors {
 	 * @see #selectDirectory(String)
 	 * @see #selectDirectory(File)
 	 */
-	public static FileSelector selectFile(String path, FilePosition position) {
+	public static FileSelector selectFile(String path, @Nullable FilePosition position) {
 		Preconditions.notBlank(path, "File path must not be null or blank");
 		return new FileSelector(path, position);
 	}
@@ -174,10 +173,10 @@ public final class DiscoverySelectors {
 	 * @see #selectDirectory(String)
 	 * @see #selectDirectory(File)
 	 */
-	public static FileSelector selectFile(File file, FilePosition position) {
+	public static FileSelector selectFile(File file, @Nullable FilePosition position) {
 		Preconditions.notNull(file, "File must not be null");
 		Preconditions.condition(file.isFile(),
-			() -> String.format("The supplied java.io.File [%s] must represent an existing file", file));
+			() -> "The supplied java.io.File [%s] must represent an existing file".formatted(file));
 		try {
 			return new FileSelector(file.getCanonicalPath(), position);
 		}
@@ -219,7 +218,7 @@ public final class DiscoverySelectors {
 	public static DirectorySelector selectDirectory(File directory) {
 		Preconditions.notNull(directory, "Directory must not be null");
 		Preconditions.condition(directory.isDirectory(),
-			() -> String.format("The supplied java.io.File [%s] must represent an existing directory", directory));
+			() -> "The supplied java.io.File [%s] must represent an existing directory".formatted(directory));
 		try {
 			return new DirectorySelector(directory.getCanonicalPath());
 		}
@@ -261,7 +260,7 @@ public final class DiscoverySelectors {
 				.map(Path::toUri)
 				.map(ClasspathRootSelector::new)
 				// unmodifiable since selectClasspathRoots is a public, non-internal method
-				.collect(toUnmodifiableList());
+				.toList();
 		// @formatter:on
 	}
 
@@ -321,7 +320,7 @@ public final class DiscoverySelectors {
 	 * @see ClassLoader#getResources(String)
 	 */
 	public static ClasspathResourceSelector selectClasspathResource(String classpathResourceName,
-			FilePosition position) {
+			@Nullable FilePosition position) {
 		Preconditions.notBlank(classpathResourceName, "classpath resource name must not be null or blank");
 		return new ClasspathResourceSelector(classpathResourceName, position);
 	}
@@ -349,11 +348,11 @@ public final class DiscoverySelectors {
 	 * @see ClasspathResourceSelector
 	 * @see ReflectionSupport#tryToGetResources(String)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.12")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static ClasspathResourceSelector selectClasspathResource(Set<Resource> classpathResources) {
 		Preconditions.notEmpty(classpathResources, "classpath resources must not be null or empty");
 		Preconditions.containsNoNullElements(classpathResources, "individual classpath resources must not be null");
-		List<String> resourceNames = classpathResources.stream().map(Resource::getName).distinct().collect(toList());
+		List<String> resourceNames = classpathResources.stream().map(Resource::getName).distinct().toList();
 		Preconditions.condition(resourceNames.size() == 1, "all classpath resources must have the same name");
 		Preconditions.notBlank(resourceNames.get(0), "classpath resource names must not be null or blank");
 		return new ClasspathResourceSelector(classpathResources);
@@ -393,7 +392,7 @@ public final class DiscoverySelectors {
 		return moduleNames.stream()
 				.map(DiscoverySelectors::selectModule)
 				// unmodifiable since this is a public, non-internal method
-				.collect(toUnmodifiableList());
+				.toList();
 		// @formatter:on
 	}
 
@@ -445,8 +444,8 @@ public final class DiscoverySelectors {
 	 * @since 1.10
 	 * @see ClassSelector
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
-	public static ClassSelector selectClass(ClassLoader classLoader, String className) {
+	@API(status = MAINTAINED, since = "1.13.3")
+	public static ClassSelector selectClass(@Nullable ClassLoader classLoader, String className) {
 		Preconditions.notBlank(className, "Class name must not be null or blank");
 		return new ClassSelector(classLoader, className);
 	}
@@ -513,8 +512,8 @@ public final class DiscoverySelectors {
 	 * @see #selectMethod(String)
 	 * @see MethodSelector
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
-	public static MethodSelector selectMethod(ClassLoader classLoader, String fullyQualifiedMethodName)
+	@API(status = MAINTAINED, since = "1.13.3")
+	public static MethodSelector selectMethod(@Nullable ClassLoader classLoader, String fullyQualifiedMethodName)
 			throws PreconditionViolationException {
 		String[] methodParts = ReflectionUtils.parseFullyQualifiedMethodName(fullyQualifiedMethodName);
 		return selectMethod(classLoader, methodParts[0], methodParts[1], methodParts[2]);
@@ -545,8 +544,8 @@ public final class DiscoverySelectors {
 	 * @since 1.10
 	 * @see MethodSelector
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
-	public static MethodSelector selectMethod(ClassLoader classLoader, String className, String methodName) {
+	@API(status = MAINTAINED, since = "1.13.3")
+	public static MethodSelector selectMethod(@Nullable ClassLoader classLoader, String className, String methodName) {
 		return selectMethod(classLoader, className, methodName, "");
 	}
 
@@ -589,8 +588,8 @@ public final class DiscoverySelectors {
 	 * @since 1.10
 	 * @see MethodSelector
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
-	public static MethodSelector selectMethod(ClassLoader classLoader, String className, String methodName,
+	@API(status = MAINTAINED, since = "1.13.3")
+	public static MethodSelector selectMethod(@Nullable ClassLoader classLoader, String className, String methodName,
 			String parameterTypeNames) {
 		Preconditions.notBlank(className, "Class name must not be null or blank");
 		Preconditions.notBlank(methodName, "Method name must not be null or blank");
@@ -645,7 +644,7 @@ public final class DiscoverySelectors {
 	 * @since 1.10
 	 * @see MethodSelector
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static MethodSelector selectMethod(String className, String methodName, Class<?>... parameterTypes) {
 		Preconditions.notBlank(className, "Class name must not be null or blank");
 		Preconditions.notBlank(methodName, "Method name must not be null or blank");
@@ -666,7 +665,7 @@ public final class DiscoverySelectors {
 	 * @since 1.10
 	 * @see MethodSelector
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static MethodSelector selectMethod(Class<?> javaClass, String methodName, Class<?>... parameterTypes) {
 		Preconditions.notNull(javaClass, "Class must not be null");
 		Preconditions.notBlank(methodName, "Method name must not be null or blank");
@@ -730,9 +729,9 @@ public final class DiscoverySelectors {
 	 * @since 1.10
 	 * @see NestedClassSelector
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
-	public static NestedClassSelector selectNestedClass(ClassLoader classLoader, List<String> enclosingClassNames,
-			String nestedClassName) {
+	@API(status = MAINTAINED, since = "1.13.3")
+	public static NestedClassSelector selectNestedClass(@Nullable ClassLoader classLoader,
+			List<String> enclosingClassNames, String nestedClassName) {
 		Preconditions.notEmpty(enclosingClassNames, "Enclosing class names must not be null or empty");
 		Preconditions.notBlank(nestedClassName, "Nested class name must not be null or blank");
 		return new NestedClassSelector(classLoader, enclosingClassNames, nestedClassName);
@@ -766,9 +765,10 @@ public final class DiscoverySelectors {
 	 * @since 1.10
 	 * @see NestedMethodSelector
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
-	public static NestedMethodSelector selectNestedMethod(ClassLoader classLoader, List<String> enclosingClassNames,
-			String nestedClassName, String methodName) throws PreconditionViolationException {
+	@API(status = MAINTAINED, since = "1.13.3")
+	public static NestedMethodSelector selectNestedMethod(@Nullable ClassLoader classLoader,
+			List<String> enclosingClassNames, String nestedClassName, String methodName)
+			throws PreconditionViolationException {
 		Preconditions.notEmpty(enclosingClassNames, "Enclosing class names must not be null or empty");
 		Preconditions.notBlank(nestedClassName, "Nested class name must not be null or blank");
 		Preconditions.notBlank(methodName, "Method name must not be null or blank");
@@ -814,9 +814,9 @@ public final class DiscoverySelectors {
 	 * @since 1.10
 	 * @see #selectNestedMethod(List, String, String, String)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
-	public static NestedMethodSelector selectNestedMethod(ClassLoader classLoader, List<String> enclosingClassNames,
-			String nestedClassName, String methodName, String parameterTypeNames) {
+	@API(status = MAINTAINED, since = "1.13.3")
+	public static NestedMethodSelector selectNestedMethod(@Nullable ClassLoader classLoader,
+			List<String> enclosingClassNames, String nestedClassName, String methodName, String parameterTypeNames) {
 
 		Preconditions.notEmpty(enclosingClassNames, "Enclosing class names must not be null or empty");
 		Preconditions.notBlank(nestedClassName, "Nested class name must not be null or blank");
@@ -840,7 +840,7 @@ public final class DiscoverySelectors {
 	 * @since 1.10
 	 * @see NestedMethodSelector
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static NestedMethodSelector selectNestedMethod(List<String> enclosingClassNames, String nestedClassName,
 			String methodName, Class<?>... parameterTypes) {
 
@@ -909,7 +909,7 @@ public final class DiscoverySelectors {
 	 * @since 1.10
 	 * @see NestedMethodSelector
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static NestedMethodSelector selectNestedMethod(List<Class<?>> enclosingClasses, Class<?> nestedClass,
 			String methodName, Class<?>... parameterTypes) {
 
@@ -973,7 +973,7 @@ public final class DiscoverySelectors {
 	 * @since 1.9
 	 * @see IterationSelector
 	 */
-	@API(status = EXPERIMENTAL, since = "1.9")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static IterationSelector selectIteration(DiscoverySelector parentSelector, int... iterationIndices) {
 		Preconditions.notNull(parentSelector, "Parent selector must not be null");
 		Preconditions.notEmpty(iterationIndices, "iteration indices must not be empty");
@@ -990,7 +990,7 @@ public final class DiscoverySelectors {
 	 * @since 1.11
 	 * @see DiscoverySelectorIdentifierParser
 	 */
-	@API(status = EXPERIMENTAL, since = "1.11")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Optional<? extends DiscoverySelector> parse(String identifier) {
 		return DiscoverySelectorIdentifierParsers.parse(identifier);
 	}
@@ -1005,7 +1005,7 @@ public final class DiscoverySelectors {
 	 * @since 1.11
 	 * @see DiscoverySelectorIdentifierParser
 	 */
-	@API(status = EXPERIMENTAL, since = "1.11")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Optional<? extends DiscoverySelector> parse(DiscoverySelectorIdentifier identifier) {
 		return DiscoverySelectorIdentifierParsers.parse(identifier);
 	}
@@ -1021,7 +1021,7 @@ public final class DiscoverySelectors {
 	 * @since 1.11
 	 * @see DiscoverySelectorIdentifierParser
 	 */
-	@API(status = EXPERIMENTAL, since = "1.11")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Stream<? extends DiscoverySelector> parseAll(String... identifiers) {
 		return DiscoverySelectorIdentifierParsers.parseAll(identifiers);
 	}
@@ -1037,7 +1037,7 @@ public final class DiscoverySelectors {
 	 * @since 1.11
 	 * @see DiscoverySelectorIdentifierParser
 	 */
-	@API(status = EXPERIMENTAL, since = "1.11")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Stream<? extends DiscoverySelector> parseAll(Collection<DiscoverySelectorIdentifier> identifiers) {
 		return DiscoverySelectorIdentifierParsers.parseAll(identifiers);
 	}

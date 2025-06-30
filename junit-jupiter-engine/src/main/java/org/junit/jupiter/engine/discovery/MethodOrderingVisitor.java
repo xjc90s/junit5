@@ -10,12 +10,14 @@
 
 package org.junit.jupiter.engine.discovery;
 
+import static java.util.Comparator.comparing;
 import static org.junit.platform.commons.support.AnnotationSupport.findAnnotation;
 import static org.junit.platform.commons.support.AnnotationSupport.isAnnotated;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -40,18 +42,21 @@ class MethodOrderingVisitor extends AbstractOrderingVisitor {
 	private final JupiterConfiguration configuration;
 	private final Condition<MethodBasedTestDescriptor> noOrderAnnotation;
 
+	// Not a static field to avoid initialization at build time for GraalVM
+	private final UnaryOperator<List<TestDescriptor>> methodsBeforeNestedClassesOrderer;
+
 	MethodOrderingVisitor(JupiterConfiguration configuration, DiscoveryIssueReporter issueReporter) {
 		super(issueReporter);
 		this.configuration = configuration;
 		this.noOrderAnnotation = issueReporter.createReportingCondition(
 			testDescriptor -> !isAnnotated(testDescriptor.getTestMethod(), Order.class), testDescriptor -> {
-				String message = String.format(
-					"Ineffective @Order annotation on method '%s'. It will not be applied because MethodOrderer.OrderAnnotation is not in use.",
+				String message = "Ineffective @Order annotation on method '%s'. It will not be applied because MethodOrderer.OrderAnnotation is not in use.".formatted(
 					testDescriptor.getTestMethod().toGenericString());
 				return DiscoveryIssue.builder(Severity.INFO, message) //
 						.source(MethodSource.from(testDescriptor.getTestMethod())) //
 						.build();
 			});
+		this.methodsBeforeNestedClassesOrderer = createMethodsBeforeNestedClassesOrderer();
 	}
 
 	@Override
@@ -74,14 +79,14 @@ class MethodOrderingVisitor extends AbstractOrderingVisitor {
 	private void orderContainedMethods(ClassBasedTestDescriptor classBasedTestDescriptor, Class<?> testClass) {
 		Optional<MethodOrderer> methodOrderer = findAnnotation(testClass, TestMethodOrder.class)//
 				.map(TestMethodOrder::value)//
-				.<MethodOrderer> map(ReflectionSupport::newInstance)//
-				.map(Optional::of)//
-				.orElseGet(configuration::getDefaultTestMethodOrderer);
+				.<MethodOrderer> map(ReflectionSupport::newInstance) //
+				.or(configuration::getDefaultTestMethodOrderer);
 		orderContainedMethods(classBasedTestDescriptor, testClass, methodOrderer);
 	}
 
 	private void orderContainedMethods(ClassBasedTestDescriptor classBasedTestDescriptor, Class<?> testClass,
 			Optional<MethodOrderer> methodOrderer) {
+
 		DescriptorWrapperOrderer<?, DefaultMethodDescriptor> descriptorWrapperOrderer = createDescriptorWrapperOrderer(
 			testClass, methodOrderer);
 
@@ -90,6 +95,11 @@ class MethodOrderingVisitor extends AbstractOrderingVisitor {
 			toValidationAction(methodOrderer), //
 			DefaultMethodDescriptor::new, //
 			descriptorWrapperOrderer);
+
+		if (methodOrderer.isEmpty()) {
+			// If there is an orderer, this is ensured by the call above
+			classBasedTestDescriptor.orderChildren(methodsBeforeNestedClassesOrderer);
+		}
 
 		// Note: MethodOrderer#getDefaultExecutionMode() is guaranteed
 		// to be invoked after MethodOrderer#orderMethods().
@@ -112,11 +122,9 @@ class MethodOrderingVisitor extends AbstractOrderingVisitor {
 		Consumer<List<DefaultMethodDescriptor>> orderingAction = methodDescriptors -> methodOrderer.orderMethods(
 			new DefaultMethodOrdererContext(testClass, methodDescriptors, this.configuration));
 
-		MessageGenerator descriptorsAddedMessageGenerator = number -> String.format(
-			"MethodOrderer [%s] added %s MethodDescriptor(s) for test class [%s] which will be ignored.",
+		MessageGenerator descriptorsAddedMessageGenerator = number -> "MethodOrderer [%s] added %s MethodDescriptor(s) for test class [%s] which will be ignored.".formatted(
 			methodOrderer.getClass().getName(), number, testClass.getName());
-		MessageGenerator descriptorsRemovedMessageGenerator = number -> String.format(
-			"MethodOrderer [%s] removed %s MethodDescriptor(s) for test class [%s] which will be retained with arbitrary ordering.",
+		MessageGenerator descriptorsRemovedMessageGenerator = number -> "MethodOrderer [%s] removed %s MethodDescriptor(s) for test class [%s] which will be retained with arbitrary ordering.".formatted(
 			methodOrderer.getClass().getName(), number, testClass.getName());
 
 		return new DescriptorWrapperOrderer<>(methodOrderer, orderingAction, descriptorsAddedMessageGenerator,
@@ -128,6 +136,14 @@ class MethodOrderingVisitor extends AbstractOrderingVisitor {
 			return Optional.empty();
 		}
 		return Optional.of(noOrderAnnotation::check);
+	}
+
+	private static UnaryOperator<List<TestDescriptor>> createMethodsBeforeNestedClassesOrderer() {
+		var methodsFirst = comparing(MethodBasedTestDescriptor.class::isInstance).reversed();
+		return children -> {
+			children.sort(methodsFirst);
+			return children;
+		};
 	}
 
 }

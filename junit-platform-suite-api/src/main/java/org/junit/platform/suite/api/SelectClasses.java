@@ -10,7 +10,6 @@
 
 package org.junit.platform.suite.api;
 
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.MAINTAINED;
 
 import java.lang.annotation.Documented;
@@ -28,7 +27,6 @@ import org.apiguardian.api.API;
  *
  * @since 1.0
  * @see Suite
- * @see org.junit.platform.runner.JUnitPlatform
  * @see org.junit.platform.engine.discovery.DiscoverySelectors#selectClass(Class)
  * @see org.junit.platform.engine.discovery.DiscoverySelectors#selectClass(String)
  */
@@ -57,7 +55,7 @@ public @interface SelectClasses {
 	 *
 	 * @since 1.10
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
+	@API(status = MAINTAINED, since = "1.13.3")
 	String[] names() default {};
 
 }
