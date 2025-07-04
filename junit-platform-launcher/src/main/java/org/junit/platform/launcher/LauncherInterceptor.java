@@ -10,9 +10,10 @@
 
 package org.junit.platform.launcher;
 
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
+import static org.apiguardian.api.API.Status.MAINTAINED;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Interceptor for test discovery and execution by a {@link Launcher} in the
@@ -52,7 +53,7 @@ import org.apiguardian.api.API;
  * @see LauncherSession
  * @see LauncherConstants#ENABLE_LAUNCHER_INTERCEPTORS
  */
-@API(status = EXPERIMENTAL, since = "1.10")
+@API(status = MAINTAINED, since = "1.13.3")
 public interface LauncherInterceptor {
 
 	/**
@@ -63,7 +64,7 @@ public interface LauncherInterceptor {
 	 * @param invocation the intercepted invocation; never {@code null}
 	 * @return the result of the invocation
 	 */
-	<T> T intercept(Invocation<T> invocation);
+	<T extends @Nullable Object> T intercept(Invocation<T> invocation);
 
 	/**
 	 * Closes this interceptor.
@@ -78,7 +79,7 @@ public interface LauncherInterceptor {
 	 *
 	 * <p>This interface is not intended to be implemented by clients.
 	 */
-	interface Invocation<T> {
+	interface Invocation<T extends @Nullable Object> {
 		T proceed();
 	}
 

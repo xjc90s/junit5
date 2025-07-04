@@ -10,7 +10,7 @@
 
 package org.junit.platform.suite.api;
 
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
+import static org.apiguardian.api.API.Status.MAINTAINED;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -29,7 +29,6 @@ import org.apiguardian.api.API;
  *
  * @since 1.10
  * @see Suite
- * @see org.junit.platform.runner.JUnitPlatform
  * @see org.junit.platform.engine.discovery.DiscoverySelectors#selectMethod(String)
  * @see org.junit.platform.engine.discovery.DiscoverySelectors#selectMethod(String, String, String)
  * @see org.junit.platform.engine.discovery.DiscoverySelectors#selectMethod(String, String, Class...)
@@ -40,7 +39,7 @@ import org.apiguardian.api.API;
 @Target(ElementType.TYPE)
 @Inherited
 @Documented
-@API(status = EXPERIMENTAL, since = "1.10")
+@API(status = MAINTAINED, since = "1.13.3")
 @Repeatable(SelectMethods.class)
 public @interface SelectMethod {
 

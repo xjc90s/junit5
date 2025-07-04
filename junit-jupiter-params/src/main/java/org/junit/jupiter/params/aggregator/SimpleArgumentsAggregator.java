@@ -13,6 +13,7 @@ package org.junit.jupiter.params.aggregator;
 import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.extension.AnnotatedElementContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.params.support.FieldContext;
@@ -25,24 +26,24 @@ import org.junit.jupiter.params.support.FieldContext;
  * @since 5.0
  * @see ArgumentsAggregator
  */
-@API(status = EXPERIMENTAL, since = "5.13")
+@API(status = EXPERIMENTAL, since = "6.0")
 public abstract class SimpleArgumentsAggregator implements ArgumentsAggregator {
 
 	public SimpleArgumentsAggregator() {
 	}
 
 	@Override
-	public Object aggregateArguments(ArgumentsAccessor accessor, ParameterContext context)
+	public @Nullable Object aggregateArguments(ArgumentsAccessor accessor, ParameterContext context)
 			throws ArgumentsAggregationException {
 		return aggregateArguments(accessor, context.getParameter().getType(), context, context.getIndex());
 	}
 
 	@Override
-	public Object aggregateArguments(ArgumentsAccessor accessor, FieldContext context)
+	public @Nullable Object aggregateArguments(ArgumentsAccessor accessor, FieldContext context)
 			throws ArgumentsAggregationException {
-		return aggregateArguments(accessor, null, context, context.getParameterIndex());
+		return aggregateArguments(accessor, context.getField().getType(), context, context.getParameterIndex());
 	}
 
-	protected abstract Object aggregateArguments(ArgumentsAccessor accessor, Class<?> targetType,
+	protected abstract @Nullable Object aggregateArguments(ArgumentsAccessor accessor, Class<?> targetType,
 			AnnotatedElementContext context, int parameterIndex) throws ArgumentsAggregationException;
 }

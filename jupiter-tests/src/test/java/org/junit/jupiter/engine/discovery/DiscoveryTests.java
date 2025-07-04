@@ -14,9 +14,11 @@ import static java.util.Comparator.comparing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.engine.discovery.JupiterUniqueIdBuilder.uniqueIdForTestTemplateMethod;
 import static org.junit.jupiter.params.provider.Arguments.argumentSet;
+import static org.junit.platform.commons.test.IdeUtils.runningInEclipse;
 import static org.junit.platform.commons.util.CollectionUtils.getOnlyElement;
 import static org.junit.platform.engine.discovery.ClassNameFilter.includeClassNamePatterns;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
@@ -25,7 +27,6 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectNeste
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectNestedMethod;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectUniqueId;
-import static org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder.request;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestTemplate;
+import org.junit.jupiter.api.extension.DisabledInEclipse;
 import org.junit.jupiter.engine.AbstractJupiterTestEngineTests;
 import org.junit.jupiter.engine.JupiterTestEngine;
 import org.junit.jupiter.engine.descriptor.ClassTestDescriptor;
@@ -48,7 +50,9 @@ import org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.platform.engine.DiscoveryIssue;
+import org.junit.platform.engine.DiscoveryIssue.Severity;
 import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
@@ -62,39 +66,84 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 
 	@Test
 	void discoverTestClass() {
-		LauncherDiscoveryRequest request = request().selectors(selectClass(LocalTestCase.class)).build();
-		TestDescriptor engineDescriptor = discoverTests(request).getEngineDescriptor();
+		LauncherDiscoveryRequest request = defaultRequest().selectors(selectClass(LocalTestCase.class)).build();
+		TestDescriptor engineDescriptor = discoverTestsWithoutIssues(request);
 		assertEquals(7, engineDescriptor.getDescendants().size(), "# resolved test descriptors");
 	}
 
 	@Test
 	void doNotDiscoverAbstractTestClass() {
-		LauncherDiscoveryRequest request = request().selectors(selectClass(AbstractTestCase.class)).build();
-		TestDescriptor engineDescriptor = discoverTests(request).getEngineDescriptor();
+		LauncherDiscoveryRequest request = defaultRequest().selectors(selectClass(AbstractTestCase.class)).build();
+		TestDescriptor engineDescriptor = discoverTestsWithoutIssues(request);
+		assertEquals(0, engineDescriptor.getDescendants().size(), "# resolved test descriptors");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "org.junit.jupiter.engine.discovery.DiscoveryTests$InterfaceTestCase",
+			"org.junit.jupiter.engine.kotlin.KotlinInterfaceTestCase" })
+	void doNotDiscoverTestInterface(String className) {
+
+		assumeFalse(runningInEclipse() && className.contains(".kotlin."));
+
+		LauncherDiscoveryRequest request = defaultRequest().selectors(selectClass(className)).build();
+		TestDescriptor engineDescriptor = discoverTestsWithoutIssues(request);
 		assertEquals(0, engineDescriptor.getDescendants().size(), "# resolved test descriptors");
 	}
 
 	@Test
+	@DisabledInEclipse
+	void doNotDiscoverGeneratedKotlinDefaultImplsClass() {
+		LauncherDiscoveryRequest request = defaultRequest() //
+				.selectors(selectClass("org.junit.jupiter.engine.kotlin.KotlinInterfaceTestCase$DefaultImpls")) //
+				.build();
+		TestDescriptor engineDescriptor = discoverTestsWithoutIssues(request);
+		assertEquals(0, engineDescriptor.getDescendants().size(), "# resolved test descriptors");
+	}
+
+	@Test
+	@DisabledInEclipse
+	void discoverDeclaredKotlinDefaultImplsClass() {
+		LauncherDiscoveryRequest request = defaultRequest().selectors(
+			selectClass("org.junit.jupiter.engine.kotlin.KotlinDefaultImplsTestCase$DefaultImpls")).build();
+		TestDescriptor engineDescriptor = discoverTestsWithoutIssues(request);
+		assertEquals(2, engineDescriptor.getDescendants().size(), "# resolved test descriptors");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {
+			"org.junit.jupiter.engine.discovery.DiscoveryTests$ConcreteImplementationOfInterfaceTestCase",
+			"org.junit.jupiter.engine.kotlin.KotlinInterfaceImplementationTestCase" })
+	void discoverTestClassInheritingTestsFromInterface(String className) {
+
+		assumeFalse(runningInEclipse() && className.contains(".kotlin."));
+
+		LauncherDiscoveryRequest request = defaultRequest().selectors(selectClass(className)).build();
+		TestDescriptor engineDescriptor = discoverTestsWithoutIssues(request);
+		assertEquals(2, engineDescriptor.getDescendants().size(), "# resolved test descriptors");
+	}
+
+	@Test
 	void discoverMethodByUniqueId() {
-		LauncherDiscoveryRequest request = request().selectors(
+		LauncherDiscoveryRequest request = defaultRequest().selectors(
 			selectUniqueId(JupiterUniqueIdBuilder.uniqueIdForMethod(LocalTestCase.class, "test1()"))).build();
-		TestDescriptor engineDescriptor = discoverTests(request).getEngineDescriptor();
+		TestDescriptor engineDescriptor = discoverTestsWithoutIssues(request);
 		assertEquals(2, engineDescriptor.getDescendants().size(), "# resolved test descriptors");
 	}
 
 	@Test
 	void discoverMethodByUniqueIdForOverloadedMethod() {
-		LauncherDiscoveryRequest request = request().selectors(
+		LauncherDiscoveryRequest request = defaultRequest().selectors(
 			selectUniqueId(JupiterUniqueIdBuilder.uniqueIdForMethod(LocalTestCase.class, "test4()"))).build();
-		TestDescriptor engineDescriptor = discoverTests(request).getEngineDescriptor();
+		TestDescriptor engineDescriptor = discoverTestsWithoutIssues(request);
 		assertEquals(2, engineDescriptor.getDescendants().size(), "# resolved test descriptors");
 	}
 
 	@Test
 	void discoverMethodByUniqueIdForOverloadedMethodVariantThatAcceptsArguments() {
-		LauncherDiscoveryRequest request = request().selectors(selectUniqueId(JupiterUniqueIdBuilder.uniqueIdForMethod(
-			LocalTestCase.class, "test4(" + TestInfo.class.getName() + ")"))).build();
-		TestDescriptor engineDescriptor = discoverTests(request).getEngineDescriptor();
+		LauncherDiscoveryRequest request = defaultRequest().selectors(
+			selectUniqueId(JupiterUniqueIdBuilder.uniqueIdForMethod(LocalTestCase.class,
+				"test4(" + TestInfo.class.getName() + ")"))).build();
+		TestDescriptor engineDescriptor = discoverTestsWithoutIssues(request);
 		assertEquals(2, engineDescriptor.getDescendants().size(), "# resolved test descriptors");
 	}
 
@@ -102,17 +151,18 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 	void discoverMethodByMethodReference() throws NoSuchMethodException {
 		Method testMethod = LocalTestCase.class.getDeclaredMethod("test3");
 
-		LauncherDiscoveryRequest request = request().selectors(selectMethod(LocalTestCase.class, testMethod)).build();
-		TestDescriptor engineDescriptor = discoverTests(request).getEngineDescriptor();
+		LauncherDiscoveryRequest request = defaultRequest().selectors(
+			selectMethod(LocalTestCase.class, testMethod)).build();
+		TestDescriptor engineDescriptor = discoverTestsWithoutIssues(request);
 		assertEquals(2, engineDescriptor.getDescendants().size(), "# resolved test descriptors");
 	}
 
 	@Test
 	void discoverMultipleMethodsOfSameClass() {
-		LauncherDiscoveryRequest request = request().selectors(selectMethod(LocalTestCase.class, "test1"),
+		LauncherDiscoveryRequest request = defaultRequest().selectors(selectMethod(LocalTestCase.class, "test1"),
 			selectMethod(LocalTestCase.class, "test2")).build();
 
-		TestDescriptor engineDescriptor = discoverTests(request).getEngineDescriptor();
+		TestDescriptor engineDescriptor = discoverTestsWithoutIssues(request);
 
 		assertThat(engineDescriptor.getChildren()).hasSize(1);
 		TestDescriptor classDescriptor = getOnlyElement(engineDescriptor.getChildren());
@@ -121,7 +171,7 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 
 	@Test
 	void discoverCompositeSpec() {
-		LauncherDiscoveryRequest spec = request().selectors(
+		LauncherDiscoveryRequest spec = defaultRequest().selectors(
 			selectUniqueId(JupiterUniqueIdBuilder.uniqueIdForMethod(LocalTestCase.class, "test2()")),
 			selectClass(LocalTestCase.class)).build();
 
@@ -131,7 +181,7 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 
 	@Test
 	void discoverTestTemplateMethodByUniqueId() {
-		LauncherDiscoveryRequest spec = request().selectors(
+		LauncherDiscoveryRequest spec = defaultRequest().selectors(
 			selectUniqueId(uniqueIdForTestTemplateMethod(TestTemplateClass.class, "testTemplate()"))).build();
 
 		TestDescriptor engineDescriptor = discoverTests(spec).getEngineDescriptor();
@@ -140,7 +190,7 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 
 	@Test
 	void discoverTestTemplateMethodByMethodSelector() {
-		LauncherDiscoveryRequest spec = request().selectors(
+		LauncherDiscoveryRequest spec = defaultRequest().selectors(
 			selectMethod(TestTemplateClass.class, "testTemplate")).build();
 
 		TestDescriptor engineDescriptor = discoverTests(spec).getEngineDescriptor();
@@ -153,7 +203,7 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 			List.of(TestCaseWithExtendedNested.class, TestCaseWithExtendedNested.ConcreteInner1.class),
 			AbstractSuperClass.NestedInAbstractClass.class,
 			AbstractSuperClass.NestedInAbstractClass.class.getDeclaredMethod("test"));
-		LauncherDiscoveryRequest spec = request().selectors(selector).build();
+		LauncherDiscoveryRequest spec = defaultRequest().selectors(selector).build();
 
 		TestDescriptor engineDescriptor = discoverTests(spec).getEngineDescriptor();
 
@@ -198,12 +248,12 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 	static List<Named<LauncherDiscoveryRequest>> requestsForTestClassWithInvalidTestMethod() {
 		return List.of( //
 			named("directly selected",
-				request().selectors(selectClass(InvalidTestCases.InvalidTestMethodTestCase.class)).build()), //
-			named("indirectly selected", request() //
+				defaultRequest().selectors(selectClass(InvalidTestCases.InvalidTestMethodTestCase.class)).build()), //
+			named("indirectly selected", defaultRequest() //
 					.selectors(selectPackage(InvalidTestCases.InvalidTestMethodTestCase.class.getPackageName())) //
 					.filters(includeClassNamePatterns(
 						Pattern.quote(InvalidTestCases.InvalidTestMethodTestCase.class.getName()))).build()), //
-			named("subclasses", request() //
+			named("subclasses", defaultRequest() //
 					.selectors(selectClass(InvalidTestCases.InvalidTestMethodSubclass1TestCase.class),
 						selectClass(InvalidTestCases.InvalidTestMethodSubclass2TestCase.class)) //
 					.build()) //
@@ -229,14 +279,14 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 	static List<Arguments> requestsForTestClassWithInvalidStandaloneTestClass() {
 		return List.of( //
 			argumentSet("directly selected",
-				request().selectors(selectClass(InvalidTestCases.InvalidTestClassTestCase.class)).build(),
+				defaultRequest().selectors(selectClass(InvalidTestCases.InvalidTestClassTestCase.class)).build(),
 				InvalidTestCases.InvalidTestClassTestCase.class), //
-			argumentSet("indirectly selected", request() //
+			argumentSet("indirectly selected", defaultRequest() //
 					.selectors(selectPackage(InvalidTestCases.InvalidTestClassTestCase.class.getPackageName())) //
 					.filters(includeClassNamePatterns(
 						Pattern.quote(InvalidTestCases.InvalidTestClassTestCase.class.getName()))).build(), //
 				InvalidTestCases.InvalidTestClassTestCase.class), //
-			argumentSet("subclass", request() //
+			argumentSet("subclass", defaultRequest() //
 					.selectors(selectClass(InvalidTestCases.InvalidTestClassSubclassTestCase.class)) //
 					.build(), //
 				InvalidTestCases.InvalidTestClassSubclassTestCase.class) //
@@ -255,15 +305,15 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 				.isEqualTo("@Nested class '%s' must not be private. It will not be executed.",
 					InvalidTestCases.InvalidTestClassTestCase.Inner.class.getName());
 		assertThat(discoveryIssues.getLast().message()) //
-				.isEqualTo("@Nested class '%s' must not be static. It will not be executed.",
-					InvalidTestCases.InvalidTestClassTestCase.Inner.class.getName());
+				.startsWith("@Nested class '%s' must not be static.".formatted(
+					InvalidTestCases.InvalidTestClassTestCase.Inner.class.getName()));
 	}
 
 	static List<Named<LauncherDiscoveryRequest>> requestsForTestClassWithInvalidNestedTestClass() {
 		return List.of( //
 			named("directly selected",
-				request().selectors(selectClass(InvalidTestCases.InvalidTestClassTestCase.Inner.class)).build()), //
-			named("subclass", request() //
+				defaultRequest().selectors(selectClass(InvalidTestCases.InvalidTestClassTestCase.Inner.class)).build()), //
+			named("subclass", defaultRequest() //
 					.selectors(selectNestedClass(List.of(InvalidTestCases.InvalidTestClassSubclassTestCase.class),
 						InvalidTestCases.InvalidTestClassTestCase.Inner.class)) //
 					.build()) //
@@ -288,7 +338,35 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 	}
 
 	@Test
-	void reportsWarningsForInvalidTags() throws NoSuchMethodException {
+	void ignoresUnrelatedClassDefinitionCycles() {
+		var results = discoverTestsForClass(UnrelatedRecursiveHierarchyTestCase.class);
+
+		assertThat(results.getDiscoveryIssues()).isEmpty();
+	}
+
+	@Test
+	void ignoresRecursiveNonTestHierarchyCycles() {
+		var results = discoverTestsForClass(NonTestRecursiveHierarchyTestCase.class);
+
+		assertThat(results.getDiscoveryIssues()).isEmpty();
+	}
+
+	@Test
+	void reportsMissingNestedAnnotationOnRecursiveHierarchy() {
+		var results = discoverTestsForClass(RecursiveHierarchyWithoutNestedTestCase.class);
+
+		var discoveryIssues = results.getDiscoveryIssues();
+		assertThat(discoveryIssues).hasSize(1);
+		assertThat(discoveryIssues.getFirst().severity()) //
+				.isEqualTo(Severity.WARNING);
+		assertThat(discoveryIssues.getFirst().message()) //
+				.isEqualTo(
+					"Inner class '%s' looks like it was intended to be a test class but will not be executed. It must be static or annotated with @Nested.",
+					RecursiveHierarchyWithoutNestedTestCase.Inner.class.getName());
+	}
+
+	@Test
+	void reportsWarningsForInvalidTags() throws Exception {
 
 		var results = discoverTestsForClass(InvalidTagsTestCase.class);
 
@@ -310,7 +388,7 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 	}
 
 	@Test
-	void reportsWarningsForBlankDisplayNames() throws NoSuchMethodException {
+	void reportsWarningsForBlankDisplayNames() throws Exception {
 
 		var results = discoverTestsForClass(BlankDisplayNamesTestCase.class);
 
@@ -334,11 +412,14 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 	// -------------------------------------------------------------------
 
 	@SuppressWarnings("unused")
-	private static abstract class AbstractTestCase {
+	static abstract class AbstractTestCase {
 
 		@Test
-		void abstractTest() {
+		void test() {
 		}
+
+		@Test
+		abstract void abstractTest();
 	}
 
 	@SuppressWarnings("JUnitMalformedDeclaration")
@@ -441,6 +522,39 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 	}
 
 	@SuppressWarnings("JUnitMalformedDeclaration")
+	static class UnrelatedRecursiveHierarchyTestCase {
+
+		@Test
+		void test() {
+		}
+
+		@SuppressWarnings({ "InnerClassMayBeStatic", "unused" })
+		class Inner {
+			class Recursive extends Inner {
+			}
+		}
+	}
+
+	@SuppressWarnings("JUnitMalformedDeclaration")
+	static class RecursiveHierarchyWithoutNestedTestCase {
+
+		@Test
+		void test() {
+		}
+
+		@SuppressWarnings({ "InnerClassMayBeStatic", "unused" })
+		class Inner extends RecursiveHierarchyWithoutNestedTestCase {
+		}
+	}
+
+	@SuppressWarnings("unused")
+	static class NonTestRecursiveHierarchyTestCase {
+		@SuppressWarnings("InnerClassMayBeStatic")
+		class Inner extends NonTestRecursiveHierarchyTestCase {
+		}
+	}
+
+	@SuppressWarnings("JUnitMalformedDeclaration")
 	@Tag("")
 	static class InvalidTagsTestCase {
 		@Test
@@ -456,6 +570,15 @@ class DiscoveryTests extends AbstractJupiterTestEngineTests {
 		@DisplayName("\t")
 		void test() {
 		}
+	}
+
+	interface InterfaceTestCase {
+		@Test
+		default void test() {
+		}
+	}
+
+	static class ConcreteImplementationOfInterfaceTestCase implements InterfaceTestCase {
 	}
 
 }

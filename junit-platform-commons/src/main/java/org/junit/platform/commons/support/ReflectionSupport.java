@@ -10,8 +10,6 @@
 
 package org.junit.platform.commons.support;
 
-import static org.apiguardian.api.API.Status.DEPRECATED;
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.MAINTAINED;
 
 import java.lang.reflect.Field;
@@ -24,6 +22,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.JUnitException;
 import org.junit.platform.commons.function.Try;
 import org.junit.platform.commons.util.ExceptionUtils;
@@ -49,28 +48,6 @@ public final class ReflectionSupport {
 
 	private ReflectionSupport() {
 		/* no-op */
-	}
-
-	/**
-	 * Load a class by its <em>primitive name</em> or <em>fully qualified name</em>,
-	 * using the default {@link ClassLoader}.
-	 *
-	 * <p>Class names for arrays may be specified using either the JVM's internal
-	 * String representation (e.g., {@code [[I} for {@code int[][]},
-	 * {@code [Ljava.lang.String;} for {@code java.lang.String[]}, etc.) or
-	 * <em>source code syntax</em> (e.g., {@code int[][]}, {@code java.lang.String[]},
-	 * etc.).
-	 *
-	 * @param name the name of the class to load; never {@code null} or blank
-	 * @return an {@code Optional} containing the loaded class; never {@code null}
-	 * but potentially empty if no such class could be loaded
-	 * @deprecated Please use {@link #tryToLoadClass(String)} instead.
-	 */
-	@API(status = DEPRECATED, since = "1.4")
-	@Deprecated
-	@SuppressWarnings("deprecation")
-	public static Optional<Class<?>> loadClass(String name) {
-		return ReflectionUtils.loadClass(name);
 	}
 
 	/**
@@ -110,7 +87,7 @@ public final class ReflectionSupport {
 	 * @since 1.10
 	 * @see #tryToLoadClass(String)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.10")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Try<Class<?>> tryToLoadClass(String name, ClassLoader classLoader) {
 		return ReflectionUtils.tryToLoadClass(name, classLoader);
 	}
@@ -133,7 +110,7 @@ public final class ReflectionSupport {
 	 * @since 1.12
 	 * @see #tryToGetResources(String, ClassLoader)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.12")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Try<Set<Resource>> tryToGetResources(String classpathResourceName) {
 		return ReflectionUtils.tryToGetResources(classpathResourceName);
 	}
@@ -157,7 +134,7 @@ public final class ReflectionSupport {
 	 * @since 1.12
 	 * @see #tryToGetResources(String)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.12")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Try<Set<Resource>> tryToGetResources(String classpathResourceName, ClassLoader classLoader) {
 		return ReflectionUtils.tryToGetResources(classpathResourceName, classLoader);
 	}
@@ -201,7 +178,7 @@ public final class ReflectionSupport {
 	 * @see #findAllResourcesInPackage(String, Predicate)
 	 * @see #findAllResourcesInModule(String, Predicate)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.11")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static List<Resource> findAllResourcesInClasspathRoot(URI root, Predicate<Resource> resourceFilter) {
 		return ReflectionUtils.findAllResourcesInClasspathRoot(root, resourceFilter);
 	}
@@ -247,7 +224,7 @@ public final class ReflectionSupport {
 	 * @see #streamAllResourcesInPackage(String, Predicate)
 	 * @see #streamAllResourcesInModule(String, Predicate)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.11")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Stream<Resource> streamAllResourcesInClasspathRoot(URI root, Predicate<Resource> resourceFilter) {
 		return ReflectionUtils.streamAllResourcesInClasspathRoot(root, resourceFilter);
 	}
@@ -294,7 +271,7 @@ public final class ReflectionSupport {
 	 * @see #findAllResourcesInClasspathRoot(URI, Predicate)
 	 * @see #findAllResourcesInModule(String, Predicate)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.11")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static List<Resource> findAllResourcesInPackage(String basePackageName, Predicate<Resource> resourceFilter) {
 		return ReflectionUtils.findAllResourcesInPackage(basePackageName, resourceFilter);
 	}
@@ -344,7 +321,7 @@ public final class ReflectionSupport {
 	 * @see #streamAllResourcesInClasspathRoot(URI, Predicate)
 	 * @see #streamAllResourcesInModule(String, Predicate)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.11")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Stream<Resource> streamAllResourcesInPackage(String basePackageName,
 			Predicate<Resource> resourceFilter) {
 
@@ -392,7 +369,7 @@ public final class ReflectionSupport {
 	 * @see #findAllResourcesInClasspathRoot(URI, Predicate)
 	 * @see #findAllResourcesInPackage(String, Predicate)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.11")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static List<Resource> findAllResourcesInModule(String moduleName, Predicate<Resource> resourceFilter) {
 		return ReflectionUtils.findAllResourcesInModule(moduleName, resourceFilter);
 	}
@@ -438,7 +415,7 @@ public final class ReflectionSupport {
 	 * @see #streamAllResourcesInClasspathRoot(URI, Predicate)
 	 * @see #streamAllResourcesInPackage(String, Predicate)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.11")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Stream<Resource> streamAllResourcesInModule(String moduleName, Predicate<Resource> resourceFilter) {
 		return ReflectionUtils.streamAllResourcesInModule(moduleName, resourceFilter);
 	}
@@ -470,12 +447,12 @@ public final class ReflectionSupport {
 	 * @param method the method to invoke; never {@code null}
 	 * @param target the object on which to invoke the method; may be
 	 * {@code null} if the method is {@code static}
-	 * @param args the arguments to pass to the method
+	 * @param args the arguments to pass to the method; never {@code null}
 	 * @return the value returned by the method invocation or {@code null}
 	 * if the return type is {@code void}
 	 * @see ExceptionUtils#throwAsUncheckedException(Throwable)
 	 */
-	public static Object invokeMethod(Method method, Object target, Object... args) {
+	public static @Nullable Object invokeMethod(Method method, @Nullable Object target, @Nullable Object... args) {
 		return ReflectionUtils.invokeMethod(method, target, args);
 	}
 
@@ -545,7 +522,7 @@ public final class ReflectionSupport {
 	 * @since 1.4
 	 */
 	@API(status = MAINTAINED, since = "1.4")
-	public static Try<Object> tryToReadFieldValue(Field field, Object instance) {
+	public static Try<@Nullable Object> tryToReadFieldValue(Field field, @Nullable Object instance) {
 		return ReflectionUtils.tryToReadFieldValue(field, instance);
 	}
 
@@ -570,7 +547,7 @@ public final class ReflectionSupport {
 	 * but potentially empty if no such method could be found
 	 * @see #findMethod(Class, String, Class...)
 	 */
-	public static Optional<Method> findMethod(Class<?> clazz, String methodName, String parameterTypeNames) {
+	public static Optional<Method> findMethod(Class<?> clazz, String methodName, @Nullable String parameterTypeNames) {
 		return ReflectionUtils.findMethod(clazz, methodName, parameterTypeNames);
 	}
 
@@ -712,7 +689,7 @@ public final class ReflectionSupport {
 	 * @since 1.12
 	 * @see Field#setAccessible(boolean)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.12")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Field makeAccessible(Field field) {
 		return ReflectionUtils.makeAccessible(Preconditions.notNull(field, "field must not be null"));
 	}

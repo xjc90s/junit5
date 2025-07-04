@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.params.support.ParameterDeclaration;
 
 /**
@@ -27,14 +28,15 @@ interface ResolutionCache {
 
 	ResolutionCache DISABLED = (__, resolver) -> resolver.get();
 
-	Object resolve(ParameterDeclaration declaration, Supplier<Object> resolver);
+	@Nullable
+	Object resolve(ParameterDeclaration declaration, Supplier<?> resolver);
 
 	class Concurrent implements ResolutionCache {
 
 		private final Map<ParameterDeclaration, Object> cache = new ConcurrentHashMap<>();
 
 		@Override
-		public Object resolve(ParameterDeclaration declaration, Supplier<Object> resolver) {
+		public @Nullable Object resolve(ParameterDeclaration declaration, Supplier<?> resolver) {
 			return cache.computeIfAbsent(declaration, __ -> resolver.get());
 		}
 	}

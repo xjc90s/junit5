@@ -10,7 +10,6 @@
 
 package org.junit.platform.testkit.engine;
 
-import static java.util.Collections.unmodifiableList;
 import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 
 import java.util.List;
@@ -28,7 +27,7 @@ import org.junit.platform.engine.TestDescriptor;
  *
  * @since 1.13
  */
-@API(status = EXPERIMENTAL, since = "1.13")
+@API(status = EXPERIMENTAL, since = "6.0")
 public class EngineDiscoveryResults {
 
 	private final TestDescriptor engineDescriptor;
@@ -36,7 +35,7 @@ public class EngineDiscoveryResults {
 
 	EngineDiscoveryResults(TestDescriptor engineDescriptor, List<DiscoveryIssue> discoveryIssues) {
 		this.engineDescriptor = Preconditions.notNull(engineDescriptor, "Engine descriptor must not be null");
-		this.discoveryIssues = unmodifiableList(
+		this.discoveryIssues = List.copyOf(
 			Preconditions.notNull(discoveryIssues, "Discovery issues list must not be null"));
 		Preconditions.containsNoNullElements(discoveryIssues, "Discovery issues list must not contain null elements");
 	}

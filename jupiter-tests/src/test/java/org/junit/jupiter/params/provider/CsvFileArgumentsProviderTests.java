@@ -13,6 +13,7 @@ package org.junit.jupiter.params.provider;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.params.provider.CsvArgumentsProviderTests.isCsvParseException;
 import static org.junit.jupiter.params.provider.MockCsvAnnotationBuilder.csvFileSource;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.io.TempDir;
@@ -40,10 +42,25 @@ import org.junit.platform.commons.PreconditionViolationException;
 class CsvFileArgumentsProviderTests {
 
 	@Test
+	void providesArgumentsForEachSupportedLineSeparator() {
+		var annotation = csvFileSource()//
+				.resources("test.csv")//
+				.build();
+
+		var arguments = provideArguments(annotation, "foo, bar \n baz, qux \r quux, corge \r\n grault, garply");
+
+		assertThat(arguments).containsExactly(//
+			array("foo", "bar"), //
+			array("baz", "qux"), //
+			array("quux", "corge"), //
+			array("grault", "garply")//
+		);
+	}
+
+	@Test
 	void providesArgumentsForNewlineAndComma() {
 		var annotation = csvFileSource()//
 				.resources("test.csv")//
-				.lineSeparator("\n")//
 				.delimiter(',')//
 				.build();
 
@@ -56,7 +73,6 @@ class CsvFileArgumentsProviderTests {
 	void providesArgumentsForCarriageReturnAndSemicolon() {
 		var annotation = csvFileSource()//
 				.resources("test.csv")//
-				.lineSeparator("\r")//
 				.delimiter(';')//
 				.build();
 
@@ -378,14 +394,13 @@ class CsvFileArgumentsProviderTests {
 
 		assertThat(exception)//
 				.hasMessageStartingWith("Failed to parse CSV input configured via Mock for CsvFileSource")//
-				.hasRootCauseInstanceOf(ArrayIndexOutOfBoundsException.class);
+				.rootCause().satisfies(isCsvParseException());
 	}
 
 	@Test
 	void emptyValueIsAnEmptyWithCustomNullValueString() {
 		var annotation = csvFileSource()//
 				.resources("test.csv")//
-				.lineSeparator("\n")//
 				.delimiter(',')//
 				.nullValues("NIL")//
 				.build();
@@ -482,7 +497,7 @@ class CsvFileArgumentsProviderTests {
 
 		assertThat(exception)//
 				.hasMessageStartingWith("Failed to parse CSV input configured via Mock for CsvFileSource")//
-				.hasRootCauseInstanceOf(ArrayIndexOutOfBoundsException.class);
+				.rootCause().satisfies(isCsvParseException());
 	}
 
 	@Test
@@ -548,7 +563,7 @@ class CsvFileArgumentsProviderTests {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T[] array(T... elements) {
+	private static <T> @Nullable T[] array(@Nullable T... elements) {
 		return elements;
 	}
 

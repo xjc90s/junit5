@@ -57,7 +57,7 @@ buildCache {
 	if (useDevelocityInstance) {
 		remote(develocity.buildCache) {
 			server = buildCacheServer.orNull
-			val authenticated = System.getenv("DEVELOCITY_ACCESS_KEY") != null
+			val authenticated = !System.getenv("DEVELOCITY_ACCESS_KEY").isNullOrEmpty()
 			isPush = buildParameters.ci && authenticated
 		}
 	} else {
@@ -69,7 +69,7 @@ buildCache {
 
 includeBuild("gradle/base")
 
-rootProject.name = "junit5"
+rootProject.name = "junit-framework"
 
 include("documentation")
 include("junit-jupiter")
@@ -81,13 +81,10 @@ include("junit-platform-commons")
 include("junit-platform-console")
 include("junit-platform-console-standalone")
 include("junit-platform-engine")
-include("junit-platform-jfr")
 include("junit-platform-launcher")
 include("junit-platform-reporting")
-include("junit-platform-runner")
 include("junit-platform-suite")
 include("junit-platform-suite-api")
-include("junit-platform-suite-commons")
 include("junit-platform-suite-engine")
 include("junit-platform-testkit")
 include("junit-vintage-engine")

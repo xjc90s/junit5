@@ -12,6 +12,8 @@ package org.junit.platform.launcher.core;
 
 import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 
+import java.io.Serial;
+
 import org.apiguardian.api.API;
 import org.junit.platform.commons.JUnitException;
 
@@ -21,9 +23,10 @@ import org.junit.platform.commons.JUnitException;
  *
  * @since 1.13
  */
-@API(status = EXPERIMENTAL, since = "1.13")
+@API(status = EXPERIMENTAL, since = "6.0")
 public class DiscoveryIssueException extends JUnitException {
 
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	DiscoveryIssueException(String message) {

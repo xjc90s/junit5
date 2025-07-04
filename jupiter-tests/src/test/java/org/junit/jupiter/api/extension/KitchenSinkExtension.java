@@ -15,6 +15,8 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * <em>Kitchen Sink</em> extension that implements every extension API
  * supported by JUnit Jupiter.
@@ -140,7 +142,7 @@ public class KitchenSinkExtension implements
 
 	@Override
 	public Object createTestInstance(TestInstanceFactoryContext factoryContext, ExtensionContext extensionContext) {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -157,7 +159,7 @@ public class KitchenSinkExtension implements
 	}
 
 	@Override
-	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
+	public @Nullable Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
 		return null;
 	}
 
@@ -165,7 +167,7 @@ public class KitchenSinkExtension implements
 
 	@Override
 	public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	// --- @TestTemplate -------------------------------------------------------
@@ -177,7 +179,7 @@ public class KitchenSinkExtension implements
 
 	@Override
 	public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -194,7 +196,7 @@ public class KitchenSinkExtension implements
 
 	@Override
 	public Stream<ClassTemplateInvocationContext> provideClassTemplateInvocationContexts(ExtensionContext context) {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -213,11 +215,11 @@ public class KitchenSinkExtension implements
 	}
 
 	@Override
-	public void testAborted(ExtensionContext context, Throwable cause) {
+	public void testAborted(ExtensionContext context, @Nullable Throwable cause) {
 	}
 
 	@Override
-	public void testFailed(ExtensionContext context, Throwable cause) {
+	public void testFailed(ExtensionContext context, @Nullable Throwable cause) {
 	}
 
 	// --- InvocationInterceptor -----------------------------------------------
@@ -231,20 +233,20 @@ public class KitchenSinkExtension implements
 	}
 
 	@Override
-	public void interceptBeforeAllMethod(Invocation<Void> invocation,
+	public void interceptBeforeAllMethod(Invocation<@Nullable Void> invocation,
 			ReflectiveInvocationContext<Method> invocationContext, ExtensionContext extensionContext) throws Throwable {
 		InvocationInterceptor.super.interceptBeforeAllMethod(invocation, invocationContext, extensionContext);
 	}
 
 	@Override
-	public void interceptBeforeEachMethod(Invocation<Void> invocation,
+	public void interceptBeforeEachMethod(Invocation<@Nullable Void> invocation,
 			ReflectiveInvocationContext<Method> invocationContext, ExtensionContext extensionContext) throws Throwable {
 		InvocationInterceptor.super.interceptBeforeEachMethod(invocation, invocationContext, extensionContext);
 	}
 
 	@Override
-	public void interceptTestMethod(Invocation<Void> invocation, ReflectiveInvocationContext<Method> invocationContext,
-			ExtensionContext extensionContext) throws Throwable {
+	public void interceptTestMethod(Invocation<@Nullable Void> invocation,
+			ReflectiveInvocationContext<Method> invocationContext, ExtensionContext extensionContext) throws Throwable {
 		InvocationInterceptor.super.interceptTestMethod(invocation, invocationContext, extensionContext);
 	}
 
@@ -255,31 +257,25 @@ public class KitchenSinkExtension implements
 	}
 
 	@Override
-	public void interceptTestTemplateMethod(Invocation<Void> invocation,
+	public void interceptTestTemplateMethod(Invocation<@Nullable Void> invocation,
 			ReflectiveInvocationContext<Method> invocationContext, ExtensionContext extensionContext) throws Throwable {
 		InvocationInterceptor.super.interceptTestTemplateMethod(invocation, invocationContext, extensionContext);
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
-	public void interceptDynamicTest(Invocation<Void> invocation, ExtensionContext extensionContext) throws Throwable {
-		InvocationInterceptor.super.interceptDynamicTest(invocation, extensionContext);
-	}
-
-	@Override
-	public void interceptDynamicTest(Invocation<Void> invocation, DynamicTestInvocationContext invocationContext,
-			ExtensionContext extensionContext) throws Throwable {
+	public void interceptDynamicTest(Invocation<@Nullable Void> invocation,
+			DynamicTestInvocationContext invocationContext, ExtensionContext extensionContext) throws Throwable {
 		InvocationInterceptor.super.interceptDynamicTest(invocation, invocationContext, extensionContext);
 	}
 
 	@Override
-	public void interceptAfterEachMethod(Invocation<Void> invocation,
+	public void interceptAfterEachMethod(Invocation<@Nullable Void> invocation,
 			ReflectiveInvocationContext<Method> invocationContext, ExtensionContext extensionContext) throws Throwable {
 		InvocationInterceptor.super.interceptAfterEachMethod(invocation, invocationContext, extensionContext);
 	}
 
 	@Override
-	public void interceptAfterAllMethod(Invocation<Void> invocation,
+	public void interceptAfterAllMethod(Invocation<@Nullable Void> invocation,
 			ReflectiveInvocationContext<Method> invocationContext, ExtensionContext extensionContext) throws Throwable {
 		InvocationInterceptor.super.interceptAfterAllMethod(invocation, invocationContext, extensionContext);
 	}

@@ -49,8 +49,8 @@ class JarDescribeModuleTests {
 		assertEquals("", result.stdErr(), "error log isn't empty");
 
 		var expectedLines = replaceVersionPlaceholders(
-			Files.readString(sourceDirectory.resolve(module + ".expected.txt")).trim());
-		assertLinesMatch(expectedLines.lines().toList(), result.stdOut().trim().lines().toList());
+			Files.readString(sourceDirectory.resolve(module + ".expected.txt")).strip());
+		assertLinesMatch(expectedLines.lines().toList(), result.stdOut().strip().lines().toList());
 	}
 
 	@ParameterizedTest
@@ -65,9 +65,7 @@ class JarDescribeModuleTests {
 	}
 
 	private static String replaceVersionPlaceholders(String line) {
-		line = line.replace("${jupiterVersion}", Helper.version("junit-jupiter"));
-		line = line.replace("${vintageVersion}", Helper.version("junit-vintage"));
-		line = line.replace("${platformVersion}", Helper.version("junit-platform"));
+		line = line.replace("${version}", Helper.version());
 		return line;
 	}
 

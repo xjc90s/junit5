@@ -176,7 +176,7 @@ class ParallelExecutionIntegrationTests {
 
 	/**
 	 * @since 1.4
-	 * @see <a href="https://github.com/junit-team/junit5/issues/1688">gh-1688</a>
+	 * @see <a href="https://github.com/junit-team/junit-framework/issues/1688">gh-1688</a>
 	 */
 	@Test
 	void threadInterruptedByUserCode() {
@@ -265,8 +265,8 @@ class ParallelExecutionIntegrationTests {
 		List<Event> parallelTestMethodEvents = events.reportingEntryPublished() //
 				.filter(e -> e.getTestDescriptor().getSource() //
 						.filter(it -> //
-						it instanceof MethodSource
-								&& SuccessfulParallelTestCase.class.equals(((MethodSource) it).getJavaClass()) //
+						it instanceof MethodSource methodSource
+								&& SuccessfulParallelTestCase.class.equals(methodSource.getJavaClass()) //
 						).isPresent() //
 				) //
 				.toList();

@@ -11,8 +11,8 @@
 package org.junit.platform.engine.discovery;
 
 import static java.util.Collections.unmodifiableSet;
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.INTERNAL;
+import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.apiguardian.api.API.Status.STABLE;
 
 import java.util.LinkedHashSet;
@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.PreconditionViolationException;
 import org.junit.platform.commons.function.Try;
 import org.junit.platform.commons.support.Resource;
@@ -55,10 +56,12 @@ import org.junit.platform.engine.DiscoverySelectorIdentifier;
 public class ClasspathResourceSelector implements DiscoverySelector {
 
 	private final String classpathResourceName;
-	private final FilePosition position;
-	private Set<Resource> classpathResources;
 
-	ClasspathResourceSelector(String classpathResourceName, FilePosition position) {
+	private final @Nullable FilePosition position;
+
+	private @Nullable Set<Resource> classpathResources;
+
+	ClasspathResourceSelector(String classpathResourceName, @Nullable FilePosition position) {
 		boolean startsWithSlash = classpathResourceName.startsWith("/");
 		this.classpathResourceName = (startsWithSlash ? classpathResourceName.substring(1) : classpathResourceName);
 		this.position = position;
@@ -93,7 +96,7 @@ public class ClasspathResourceSelector implements DiscoverySelector {
 	 *
 	 * @since 1.12
 	 */
-	@API(status = EXPERIMENTAL, since = "1.12")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public Set<Resource> getClasspathResources() {
 		if (this.classpathResources == null) {
 			Try<Set<Resource>> tryToGetResource = ReflectionUtils.tryToGetResources(this.classpathResourceName);
@@ -159,7 +162,7 @@ public class ClasspathResourceSelector implements DiscoverySelector {
 		}
 		else {
 			return Optional.of(DiscoverySelectorIdentifier.create(IdentifierParser.PREFIX,
-				String.format("%s?%s", this.classpathResourceName, this.position.toQueryPart())));
+				"%s?%s".formatted(this.classpathResourceName, this.position.toQueryPart())));
 		}
 	}
 

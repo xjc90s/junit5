@@ -11,7 +11,6 @@
 package org.junit.platform.commons.support;
 
 import static org.apiguardian.api.API.Status.DEPRECATED;
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.MAINTAINED;
 
 import java.lang.annotation.Annotation;
@@ -24,6 +23,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.util.AnnotationUtils;
 import org.junit.platform.commons.util.Preconditions;
 import org.junit.platform.commons.util.ReflectionUtils;
@@ -70,7 +70,7 @@ public final class AnnotationSupport {
 	 * @see #findRepeatableAnnotations(Optional, Class)
 	 */
 	@API(status = MAINTAINED, since = "1.3")
-	public static boolean isAnnotated(Optional<? extends AnnotatedElement> element,
+	public static boolean isAnnotated(@Nullable Optional<? extends AnnotatedElement> element,
 			Class<? extends Annotation> annotationType) {
 
 		return AnnotationUtils.isAnnotated(element, annotationType);
@@ -93,7 +93,7 @@ public final class AnnotationSupport {
 	 * @see #findAnnotation(AnnotatedElement, Class)
 	 * @see #findRepeatableAnnotations(AnnotatedElement, Class)
 	 */
-	public static boolean isAnnotated(AnnotatedElement element, Class<? extends Annotation> annotationType) {
+	public static boolean isAnnotated(@Nullable AnnotatedElement element, Class<? extends Annotation> annotationType) {
 		return AnnotationUtils.isAnnotated(element, annotationType);
 	}
 
@@ -112,8 +112,8 @@ public final class AnnotationSupport {
 	 * @see #findAnnotation(AnnotatedElement, Class)
 	 */
 	@API(status = MAINTAINED, since = "1.1")
-	public static <A extends Annotation> Optional<A> findAnnotation(Optional<? extends AnnotatedElement> element,
-			Class<A> annotationType) {
+	public static <A extends Annotation> Optional<A> findAnnotation(
+			@Nullable Optional<? extends AnnotatedElement> element, Class<A> annotationType) {
 
 		return AnnotationUtils.findAnnotation(element, annotationType);
 	}
@@ -135,7 +135,8 @@ public final class AnnotationSupport {
 	 * @return an {@code Optional} containing the annotation; never {@code null} but
 	 * potentially empty
 	 */
-	public static <A extends Annotation> Optional<A> findAnnotation(AnnotatedElement element, Class<A> annotationType) {
+	public static <A extends Annotation> Optional<A> findAnnotation(@Nullable AnnotatedElement element,
+			Class<A> annotationType) {
 		return AnnotationUtils.findAnnotation(element, annotationType);
 	}
 
@@ -173,7 +174,7 @@ public final class AnnotationSupport {
 	@Deprecated
 	@API(status = DEPRECATED, since = "1.12")
 	@SuppressWarnings("deprecation")
-	public static <A extends Annotation> Optional<A> findAnnotation(Class<?> clazz, Class<A> annotationType,
+	public static <A extends Annotation> Optional<A> findAnnotation(@Nullable Class<?> clazz, Class<A> annotationType,
 			SearchOption searchOption) {
 
 		Preconditions.notNull(searchOption, "SearchOption must not be null");
@@ -213,14 +214,14 @@ public final class AnnotationSupport {
 	 * @since 1.12
 	 * @see #findAnnotation(AnnotatedElement, Class)
 	 */
-	@API(status = EXPERIMENTAL, since = "1.12")
-	public static <A extends Annotation> Optional<A> findAnnotation(Class<?> clazz, Class<A> annotationType,
+	@API(status = MAINTAINED, since = "1.13.3")
+	public static <A extends Annotation> Optional<A> findAnnotation(@Nullable Class<?> clazz, Class<A> annotationType,
 			List<Class<?>> enclosingInstanceTypes) {
 
 		Preconditions.notNull(enclosingInstanceTypes, "enclosingInstanceTypes must not be null");
 
 		Optional<A> annotation = findAnnotation(clazz, annotationType);
-		if (!annotation.isPresent()) {
+		if (annotation.isEmpty()) {
 			ListIterator<Class<?>> iterator = enclosingInstanceTypes.listIterator(enclosingInstanceTypes.size());
 			while (iterator.hasPrevious()) {
 				annotation = findAnnotation(iterator.previous(), annotationType);
@@ -252,8 +253,8 @@ public final class AnnotationSupport {
 	 * @see #findRepeatableAnnotations(AnnotatedElement, Class)
 	 */
 	@API(status = MAINTAINED, since = "1.5")
-	public static <A extends Annotation> List<A> findRepeatableAnnotations(Optional<? extends AnnotatedElement> element,
-			Class<A> annotationType) {
+	public static <A extends Annotation> List<A> findRepeatableAnnotations(
+			@Nullable Optional<? extends AnnotatedElement> element, Class<A> annotationType) {
 
 		return AnnotationUtils.findRepeatableAnnotations(element, annotationType);
 	}
@@ -297,7 +298,7 @@ public final class AnnotationSupport {
 	 * @see java.lang.annotation.Repeatable
 	 * @see java.lang.annotation.Inherited
 	 */
-	public static <A extends Annotation> List<A> findRepeatableAnnotations(AnnotatedElement element,
+	public static <A extends Annotation> List<A> findRepeatableAnnotations(@Nullable AnnotatedElement element,
 			Class<A> annotationType) {
 
 		return AnnotationUtils.findRepeatableAnnotations(element, annotationType);
@@ -441,13 +442,16 @@ public final class AnnotationSupport {
 	 * @see ReflectionSupport#tryToReadFieldValue(Field, Object)
 	 */
 	@API(status = MAINTAINED, since = "1.4")
-	public static List<Object> findAnnotatedFieldValues(Object instance, Class<? extends Annotation> annotationType) {
+	public static List<@Nullable Object> findAnnotatedFieldValues(Object instance,
+			Class<? extends Annotation> annotationType) {
 		Preconditions.notNull(instance, "instance must not be null");
 
 		List<Field> fields = findAnnotatedFields(instance.getClass(), annotationType, ModifierSupport::isNotStatic,
 			HierarchyTraversalMode.TOP_DOWN);
 
-		return ReflectionUtils.readFieldValues(fields, instance);
+		@SuppressWarnings("unchecked")
+		List<@Nullable Object> result = (List<@Nullable Object>) ReflectionUtils.readFieldValues(fields, instance);
+		return result;
 	}
 
 	/**
@@ -473,12 +477,15 @@ public final class AnnotationSupport {
 	 * @see ReflectionSupport#tryToReadFieldValue(Field, Object)
 	 */
 	@API(status = MAINTAINED, since = "1.4")
-	public static List<Object> findAnnotatedFieldValues(Class<?> clazz, Class<? extends Annotation> annotationType) {
+	public static List<@Nullable Object> findAnnotatedFieldValues(Class<?> clazz,
+			Class<? extends Annotation> annotationType) {
 
 		List<Field> fields = findAnnotatedFields(clazz, annotationType, ModifierSupport::isStatic,
 			HierarchyTraversalMode.TOP_DOWN);
 
-		return ReflectionUtils.readFieldValues(fields, null);
+		@SuppressWarnings("unchecked")
+		List<@Nullable Object> result = (List<@Nullable Object>) ReflectionUtils.readFieldValues(fields, null);
+		return result;
 	}
 
 	/**
@@ -508,8 +515,8 @@ public final class AnnotationSupport {
 	 */
 	@SuppressWarnings("unchecked")
 	@API(status = MAINTAINED, since = "1.4")
-	public static <T> List<T> findAnnotatedFieldValues(Object instance, Class<? extends Annotation> annotationType,
-			Class<T> fieldType) {
+	public static <T extends @Nullable Object> List<T> findAnnotatedFieldValues(Object instance,
+			Class<? extends Annotation> annotationType, Class<T> fieldType) {
 
 		Preconditions.notNull(instance, "instance must not be null");
 		Preconditions.notNull(fieldType, "fieldType must not be null");
@@ -550,8 +557,8 @@ public final class AnnotationSupport {
 	 */
 	@SuppressWarnings("unchecked")
 	@API(status = MAINTAINED, since = "1.4")
-	public static <T> List<T> findAnnotatedFieldValues(Class<?> clazz, Class<? extends Annotation> annotationType,
-			Class<T> fieldType) {
+	public static <T extends @Nullable Object> List<T> findAnnotatedFieldValues(Class<?> clazz,
+			Class<? extends Annotation> annotationType, Class<T> fieldType) {
 
 		Preconditions.notNull(fieldType, "fieldType must not be null");
 

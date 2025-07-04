@@ -1,4 +1,9 @@
+import junitbuild.extensions.javaModuleName
+import net.ltgt.gradle.errorprone.errorprone
+import net.ltgt.gradle.nullaway.nullaway
+
 plugins {
+	id("junitbuild.java-nullability-conventions")
 	id("junitbuild.kotlin-library-conventions")
 	id("junitbuild.shadow-conventions")
 	id("junitbuild.jmh-conventions")
@@ -12,8 +17,9 @@ dependencies {
 	api(projects.junitJupiterApi)
 
 	compileOnlyApi(libs.apiguardian)
+	compileOnlyApi(libs.jspecify)
 
-	shadowed(libs.univocity.parsers)
+	shadowed(libs.fastcsv)
 
 	compileOnly(kotlin("stdlib"))
 
@@ -33,20 +39,36 @@ tasks {
 			""")
 		}
 	}
-}
-
-tasks {
+	val extractFastCSVLicense by registering(Sync::class) {
+		from(zipTree(configurations.shadowedClasspath.flatMap { it.elements }.map { it.single { file -> file.asFile.name.contains("fastcsv") } })) {
+			include("META-INF/LICENSE")
+			rename { "LICENSE-fastcsv" }
+		}
+		into(layout.buildDirectory.dir("fastcsv"))
+	}
 	shadowJar {
-		relocate("com.univocity", "org.junit.jupiter.params.shadow.com.univocity")
-		from(projectDir) {
-			include("LICENSE-univocity-parsers.md")
-			into("META-INF")
+		relocate("de.siegmar.fastcsv", "org.junit.jupiter.params.shadow.de.siegmar.fastcsv")
+		exclude("META-INF/LICENSE")
+		from(extractFastCSVLicense)
+	}
+	compileJava {
+		options.compilerArgs.addAll(listOf(
+			"--add-modules", "de.siegmar.fastcsv",
+			"--add-reads", "${javaModuleName}=de.siegmar.fastcsv"
+		))
+	}
+	compileJmhJava {
+		options.compilerArgs.add("-Xlint:-processing")
+		options.errorprone.nullaway {
+			customInitializerAnnotations.add(
+				"org.openjdk.jmh.annotations.Setup",
+			)
 		}
 	}
-	compileModule {
-		options.compilerArgs.addAll(listOf(
-			"--add-modules", "univocity.parsers",
-			"--add-reads", "${javaModuleName}=univocity.parsers"
-		))
+	javadoc {
+		(options as StandardJavadocDocletOptions).apply {
+			addStringOption("-add-modules", "de.siegmar.fastcsv")
+			addStringOption("-add-reads", "${javaModuleName}=de.siegmar.fastcsv")
+		}
 	}
 }

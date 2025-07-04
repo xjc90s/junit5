@@ -14,9 +14,12 @@ import static java.util.Collections.emptyList;
 import static org.apiguardian.api.API.Status.DEPRECATED;
 import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.INTERNAL;
+import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.apiguardian.api.API.Status.STABLE;
 import static org.junit.platform.commons.support.AnnotationSupport.findAnnotation;
 import static org.junit.platform.commons.support.ModifierSupport.isStatic;
+import static org.junit.platform.commons.util.KotlinReflectionUtils.getKotlinSuspendingFunctionParameterTypes;
+import static org.junit.platform.commons.util.KotlinReflectionUtils.isKotlinSuspendingFunction;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -29,6 +32,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.support.ReflectionSupport;
 import org.junit.platform.commons.util.ClassUtils;
 import org.junit.platform.commons.util.Preconditions;
@@ -128,7 +132,7 @@ public interface DisplayNameGenerator {
 	 * @return the display name for the nested class; never blank
 	 * @since 5.12
 	 */
-	@API(status = EXPERIMENTAL, since = "5.12")
+	@API(status = MAINTAINED, since = "5.13.3")
 	default String generateDisplayNameForNestedClass(List<Class<?>> enclosingInstanceTypes, Class<?> nestedClass) {
 		return generateDisplayNameForNestedClass(nestedClass);
 	}
@@ -177,7 +181,7 @@ public interface DisplayNameGenerator {
 	 * @return the display name for the test; never blank
 	 * @since 5.12
 	 */
-	@API(status = EXPERIMENTAL, since = "5.12")
+	@API(status = MAINTAINED, since = "5.13.3")
 	default String generateDisplayNameForMethod(List<Class<?>> enclosingInstanceTypes, Class<?> testClass,
 			Method testMethod) {
 		return generateDisplayNameForMethod(testClass, testMethod);
@@ -195,7 +199,10 @@ public interface DisplayNameGenerator {
 	 */
 	static String parameterTypesAsString(Method method) {
 		Preconditions.notNull(method, "Method must not be null");
-		return '(' + ClassUtils.nullSafeToString(Class::getSimpleName, method.getParameterTypes()) + ')';
+		var parameterTypes = isKotlinSuspendingFunction(method) //
+				? getKotlinSuspendingFunctionParameterTypes(method) //
+				: method.getParameterTypes();
+		return '(' + ClassUtils.nullSafeToString(Class::getSimpleName, parameterTypes) + ')';
 	}
 
 	/**
@@ -332,7 +339,7 @@ public interface DisplayNameGenerator {
 		 */
 		@Target({ ElementType.TYPE, ElementType.METHOD })
 		@Retention(RetentionPolicy.RUNTIME)
-		@API(status = EXPERIMENTAL, since = "5.13")
+		@API(status = EXPERIMENTAL, since = "6.0")
 		public @interface SentenceFragment {
 
 			/**
@@ -381,14 +388,13 @@ public interface DisplayNameGenerator {
 		private String getSentenceBeginning(Class<?> testClass, List<Class<?>> enclosingInstanceTypes) {
 			Class<?> enclosingClass = enclosingInstanceTypes.isEmpty() ? null
 					: enclosingInstanceTypes.get(enclosingInstanceTypes.size() - 1);
-			boolean topLevelTestClass = (enclosingClass == null || isStatic(testClass));
 
 			String sentenceFragment = findAnnotation(testClass, DisplayName.class)//
 					.map(DisplayName::value)//
-					.map(String::trim)//
+					.map(String::strip)//
 					.orElseGet(() -> getSentenceFragment(testClass));
 
-			if (topLevelTestClass) {
+			if (enclosingClass == null || isStatic(testClass)) { // top-level class
 				if (sentenceFragment != null) {
 					return sentenceFragment;
 				}
@@ -496,13 +502,13 @@ public interface DisplayNameGenerator {
 			return findAnnotation(testClass, IndicativeSentencesGeneration.class, enclosingInstanceTypes);
 		}
 
-		private static String getSentenceFragment(AnnotatedElement element) {
+		private static @Nullable String getSentenceFragment(AnnotatedElement element) {
 			return findAnnotation(element, SentenceFragment.class) //
 					.map(SentenceFragment::value) //
 					.map(sentenceFragment -> {
-						Preconditions.notBlank(sentenceFragment, String.format(
-							"@SentenceFragment on [%s] must be declared with a non-blank value.", element));
-						return sentenceFragment.trim();
+						Preconditions.notBlank(sentenceFragment,
+							"@SentenceFragment on [%s] must be declared with a non-blank value.".formatted(element));
+						return sentenceFragment.strip();
 					}) //
 					.orElse(null);
 		}

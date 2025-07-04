@@ -11,7 +11,6 @@
 package org.junit.platform.testkit.engine;
 
 import static java.util.function.Predicate.isEqual;
-import static java.util.stream.Collectors.toList;
 import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.apiguardian.api.API.Status.STABLE;
@@ -62,7 +61,7 @@ public final class EventConditions {
 
 	/**
 	 * Create a new {@link Condition} that matches if and only if an
-	 * {@link Event} matches all of the supplied conditions.
+	 * {@link Event} matches all the supplied conditions.
 	 */
 	@SafeVarargs
 	@SuppressWarnings("varargs")
@@ -257,7 +256,7 @@ public final class EventConditions {
 	 *
 	 * @since 1.13
 	 */
-	@API(status = EXPERIMENTAL, since = "1.13")
+	@API(status = EXPERIMENTAL, since = "6.0")
 	public static Condition<Event> uniqueId(String uniqueId) {
 		return uniqueId(UniqueId.parse(uniqueId));
 	}
@@ -270,7 +269,7 @@ public final class EventConditions {
 	 *
 	 * @since 1.13
 	 */
-	@API(status = EXPERIMENTAL, since = "1.13")
+	@API(status = EXPERIMENTAL, since = "6.0")
 	public static Condition<Event> uniqueId(UniqueId uniqueId) {
 		return uniqueId(new Condition<>(isEqual(uniqueId), "equal to '%s'", uniqueId));
 	}
@@ -298,7 +297,7 @@ public final class EventConditions {
 	 *
 	 * @since 1.13
 	 */
-	@API(status = EXPERIMENTAL, since = "1.13")
+	@API(status = EXPERIMENTAL, since = "6.0")
 	public static Condition<Event> uniqueId(Condition<? super UniqueId> condition) {
 		return new Condition<>(byTestDescriptor(where(TestDescriptor::getUniqueId, condition::matches)),
 			"descriptor with uniqueId %s", condition.description().value());
@@ -326,7 +325,7 @@ public final class EventConditions {
 	 */
 	public static Condition<Event> uniqueIdSubstrings(List<String> uniqueIdSubstrings) {
 		// The following worked with AssertJ 3.13.2
-		// return allOf(uniqueIdSubstrings.stream().map(EventConditions::uniqueIdSubstring).collect(toList()));
+		// return allOf(uniqueIdSubstrings.stream().map(EventConditions::uniqueIdSubstring).toList());
 
 		// Workaround for a regression in AssertJ 3.14.0 that loses the individual descriptions
 		// when multiple conditions are supplied as an Iterable instead of as an array.
@@ -336,8 +335,8 @@ public final class EventConditions {
 		// does not track all descriptions.
 		List<Condition<Event>> conditions = uniqueIdSubstrings.stream()//
 				.map(EventConditions::uniqueIdSubstring)//
-				.collect(toList());
-		List<Description> descriptions = conditions.stream().map(Condition::description).collect(toList());
+				.toList();
+		List<Description> descriptions = conditions.stream().map(Condition::description).toList();
 		return allOf(conditions).describedAs(new JoinDescription("all of :[", "]", descriptions));
 	}
 
@@ -360,7 +359,7 @@ public final class EventConditions {
 	 *
 	 * @since 1.13
 	 */
-	@API(status = EXPERIMENTAL, since = "1.13")
+	@API(status = EXPERIMENTAL, since = "6.0")
 	public static Condition<Event> legacyReportingName(String legacyReportingName) {
 		return new Condition<>(
 			byTestDescriptor(where(TestDescriptor::getLegacyReportingName, isEqual(legacyReportingName))),
@@ -532,7 +531,7 @@ public final class EventConditions {
 	 *
 	 * @since 1.12
 	 */
-	@API(status = EXPERIMENTAL, since = "1.12")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Condition<Event> fileEntry(Predicate<FileEntry> predicate) {
 		return new Condition<>(byPayload(FileEntry.class, predicate), "event for file entry with custom predicate");
 	}

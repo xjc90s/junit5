@@ -10,7 +10,8 @@
 
 package org.junit.jupiter.params.provider;
 
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
+import static org.apiguardian.api.API.Status.DEPRECATED;
+import static org.apiguardian.api.API.Status.MAINTAINED;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ import org.junit.platform.commons.util.Preconditions;
  * @see org.junit.jupiter.params.provider.ArgumentsProvider
  * @see org.junit.jupiter.params.support.AnnotationConsumer
  */
-@API(status = EXPERIMENTAL, since = "5.10")
+@API(status = MAINTAINED, since = "5.13.3")
 public abstract class AnnotationBasedArgumentsProvider<A extends Annotation>
 		implements ArgumentsProvider, AnnotationConsumer<A> {
 
@@ -69,6 +70,7 @@ public abstract class AnnotationBasedArgumentsProvider<A extends Annotation>
 	 * instead.
 	 */
 	@Deprecated
+	@API(status = DEPRECATED, since = "5.13")
 	protected Stream<? extends Arguments> provideArguments(ExtensionContext context, A annotation) {
 		throw new JUnitException(String.format(
 			"AnnotationBasedArgumentsProvider does not override the provideArguments(ParameterDeclarations, ExtensionContext, Annotation) method. "

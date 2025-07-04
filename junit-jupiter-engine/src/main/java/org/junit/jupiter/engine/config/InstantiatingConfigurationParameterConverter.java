@@ -41,7 +41,7 @@ class InstantiatingConfigurationParameterConverter<T> {
 	Supplier<Optional<T>> supply(ConfigurationParameters configurationParameters, String key) {
 		// @formatter:off
 		return configurationParameters.get(key)
-				.map(String::trim)
+				.map(String::strip)
 				.filter(className -> !className.isEmpty())
 				.map(className -> newInstanceSupplier(className, key))
 				.orElse(Optional::empty);
@@ -67,7 +67,7 @@ class InstantiatingConfigurationParameterConverter<T> {
 	}
 
 	private void logSuccessMessage(String className, String key) {
-		logger.config(() -> String.format("Using default %s '%s' set via the '%s' configuration parameter.", this.name,
+		logger.config(() -> "Using default %s '%s' set via the '%s' configuration parameter.".formatted(this.name,
 			className, key));
 	}
 

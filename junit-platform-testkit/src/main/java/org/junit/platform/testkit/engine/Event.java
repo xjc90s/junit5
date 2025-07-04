@@ -10,7 +10,6 @@
 
 package org.junit.platform.testkit.engine;
 
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.junit.platform.commons.util.FunctionUtils.where;
 
@@ -19,6 +18,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.util.Preconditions;
 import org.junit.platform.commons.util.ToStringBuilder;
 import org.junit.platform.engine.TestDescriptor;
@@ -64,7 +64,7 @@ public class Event {
 	 * @since 1.12
 	 * @see EventType#FILE_ENTRY_PUBLISHED
 	 */
-	@API(status = EXPERIMENTAL, since = "1.12")
+	@API(status = MAINTAINED, since = "1.13.3")
 	public static Event fileEntryPublished(TestDescriptor testDescriptor, FileEntry file) {
 		Preconditions.notNull(file, "FileEntry must not be null");
 		return new Event(EventType.FILE_ENTRY_PUBLISHED, testDescriptor, file);
@@ -93,7 +93,7 @@ public class Event {
 	 * @return the newly created {@code Event}
 	 * @see EventType#SKIPPED
 	 */
-	public static Event executionSkipped(TestDescriptor testDescriptor, String reason) {
+	public static Event executionSkipped(TestDescriptor testDescriptor, @Nullable String reason) {
 		return new Event(EventType.SKIPPED, testDescriptor, reason);
 	}
 
@@ -170,7 +170,8 @@ public class Event {
 	private final Instant timestamp = Instant.now();
 	private final EventType type;
 	private final TestDescriptor testDescriptor;
-	private final Object payload;
+
+	private final @Nullable Object payload;
 
 	/**
 	 * Construct an {@code Event} with the supplied arguments.
@@ -180,7 +181,7 @@ public class Event {
 	 * never {@code null}
 	 * @param payload the generic payload associated with the event; may be {@code null}
 	 */
-	private Event(EventType type, TestDescriptor testDescriptor, Object payload) {
+	private Event(EventType type, TestDescriptor testDescriptor, @Nullable Object payload) {
 		this.type = Preconditions.notNull(type, "EventType must not be null");
 		this.testDescriptor = Preconditions.notNull(testDescriptor, "TestDescriptor must not be null");
 		this.payload = payload;
