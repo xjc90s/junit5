@@ -10,6 +10,7 @@
 
 package org.junit.platform.launcher.listeners;
 
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -44,6 +45,7 @@ import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
 import org.assertj.core.api.Condition;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
@@ -206,14 +208,9 @@ class UniqueIdTrackingListenerIntegrationTests {
 
 	private List<String> executeTests(Map<String, String> configurationParameters, ClassSelector... classSelectors) {
 		List<String> uniqueIds = new ArrayList<>();
-		var request = request()//
-				.selectors(classSelectors)//
-				.filters(includeEngines("junit-jupiter"))//
-				.configurationParameters(configurationParameters)//
-				.configurationParameter(WORKING_DIR_PROPERTY_NAME, workingDir.toAbsolutePath().toString())//
-				.build();
-		LauncherFactory.create().execute(request, new TestExecutionListener() {
+		var listener = new TestExecutionListener() {
 
+			@Nullable
 			private TestPlan testPlan;
 
 			@Override
@@ -227,7 +224,8 @@ class UniqueIdTrackingListenerIntegrationTests {
 					uniqueIds.add(testIdentifier.getUniqueId());
 				}
 				else {
-					this.testPlan.getChildren(testIdentifier).forEach(child -> executionSkipped(child, reason));
+					requireNonNull(this.testPlan).getChildren(testIdentifier).forEach(
+						child -> executionSkipped(child, reason));
 				}
 			}
 
@@ -237,7 +235,16 @@ class UniqueIdTrackingListenerIntegrationTests {
 					uniqueIds.add(testIdentifier.getUniqueId());
 				}
 			}
-		});
+		};
+		var request = request()//
+				.selectors(classSelectors)//
+				.filters(includeEngines("junit-jupiter"))//
+				.configurationParameters(configurationParameters)//
+				.configurationParameter(WORKING_DIR_PROPERTY_NAME, workingDir.toAbsolutePath().toString())//
+				.forExecution()//
+				.listeners(listener)//
+				.build();
+		LauncherFactory.create().execute(request);
 		return uniqueIds;
 	}
 

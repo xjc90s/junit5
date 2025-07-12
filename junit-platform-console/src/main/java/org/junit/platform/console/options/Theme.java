@@ -14,6 +14,7 @@ import static org.apiguardian.api.API.Status.INTERNAL;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 import org.apiguardian.api.API;
 import org.junit.platform.engine.TestExecutionResult;
@@ -116,16 +117,11 @@ public enum Theme {
 	}
 
 	public final String status(TestExecutionResult result) {
-		switch (result.getStatus()) {
-			case SUCCESSFUL:
-				return successful();
-			case ABORTED:
-				return aborted();
-			case FAILED:
-				return failed();
-			default:
-				return result.getStatus().name();
-		}
+		return switch (result.getStatus()) {
+			case SUCCESSFUL -> successful();
+			case ABORTED -> aborted();
+			case FAILED -> failed();
+		};
 	}
 
 	/**
@@ -134,7 +130,7 @@ public enum Theme {
 	 */
 	@Override
 	public final String toString() {
-		return name().toLowerCase();
+		return name().toLowerCase(Locale.ROOT);
 	}
 
 }

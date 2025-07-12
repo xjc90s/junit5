@@ -10,6 +10,7 @@
 
 package org.junit.platform.launcher.core;
 
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,12 +19,12 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,6 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
  *
  * @since 1.0
  */
-@SuppressWarnings("deprecation")
 class LauncherConfigurationParametersTests {
 
 	private static final String CONFIG_FILE_NAME = "test-junit-platform.properties";
@@ -60,6 +60,7 @@ class LauncherConfigurationParametersTests {
 		System.clearProperty(KEY);
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void constructorPreconditions() {
 		assertThrows(PreconditionViolationException.class, () -> fromMap(null));
@@ -68,6 +69,7 @@ class LauncherConfigurationParametersTests {
 		assertThrows(PreconditionViolationException.class, () -> fromMapAndFile(Map.of(), "  "));
 	}
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void getPreconditions() {
 		ConfigurationParameters configParams = fromMap(Map.of());
@@ -79,7 +81,6 @@ class LauncherConfigurationParametersTests {
 	@Test
 	void noConfigParams() {
 		ConfigurationParameters configParams = fromMap(Map.of());
-		assertThat(configParams.size()).isEqualTo(0);
 		assertThat(configParams.get(KEY)).isEmpty();
 		assertThat(configParams.keySet()).doesNotContain(KEY);
 		assertThat(configParams.toString()).doesNotContain(KEY);
@@ -168,11 +169,14 @@ class LauncherConfigurationParametersTests {
 
 	@Test
 	void getValueInExtensionContext() {
+		var summary = new SummaryGeneratingListener();
 		var request = LauncherDiscoveryRequestBuilder.request() //
 				.configurationParameter("thing", "one else!") //
-				.selectors(DiscoverySelectors.selectClass(Something.class)).build();
-		var summary = new SummaryGeneratingListener();
-		LauncherFactory.create().execute(request, summary);
+				.selectors(DiscoverySelectors.selectClass(Something.class)) //
+				.forExecution() //
+				.listeners(summary) //
+				.build();
+		LauncherFactory.create().execute(request);
 		assertEquals(0, summary.getSummary().getTestsFailedCount());
 	}
 
@@ -204,31 +208,32 @@ class LauncherConfigurationParametersTests {
 	@Test
 	void warnsOnMultiplePropertyResources(@TempDir Path tempDir, @TrackLogRecords LogRecordListener logRecordListener)
 			throws Exception {
+
 		Properties properties = new Properties();
 		properties.setProperty(KEY, "from second config file");
 		try (var out = Files.newOutputStream(tempDir.resolve(CONFIG_FILE_NAME))) {
 			properties.store(out, "");
 		}
+
 		ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+		URL originalResource = originalClassLoader.getResource(CONFIG_FILE_NAME);
+
 		try (var customClassLoader = new URLClassLoader(new URL[] { tempDir.toUri().toURL() }, originalClassLoader)) {
 			Thread.currentThread().setContextClassLoader(customClassLoader);
 			ConfigurationParameters configParams = fromMapAndFile(Map.of(), CONFIG_FILE_NAME);
 
 			assertThat(configParams.get(KEY)).contains(CONFIG_FILE);
 
-			List<String> loggedWarnings = logRecordListener.stream(Level.WARNING) //
-					.map(LogRecord::getMessage) //
-					.toList();
-			assertThat(loggedWarnings) //
-					.hasSize(1);
-			assertThat(loggedWarnings.getFirst()) //
-					.contains("Discovered 2 '" + CONFIG_FILE_NAME
-							+ "' configuration files on the classpath (see below); only the first (*) will be used.") //
-					.contains("- "
-							+ Path.of(
-								"build/resources/test/test-junit-platform.properties").toAbsolutePath().toUri().toURL()
-							+ " (*)") //
-					.contains("- " + tempDir.resolve(CONFIG_FILE_NAME).toUri().toURL());
+			assertThat(logRecordListener.stream(Level.WARNING).map(LogRecord::getMessage)) //
+					.hasSize(1) //
+					.first(as(InstanceOfAssertFactories.STRING)) //
+					.contains("""
+							Discovered 2 '%s' configuration files on the classpath (see below); \
+							only the first (*) will be used.
+							- %s (*)
+							- %s"""//
+							.formatted(CONFIG_FILE_NAME, originalResource,
+								tempDir.resolve(CONFIG_FILE_NAME).toUri().toURL()));
 		}
 		finally {
 			Thread.currentThread().setContextClassLoader(originalClassLoader);

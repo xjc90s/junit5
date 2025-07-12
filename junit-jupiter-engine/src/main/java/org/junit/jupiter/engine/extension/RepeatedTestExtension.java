@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 import org.junit.platform.commons.util.Preconditions;
 
@@ -38,7 +37,7 @@ class RepeatedTestExtension implements TestTemplateInvocationContextProvider {
 	}
 
 	@Override
-	public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
+	public Stream<RepeatedTestInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
 		Method testMethod = context.getRequiredTestMethod();
 		String displayName = context.getDisplayName();
 		RepeatedTest repeatedTest = findAnnotation(testMethod, RepeatedTest.class).get();
@@ -57,8 +56,9 @@ class RepeatedTestExtension implements TestTemplateInvocationContextProvider {
 
 	private int totalRepetitions(RepeatedTest repeatedTest, Method method) {
 		int repetitions = repeatedTest.value();
-		Preconditions.condition(repetitions > 0, () -> String.format(
-			"Configuration error: @RepeatedTest on method [%s] must be declared with a positive 'value'.", method));
+		Preconditions.condition(repetitions > 0,
+			() -> "Configuration error: @RepeatedTest on method [%s] must be declared with a positive 'value'.".formatted(
+				method));
 		return repetitions;
 	}
 
@@ -67,8 +67,9 @@ class RepeatedTestExtension implements TestTemplateInvocationContextProvider {
 		if (failureThreshold != Integer.MAX_VALUE) {
 			int repetitions = repeatedTest.value();
 			Preconditions.condition((failureThreshold > 0) && (failureThreshold < repetitions),
-				() -> String.format("Configuration error: @RepeatedTest on method [%s] must declare a "
-						+ "'failureThreshold' greater than zero and less than the total number of repetitions [%d].",
+				() -> """
+						Configuration error: @RepeatedTest on method [%s] must declare a \
+						'failureThreshold' greater than zero and less than the total number of repetitions [%d].""".formatted(
 					method, repetitions));
 		}
 		return failureThreshold;
@@ -76,8 +77,9 @@ class RepeatedTestExtension implements TestTemplateInvocationContextProvider {
 
 	private RepeatedTestDisplayNameFormatter displayNameFormatter(RepeatedTest repeatedTest, Method method,
 			String displayName) {
-		String pattern = Preconditions.notBlank(repeatedTest.name().trim(), () -> String.format(
-			"Configuration error: @RepeatedTest on method [%s] must be declared with a non-empty name.", method));
+		String pattern = Preconditions.notBlank(repeatedTest.name().strip(),
+			() -> "Configuration error: @RepeatedTest on method [%s] must be declared with a non-empty name.".formatted(
+				method));
 		return new RepeatedTestDisplayNameFormatter(pattern, displayName);
 	}
 

@@ -12,14 +12,12 @@ package org.junit.jupiter.params;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.reverse;
-import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_METHOD;
 import static org.junit.platform.commons.support.AnnotationSupport.findAnnotatedMethods;
 import static org.junit.platform.commons.support.AnnotationSupport.findAnnotation;
 import static org.junit.platform.commons.support.AnnotationSupport.isAnnotated;
 import static org.junit.platform.commons.support.HierarchyTraversalMode.BOTTOM_UP;
 import static org.junit.platform.commons.support.HierarchyTraversalMode.TOP_DOWN;
 import static org.junit.platform.commons.support.ReflectionSupport.findFields;
-import static org.junit.platform.commons.util.CollectionUtils.toUnmodifiableList;
 import static org.junit.platform.commons.util.ReflectionUtils.isRecordClass;
 
 import java.lang.annotation.Annotation;
@@ -30,14 +28,12 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ClassTemplateInvocationContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.platform.commons.JUnitException;
 import org.junit.platform.commons.support.HierarchyTraversalMode;
-import org.junit.platform.commons.support.ModifierSupport;
 import org.junit.platform.commons.util.ReflectionUtils;
 
-class ParameterizedClassContext implements ParameterizedDeclarationContext<ClassTemplateInvocationContext> {
+class ParameterizedClassContext implements ParameterizedDeclarationContext<ParameterizedClassInvocationContext> {
 
 	private final Class<?> testClass;
 	private final ParameterizedClass annotation;
@@ -63,14 +59,14 @@ class ParameterizedClassContext implements ParameterizedDeclarationContext<Class
 			this.injectionType = InjectionType.FIELDS;
 		}
 
-		this.beforeMethods = findLifecycleMethodsAndAssertStaticAndNonPrivate(testClass, testInstanceLifecycle,
-			TOP_DOWN, BeforeParameterizedClassInvocation.class, BeforeParameterizedClassInvocation::injectArguments,
+		this.beforeMethods = findLifecycleMethodsAndAssertStaticAndNonPrivate(testClass, TOP_DOWN,
+			BeforeParameterizedClassInvocation.class, BeforeParameterizedClassInvocation::injectArguments,
 			this.resolverFacade);
 
 		// Make a local copy since findAnnotatedMethods() returns an immutable list.
-		this.afterMethods = new ArrayList<>(findLifecycleMethodsAndAssertStaticAndNonPrivate(testClass,
-			testInstanceLifecycle, BOTTOM_UP, AfterParameterizedClassInvocation.class,
-			AfterParameterizedClassInvocation::injectArguments, this.resolverFacade));
+		this.afterMethods = new ArrayList<>(findLifecycleMethodsAndAssertStaticAndNonPrivate(testClass, BOTTOM_UP,
+			AfterParameterizedClassInvocation.class, AfterParameterizedClassInvocation::injectArguments,
+			this.resolverFacade));
 
 		// Since the bottom-up ordering of afterMethods will later be reversed when the
 		// AfterParameterizedClassInvocationMethodInvoker extensions are executed within
@@ -127,7 +123,7 @@ class ParameterizedClassContext implements ParameterizedDeclarationContext<Class
 	}
 
 	@Override
-	public ClassTemplateInvocationContext createInvocationContext(ParameterizedInvocationNameFormatter formatter,
+	public ParameterizedClassInvocationContext createInvocationContext(ParameterizedInvocationNameFormatter formatter,
 			Arguments arguments, int invocationIndex) {
 		return new ParameterizedClassInvocationContext(this, formatter, arguments, invocationIndex);
 	}
@@ -149,15 +145,12 @@ class ParameterizedClassContext implements ParameterizedDeclarationContext<Class
 	}
 
 	private static <A extends Annotation> List<ArgumentSetLifecycleMethod> findLifecycleMethodsAndAssertStaticAndNonPrivate(
-			Class<?> testClass, TestInstance.Lifecycle testInstanceLifecycle, HierarchyTraversalMode traversalMode,
-			Class<A> annotationType, Predicate<A> injectArgumentsPredicate, ResolverFacade resolverFacade) {
+			Class<?> testClass, HierarchyTraversalMode traversalMode, Class<A> annotationType,
+			Predicate<A> injectArgumentsPredicate, ResolverFacade resolverFacade) {
 
 		List<Method> methods = findAnnotatedMethods(testClass, annotationType, traversalMode);
 
 		return methods.stream() //
-				.filter(ModifierSupport::isNotPrivate) //
-				.filter(testInstanceLifecycle == PER_METHOD ? ModifierSupport::isStatic : __ -> true) //
-				.filter(ReflectionUtils::returnsPrimitiveVoid) //
 				.map(method -> {
 					A annotation = getAnnotation(method, annotationType);
 					if (injectArgumentsPredicate.test(annotation)) {
@@ -166,7 +159,7 @@ class ParameterizedClassContext implements ParameterizedDeclarationContext<Class
 					}
 					return new ArgumentSetLifecycleMethod(method);
 				}) //
-				.collect(toUnmodifiableList());
+				.toList();
 	}
 
 	private static <A extends Annotation> A getAnnotation(Method method, Class<A> annotationType) {

@@ -11,6 +11,7 @@
 package org.junit.platform.engine;
 
 import static org.apiguardian.api.API.Status.EXPERIMENTAL;
+import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.apiguardian.api.API.Status.STABLE;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.util.Preconditions;
 
 /**
@@ -99,7 +101,7 @@ public interface TestDescriptor {
 	 *
 	 * @param parent the new parent of this descriptor; may be {@code null}.
 	 */
-	void setParent(TestDescriptor parent);
+	void setParent(@Nullable TestDescriptor parent);
 
 	/**
 	 * Get the immutable set of <em>children</em> of this descriptor.
@@ -120,7 +122,7 @@ public interface TestDescriptor {
 	 */
 	@API(status = STABLE, since = "1.10")
 	default Set<? extends TestDescriptor> getAncestors() {
-		if (!getParent().isPresent()) {
+		if (getParent().isEmpty()) {
 			return Collections.emptySet();
 		}
 		TestDescriptor parent = getParent().get();
@@ -188,7 +190,7 @@ public interface TestDescriptor {
 	 * @param orderer a unary operator to order the children of this test descriptor
 	 * @since 1.12
 	 */
-	@API(since = "1.12", status = EXPERIMENTAL)
+	@API(status = MAINTAINED, since = "1.13.3")
 	default void orderChildren(UnaryOperator<List<TestDescriptor>> orderer) {
 		Preconditions.notNull(orderer, "orderer must not be null");
 		Set<? extends TestDescriptor> originalChildren = getChildren();
@@ -215,7 +217,7 @@ public interface TestDescriptor {
 	 * <p>A <em>root</em> descriptor is a descriptor without a parent.
 	 */
 	default boolean isRoot() {
-		return !getParent().isPresent();
+		return getParent().isEmpty();
 	}
 
 	/**
@@ -333,7 +335,7 @@ public interface TestDescriptor {
 		 * is empty
 		 * @since 1.13
 		 */
-		@API(status = EXPERIMENTAL, since = "1.13")
+		@API(status = EXPERIMENTAL, since = "6.0")
 		static Visitor composite(Visitor... visitors) {
 			return CompositeTestDescriptorVisitor.from(visitors);
 		}
@@ -369,15 +371,15 @@ public interface TestDescriptor {
 		CONTAINER_AND_TEST;
 
 		/**
-		 * @return {@code true} if this type represents a descriptor that can
-		 * contain other descriptors
+		 * {@return {@code true} if this type represents a descriptor that can
+		 * contain other descriptors}
 		 */
 		public boolean isContainer() {
 			return this == CONTAINER || this == CONTAINER_AND_TEST;
 		}
 
 		/**
-		 * @return {@code true} if this type represents a descriptor for a test
+		 * {@return {@code true} if this type represents a descriptor for a test}
 		 */
 		public boolean isTest() {
 			return this == TEST || this == CONTAINER_AND_TEST;

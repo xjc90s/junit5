@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.extension.ExecutableInvoker;
 import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -54,7 +55,7 @@ abstract class AbstractExtensionContext<T extends TestDescriptor> implements Ext
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractExtensionContext.class);
 
-	private final ExtensionContext parent;
+	private final @Nullable ExtensionContext parent;
 	private final EngineExecutionListener engineExecutionListener;
 	private final T testDescriptor;
 	private final Set<String> tags;
@@ -64,8 +65,8 @@ abstract class AbstractExtensionContext<T extends TestDescriptor> implements Ext
 	private final LauncherStoreFacade launcherStoreFacade;
 	private final NamespacedHierarchicalStore<org.junit.platform.engine.support.store.Namespace> valuesStore;
 
-	AbstractExtensionContext(ExtensionContext parent, EngineExecutionListener engineExecutionListener, T testDescriptor,
-			JupiterConfiguration configuration, ExtensionRegistry extensionRegistry,
+	AbstractExtensionContext(@Nullable ExtensionContext parent, EngineExecutionListener engineExecutionListener,
+			T testDescriptor, JupiterConfiguration configuration, ExtensionRegistry extensionRegistry,
 			LauncherStoreFacade launcherStoreFacade) {
 
 		Preconditions.notNull(testDescriptor, "TestDescriptor must not be null");
@@ -93,23 +94,23 @@ abstract class AbstractExtensionContext<T extends TestDescriptor> implements Ext
 		return (__, ___, value) -> {
 			boolean isAutoCloseEnabled = this.configuration.isClosingStoredAutoCloseablesEnabled();
 
-			if (value instanceof AutoCloseable && isAutoCloseEnabled) {
-				((AutoCloseable) value).close();
+			if (value instanceof @SuppressWarnings("resource") AutoCloseable closeable && isAutoCloseEnabled) {
+				closeable.close();
 				return;
 			}
 
-			if (value instanceof Store.CloseableResource) {
+			if (value instanceof Store.CloseableResource resource) {
 				if (isAutoCloseEnabled) {
 					LOGGER.warn(
 						() -> "Type implements CloseableResource but not AutoCloseable: " + value.getClass().getName());
 				}
-				((Store.CloseableResource) value).close();
+				resource.close();
 			}
 		};
 	}
 
 	private static NamespacedHierarchicalStore<org.junit.platform.engine.support.store.Namespace> createStore(
-			ExtensionContext parent, LauncherStoreFacade launcherStoreFacade,
+			@Nullable ExtensionContext parent, LauncherStoreFacade launcherStoreFacade,
 			NamespacedHierarchicalStore.CloseAction<org.junit.platform.engine.support.store.Namespace> closeAction) {
 		NamespacedHierarchicalStore<org.junit.platform.engine.support.store.Namespace> parentStore;
 		if (parent == null) {
@@ -159,7 +160,9 @@ abstract class AbstractExtensionContext<T extends TestDescriptor> implements Ext
 		Preconditions.notNull(action, "action must not be null");
 
 		ThrowingConsumer<Path> enhancedAction = path -> {
-			Files.createDirectory(path);
+			if (!Files.isDirectory(path)) {
+				Files.createDirectory(path);
+			}
 			action.accept(path);
 		};
 		publishFileEntry(name, enhancedAction, file -> {
@@ -172,7 +175,8 @@ abstract class AbstractExtensionContext<T extends TestDescriptor> implements Ext
 			Function<Path, FileEntry> fileEntryCreator) {
 		Path dir = createOutputDirectory();
 		Path path = dir.resolve(name);
-		Preconditions.condition(path.getParent().equals(dir), () -> "name must not contain path separators: " + name);
+		Preconditions.condition(path.getParent() != null && path.getParent().equals(dir),
+			() -> "name must not contain path separators: " + name);
 		try {
 			action.accept(path);
 		}
@@ -218,16 +222,11 @@ abstract class AbstractExtensionContext<T extends TestDescriptor> implements Ext
 
 	@Override
 	public Store getStore(StoreScope scope, Namespace namespace) {
-		// TODO [#4246] Use switch expression
-		switch (scope) {
-			case LAUNCHER_SESSION:
-				return launcherStoreFacade.getSessionLevelStore(namespace);
-			case EXECUTION_REQUEST:
-				return launcherStoreFacade.getRequestLevelStore(namespace);
-			case EXTENSION_CONTEXT:
-				return getStore(namespace);
-		}
-		throw new JUnitException("Unknown StoreScope: " + scope);
+		return switch (scope) {
+			case LAUNCHER_SESSION -> launcherStoreFacade.getSessionLevelStore(namespace);
+			case EXECUTION_REQUEST -> launcherStoreFacade.getRequestLevelStore(namespace);
+			case EXTENSION_CONTEXT -> getStore(namespace);
+		};
 	}
 
 	@Override
@@ -242,7 +241,8 @@ abstract class AbstractExtensionContext<T extends TestDescriptor> implements Ext
 	}
 
 	@Override
-	public <V> Optional<V> getConfigurationParameter(String key, Function<String, V> transformer) {
+	public <V> Optional<V> getConfigurationParameter(String key,
+			Function<? super String, ? extends @Nullable V> transformer) {
 		return this.configuration.getRawConfigurationParameter(key, transformer);
 	}
 
@@ -264,12 +264,9 @@ abstract class AbstractExtensionContext<T extends TestDescriptor> implements Ext
 	protected abstract Node.ExecutionMode getPlatformExecutionMode();
 
 	private ExecutionMode toJupiterExecutionMode(Node.ExecutionMode mode) {
-		switch (mode) {
-			case CONCURRENT:
-				return ExecutionMode.CONCURRENT;
-			case SAME_THREAD:
-				return ExecutionMode.SAME_THREAD;
-		}
-		throw new JUnitException("Unknown ExecutionMode: " + mode);
+		return switch (mode) {
+			case CONCURRENT -> ExecutionMode.CONCURRENT;
+			case SAME_THREAD -> ExecutionMode.SAME_THREAD;
+		};
 	}
 }

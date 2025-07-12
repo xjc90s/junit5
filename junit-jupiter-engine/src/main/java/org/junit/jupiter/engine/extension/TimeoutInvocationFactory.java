@@ -10,6 +10,8 @@
 
 package org.junit.jupiter.engine.extension;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -48,11 +50,11 @@ class TimeoutInvocationFactory {
 	}
 
 	private ScheduledExecutorService getThreadExecutorForSameThreadInvocation() {
-		return store.getOrComputeIfAbsent(SingleThreadExecutorResource.class).get();
+		return requireNonNull(store.getOrComputeIfAbsent(SingleThreadExecutorResource.class)).get();
 	}
 
 	@SuppressWarnings({ "deprecation", "try" })
-	private static abstract class ExecutorResource implements Store.CloseableResource, AutoCloseable {
+	private abstract static class ExecutorResource implements Store.CloseableResource, AutoCloseable {
 
 		protected final ScheduledExecutorService executor;
 
@@ -78,7 +80,7 @@ class TimeoutInvocationFactory {
 	@SuppressWarnings("try")
 	static class SingleThreadExecutorResource extends ExecutorResource {
 
-		@SuppressWarnings("unused")
+		@SuppressWarnings({ "unused", "ThreadPriorityCheck" })
 		SingleThreadExecutorResource() {
 			super(Executors.newSingleThreadScheduledExecutor(runnable -> {
 				Thread thread = new Thread(runnable, "junit-jupiter-timeout-watcher");

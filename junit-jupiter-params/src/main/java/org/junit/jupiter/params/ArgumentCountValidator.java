@@ -10,6 +10,8 @@
 
 package org.junit.jupiter.params;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -38,23 +40,21 @@ class ArgumentCountValidator {
 	void validate(ExtensionContext extensionContext) {
 		ArgumentCountValidationMode argumentCountValidationMode = getArgumentCountValidationMode(extensionContext);
 		switch (argumentCountValidationMode) {
-			case DEFAULT:
-			case NONE:
-				return;
-			case STRICT:
+			case DEFAULT, NONE -> {
+			}
+			case STRICT -> {
 				int consumedCount = this.declarationContext.getResolverFacade().determineConsumedArgumentCount(
 					this.arguments);
 				int totalCount = this.arguments.getTotalLength();
-				Preconditions.condition(consumedCount == totalCount, () -> String.format(
-					"Configuration error: @%s consumes %s %s but there %s %s %s provided.%nNote: the provided arguments were %s",
-					this.declarationContext.getAnnotationName(), consumedCount,
-					pluralize(consumedCount, "parameter", "parameters"), pluralize(totalCount, "was", "were"),
-					totalCount, pluralize(totalCount, "argument", "arguments"),
-					Arrays.toString(this.arguments.getAllPayloads())));
-				break;
-			default:
-				throw new ExtensionConfigurationException(
-					"Unsupported argument count validation mode: " + argumentCountValidationMode);
+				Preconditions.condition(consumedCount == totalCount,
+					() -> "Configuration error: @%s consumes %s %s but there %s %s %s provided.%nNote: the provided arguments were %s".formatted(
+						this.declarationContext.getAnnotationName(), consumedCount,
+						pluralize(consumedCount, "parameter", "parameters"), pluralize(totalCount, "was", "were"),
+						totalCount, pluralize(totalCount, "argument", "arguments"),
+						Arrays.toString(this.arguments.getAllPayloads())));
+			}
+			default -> throw new ExtensionConfigurationException(
+				"Unsupported argument count validation mode: " + argumentCountValidationMode);
 		}
 	}
 
@@ -72,7 +72,7 @@ class ArgumentCountValidator {
 		String key = ARGUMENT_COUNT_VALIDATION_KEY;
 		ArgumentCountValidationMode fallback = ArgumentCountValidationMode.NONE;
 		ExtensionContext.Store store = getStore(extensionContext);
-		return store.getOrComputeIfAbsent(key, __ -> {
+		return requireNonNull(store.getOrComputeIfAbsent(key, __ -> {
 			Optional<String> optionalConfigValue = extensionContext.getConfigurationParameter(key);
 			if (optionalConfigValue.isPresent()) {
 				String configValue = optionalConfigValue.get();
@@ -80,23 +80,22 @@ class ArgumentCountValidator {
 					ArgumentCountValidationMode.values()).filter(
 						mode -> mode.name().equalsIgnoreCase(configValue)).findFirst();
 				if (enumValue.isPresent()) {
-					logger.config(() -> String.format(
-						"Using ArgumentCountValidationMode '%s' set via the '%s' configuration parameter.",
-						enumValue.get().name(), key));
+					logger.config(
+						() -> "Using ArgumentCountValidationMode '%s' set via the '%s' configuration parameter.".formatted(
+							enumValue.get().name(), key));
 					return enumValue.get();
 				}
 				else {
-					logger.warn(() -> String.format(
-						"Invalid ArgumentCountValidationMode '%s' set via the '%s' configuration parameter. "
-								+ "Falling back to the %s default value.",
-						configValue, key, fallback.name()));
+					logger.warn(() -> """
+							Invalid ArgumentCountValidationMode '%s' set via the '%s' configuration parameter. \
+							Falling back to the %s default value.""".formatted(configValue, key, fallback.name()));
 					return fallback;
 				}
 			}
 			else {
 				return fallback;
 			}
-		}, ArgumentCountValidationMode.class);
+		}, ArgumentCountValidationMode.class));
 	}
 
 	private static String pluralize(int count, String singular, String plural) {

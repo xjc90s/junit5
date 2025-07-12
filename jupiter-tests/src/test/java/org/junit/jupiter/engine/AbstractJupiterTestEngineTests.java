@@ -10,6 +10,8 @@
 
 package org.junit.jupiter.engine;
 
+import static kotlin.jvm.JvmClassMappingKt.getJavaClass;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
@@ -22,12 +24,15 @@ import java.util.function.Consumer;
 
 import org.junit.platform.engine.DiscoveryIssue.Severity;
 import org.junit.platform.engine.DiscoverySelector;
+import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.testkit.engine.EngineDiscoveryResults;
 import org.junit.platform.testkit.engine.EngineExecutionResults;
 import org.junit.platform.testkit.engine.EngineTestKit;
+
+import kotlin.reflect.KClass;
 
 /**
  * Abstract base class for tests involving the {@link JupiterTestEngine}.
@@ -37,6 +42,10 @@ import org.junit.platform.testkit.engine.EngineTestKit;
 public abstract class AbstractJupiterTestEngineTests {
 
 	private final JupiterTestEngine engine = new JupiterTestEngine();
+
+	protected EngineExecutionResults executeTestsForClass(KClass<?> testClass) {
+		return executeTestsForClass(getJavaClass(testClass));
+	}
 
 	protected EngineExecutionResults executeTestsForClass(Class<?> testClass) {
 		return executeTests(selectClass(testClass));
@@ -58,6 +67,12 @@ public abstract class AbstractJupiterTestEngineTests {
 
 	protected EngineExecutionResults executeTests(LauncherDiscoveryRequest request) {
 		return EngineTestKit.execute(this.engine, request);
+	}
+
+	protected TestDescriptor discoverTestsWithoutIssues(LauncherDiscoveryRequest request) {
+		var results = discoverTests(request);
+		assertThat(results.getDiscoveryIssues()).isEmpty();
+		return results.getEngineDescriptor();
 	}
 
 	protected EngineDiscoveryResults discoverTestsForClass(Class<?> testClass) {
@@ -82,7 +97,15 @@ public abstract class AbstractJupiterTestEngineTests {
 		return EngineTestKit.discover(this.engine, request);
 	}
 
-	private static LauncherDiscoveryRequestBuilder defaultRequest() {
+	protected EngineTestKit.Builder jupiterTestEngine() {
+		return EngineTestKit.engine(this.engine) //
+				.outputDirectoryProvider(dummyOutputDirectoryProvider()) //
+				.configurationParameter(STACKTRACE_PRUNING_ENABLED_PROPERTY_NAME, String.valueOf(false)) //
+				.configurationParameter(CRITICAL_DISCOVERY_ISSUE_SEVERITY_PROPERTY_NAME, Severity.INFO.name()) //
+				.enableImplicitConfigurationParameters(false);
+	}
+
+	protected static LauncherDiscoveryRequestBuilder defaultRequest() {
 		return request() //
 				.outputDirectoryProvider(dummyOutputDirectoryProvider()) //
 				.configurationParameter(STACKTRACE_PRUNING_ENABLED_PROPERTY_NAME, String.valueOf(false)) //

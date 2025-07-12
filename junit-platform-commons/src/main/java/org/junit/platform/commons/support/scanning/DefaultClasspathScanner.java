@@ -10,10 +10,7 @@
 
 package org.junit.platform.commons.support.scanning;
 
-import static java.lang.String.format;
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 import static org.apiguardian.api.API.Status.INTERNAL;
 import static org.junit.platform.commons.support.scanning.ClasspathFilters.CLASS_FILE_SUFFIX;
 import static org.junit.platform.commons.util.StringUtils.isNotBlank;
@@ -89,7 +86,7 @@ public class DefaultClasspathScanner implements ClasspathScanner {
 			PackageUtils.DEFAULT_PACKAGE_NAME.equals(basePackageName) || isNotBlank(basePackageName),
 			"basePackageName must not be null or blank");
 		Preconditions.notNull(classFilter, "classFilter must not be null");
-		basePackageName = basePackageName.trim();
+		basePackageName = basePackageName.strip();
 
 		List<URI> roots = getRootUrisForPackageNameOnClassPathAndModulePath(basePackageName);
 		return findClassesForUris(roots, basePackageName, classFilter);
@@ -109,7 +106,7 @@ public class DefaultClasspathScanner implements ClasspathScanner {
 			PackageUtils.DEFAULT_PACKAGE_NAME.equals(basePackageName) || isNotBlank(basePackageName),
 			"basePackageName must not be null or blank");
 		Preconditions.notNull(resourceFilter, "resourceFilter must not be null");
-		basePackageName = basePackageName.trim();
+		basePackageName = basePackageName.strip();
 
 		List<URI> roots = getRootUrisForPackageNameOnClassPathAndModulePath(basePackageName);
 		return findResourcesForUris(roots, basePackageName, resourceFilter);
@@ -132,7 +129,7 @@ public class DefaultClasspathScanner implements ClasspathScanner {
 				.map(baseUri -> findClassesForUri(baseUri, basePackageName, classFilter))
 				.flatMap(Collection::stream)
 				.distinct()
-				.collect(toList());
+				.toList();
 		// @formatter:on
 	}
 
@@ -156,7 +153,7 @@ public class DefaultClasspathScanner implements ClasspathScanner {
 				.map(baseUri -> findResourcesForUri(baseUri, basePackageName, resourceFilter))
 				.flatMap(Collection::stream)
 				.distinct()
-				.collect(toList());
+				.toList();
 		// @formatter:on
 	}
 
@@ -297,8 +294,9 @@ public class DefaultClasspathScanner implements ClasspathScanner {
 
 	private void logMalformedClassName(Path classFile, String fullyQualifiedClassName, InternalError ex) {
 		try {
-			logger.debug(ex, () -> format("The java.lang.Class loaded from path [%s] has a malformed class name [%s].",
-				classFile.toAbsolutePath(), fullyQualifiedClassName));
+			logger.debug(ex,
+				() -> "The java.lang.Class loaded from path [%s] has a malformed class name [%s].".formatted(
+					classFile.toAbsolutePath(), fullyQualifiedClassName));
 		}
 		catch (Throwable t) {
 			UnrecoverableExceptions.rethrowIfUnrecoverable(t);
@@ -309,7 +307,7 @@ public class DefaultClasspathScanner implements ClasspathScanner {
 
 	private void logGenericFileProcessingException(Path classpathFile, Throwable throwable) {
 		logger.debug(throwable,
-			() -> format("Failed to load [%s] during classpath scanning.", classpathFile.toAbsolutePath()));
+			() -> "Failed to load [%s] during classpath scanning.".formatted(classpathFile.toAbsolutePath()));
 	}
 
 	private ClassLoader getClassLoader() {
@@ -342,19 +340,18 @@ public class DefaultClasspathScanner implements ClasspathScanner {
 	}
 
 	private List<URI> getRootUrisForPackage(String basePackageName) {
+		List<URI> uris = new ArrayList<>();
 		try {
 			Enumeration<URL> resources = getClassLoader().getResources(packagePath(basePackageName));
-			List<URI> uris = new ArrayList<>();
 			while (resources.hasMoreElements()) {
 				URL resource = resources.nextElement();
 				uris.add(resource.toURI());
 			}
-			return uris;
 		}
 		catch (Exception ex) {
 			logger.warn(ex, () -> "Error reading URIs from class loader for base package " + basePackageName);
-			return emptyList();
 		}
+		return uris;
 	}
 
 }

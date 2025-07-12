@@ -13,8 +13,10 @@ package org.junit.platform.launcher.core;
 import static org.apiguardian.api.API.Status.INTERNAL;
 import static org.junit.platform.launcher.LauncherConstants.DRY_RUN_PROPERTY_NAME;
 import static org.junit.platform.launcher.LauncherConstants.STACKTRACE_PRUNING_ENABLED_PROPERTY_NAME;
+import static org.junit.platform.launcher.core.LauncherPhase.getDiscoveryIssueFailurePhase;
 import static org.junit.platform.launcher.core.ListenerRegistry.forEngineExecutionListeners;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -22,6 +24,7 @@ import org.apiguardian.api.API;
 import org.junit.platform.commons.JUnitException;
 import org.junit.platform.commons.util.Preconditions;
 import org.junit.platform.commons.util.UnrecoverableExceptions;
+import org.junit.platform.engine.CancellationToken;
 import org.junit.platform.engine.ConfigurationParameters;
 import org.junit.platform.engine.EngineExecutionListener;
 import org.junit.platform.engine.ExecutionRequest;
@@ -55,13 +58,13 @@ public class EngineExecutionOrchestrator {
 	}
 
 	void execute(InternalTestPlan internalTestPlan, NamespacedHierarchicalStore<Namespace> requestLevelStore,
-			TestExecutionListener... listeners) {
+			Collection<? extends TestExecutionListener> listeners, CancellationToken cancellationToken) {
 		ConfigurationParameters configurationParameters = internalTestPlan.getConfigurationParameters();
 		ListenerRegistry<TestExecutionListener> testExecutionListenerListeners = buildListenerRegistryForExecution(
 			listeners);
 		withInterceptedStreams(configurationParameters, testExecutionListenerListeners,
 			testExecutionListener -> execute(internalTestPlan, EngineExecutionListener.NOOP, testExecutionListener,
-				requestLevelStore));
+				requestLevelStore, cancellationToken));
 	}
 
 	/**
@@ -73,18 +76,23 @@ public class EngineExecutionOrchestrator {
 	 */
 	@API(status = INTERNAL, since = "1.9", consumers = { "org.junit.platform.suite.engine" })
 	public void execute(LauncherDiscoveryResult discoveryResult, EngineExecutionListener engineExecutionListener,
-			TestExecutionListener testExecutionListener, NamespacedHierarchicalStore<Namespace> requestLevelStore) {
+			TestExecutionListener testExecutionListener, NamespacedHierarchicalStore<Namespace> requestLevelStore,
+			CancellationToken cancellationToken) {
+
 		Preconditions.notNull(discoveryResult, "discoveryResult must not be null");
 		Preconditions.notNull(engineExecutionListener, "engineExecutionListener must not be null");
 		Preconditions.notNull(testExecutionListener, "testExecutionListener must not be null");
 		Preconditions.notNull(requestLevelStore, "requestLevelStore must not be null");
+		Preconditions.notNull(cancellationToken, "cancellationToken must not be null");
 
 		InternalTestPlan internalTestPlan = InternalTestPlan.from(discoveryResult);
-		execute(internalTestPlan, engineExecutionListener, testExecutionListener, requestLevelStore);
+		execute(internalTestPlan, engineExecutionListener, testExecutionListener, requestLevelStore, cancellationToken);
 	}
 
 	private void execute(InternalTestPlan internalTestPlan, EngineExecutionListener parentEngineExecutionListener,
-			TestExecutionListener testExecutionListener, NamespacedHierarchicalStore<Namespace> requestLevelStore) {
+			TestExecutionListener testExecutionListener, NamespacedHierarchicalStore<Namespace> requestLevelStore,
+			CancellationToken cancellationToken) {
+
 		internalTestPlan.markStarted();
 
 		// Do not directly pass the internal test plan to test execution listeners.
@@ -99,7 +107,7 @@ public class EngineExecutionOrchestrator {
 		else {
 			execute(discoveryResult,
 				buildEngineExecutionListener(parentEngineExecutionListener, testExecutionListener, testPlan),
-				requestLevelStore);
+				requestLevelStore, cancellationToken);
 		}
 		testExecutionListener.testPlanExecutionFinished(testPlan);
 	}
@@ -160,7 +168,7 @@ public class EngineExecutionOrchestrator {
 	 */
 	@API(status = INTERNAL, since = "1.7", consumers = { "org.junit.platform.testkit" })
 	public void execute(LauncherDiscoveryResult discoveryResult, EngineExecutionListener engineExecutionListener,
-			NamespacedHierarchicalStore<Namespace> requestLevelStore) {
+			NamespacedHierarchicalStore<Namespace> requestLevelStore, CancellationToken cancellationToken) {
 		Preconditions.notNull(discoveryResult, "discoveryResult must not be null");
 		Preconditions.notNull(engineExecutionListener, "engineExecutionListener must not be null");
 
@@ -168,7 +176,7 @@ public class EngineExecutionOrchestrator {
 		EngineExecutionListener listener = selectExecutionListener(engineExecutionListener, configurationParameters);
 
 		for (TestEngine testEngine : discoveryResult.getTestEngines()) {
-			failOrExecuteEngine(discoveryResult, listener, testEngine, requestLevelStore);
+			failOrExecuteEngine(discoveryResult, listener, testEngine, requestLevelStore, cancellationToken);
 		}
 	}
 
@@ -183,9 +191,13 @@ public class EngineExecutionOrchestrator {
 	}
 
 	private void failOrExecuteEngine(LauncherDiscoveryResult discoveryResult, EngineExecutionListener listener,
-			TestEngine testEngine, NamespacedHierarchicalStore<Namespace> requestLevelStore) {
+			TestEngine testEngine, NamespacedHierarchicalStore<Namespace> requestLevelStore,
+			CancellationToken cancellationToken) {
+
 		EngineResultInfo engineDiscoveryResult = discoveryResult.getEngineResult(testEngine);
-		DiscoveryIssueNotifier discoveryIssueNotifier = engineDiscoveryResult.getDiscoveryIssueNotifier();
+		DiscoveryIssueNotifier discoveryIssueNotifier = shouldReportDiscoveryIssues(discoveryResult) //
+				? engineDiscoveryResult.getDiscoveryIssueNotifier() //
+				: DiscoveryIssueNotifier.NO_ISSUES;
 		TestDescriptor engineDescriptor = engineDiscoveryResult.getRootDescriptor();
 		Throwable failure = engineDiscoveryResult.getCause() //
 				.orElseGet(() -> discoveryIssueNotifier.createExceptionForCriticalIssues(testEngine));
@@ -197,15 +209,27 @@ public class EngineExecutionOrchestrator {
 			discoveryIssueNotifier.logNonCriticalIssues(testEngine);
 			listener.executionFinished(engineDescriptor, TestExecutionResult.failed(failure));
 		}
+		else if (cancellationToken.isCancellationRequested()) {
+			listener.executionStarted(engineDescriptor);
+			engineDescriptor.getChildren().forEach(child -> listener.executionSkipped(child, "Execution cancelled"));
+			listener.executionFinished(engineDescriptor, TestExecutionResult.aborted(null));
+		}
 		else {
 			executeEngine(engineDescriptor, listener, discoveryResult.getConfigurationParameters(), testEngine,
-				discoveryResult.getOutputDirectoryProvider(), discoveryIssueNotifier, requestLevelStore);
+				discoveryResult.getOutputDirectoryProvider(), discoveryIssueNotifier, requestLevelStore,
+				cancellationToken);
 		}
 	}
 
+	private static boolean shouldReportDiscoveryIssues(LauncherDiscoveryResult discoveryResult) {
+		ConfigurationParameters configurationParameters = discoveryResult.getConfigurationParameters();
+		return getDiscoveryIssueFailurePhase(configurationParameters).orElse(
+			LauncherPhase.EXECUTION) == LauncherPhase.EXECUTION;
+	}
+
 	private ListenerRegistry<TestExecutionListener> buildListenerRegistryForExecution(
-			TestExecutionListener... listeners) {
-		if (listeners.length == 0) {
+			Collection<? extends TestExecutionListener> listeners) {
+		if (listeners.isEmpty()) {
 			return this.listenerRegistry;
 		}
 		return ListenerRegistry.copyOf(this.listenerRegistry).addAll(listeners);
@@ -214,23 +238,24 @@ public class EngineExecutionOrchestrator {
 	private void executeEngine(TestDescriptor engineDescriptor, EngineExecutionListener listener,
 			ConfigurationParameters configurationParameters, TestEngine testEngine,
 			OutputDirectoryProvider outputDirectoryProvider, DiscoveryIssueNotifier discoveryIssueNotifier,
-			NamespacedHierarchicalStore<Namespace> requestLevelStore) {
+			NamespacedHierarchicalStore<Namespace> requestLevelStore, CancellationToken cancellationToken) {
+
 		OutcomeDelayingEngineExecutionListener delayingListener = new OutcomeDelayingEngineExecutionListener(listener,
 			engineDescriptor);
 		try {
 			testEngine.execute(ExecutionRequest.create(engineDescriptor, delayingListener, configurationParameters,
-				outputDirectoryProvider, requestLevelStore));
+				outputDirectoryProvider, requestLevelStore, cancellationToken));
 			discoveryIssueNotifier.logNonCriticalIssues(testEngine);
 			delayingListener.reportEngineOutcome();
 		}
 		catch (Throwable throwable) {
 			UnrecoverableExceptions.rethrowIfUnrecoverable(throwable);
 			JUnitException cause = null;
-			if (throwable instanceof LinkageError) {
-				cause = ClasspathAlignmentChecker.check((LinkageError) throwable).orElse(null);
+			if (throwable instanceof LinkageError error) {
+				cause = ClasspathAlignmentChecker.check(error).orElse(null);
 			}
 			if (cause == null) {
-				String message = String.format("TestEngine with ID '%s' failed to execute tests", testEngine.getId());
+				String message = "TestEngine with ID '%s' failed to execute tests".formatted(testEngine.getId());
 				cause = new JUnitException(message, throwable);
 			}
 			delayingListener.reportEngineStartIfNecessary();

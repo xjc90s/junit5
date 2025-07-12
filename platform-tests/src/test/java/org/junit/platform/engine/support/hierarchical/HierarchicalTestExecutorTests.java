@@ -18,8 +18,6 @@ import static org.junit.platform.engine.TestExecutionResult.Status.ABORTED;
 import static org.junit.platform.engine.TestExecutionResult.Status.FAILED;
 import static org.junit.platform.engine.TestExecutionResult.Status.SUCCESSFUL;
 import static org.junit.platform.engine.TestExecutionResult.successful;
-import static org.junit.platform.launcher.core.NamespacedHierarchicalStoreProviders.dummyNamespacedHierarchicalStore;
-import static org.junit.platform.launcher.core.OutputDirectoryProviders.dummyOutputDirectoryProvider;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -29,6 +27,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.quality.Strictness.LENIENT;
 
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +38,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.function.ThrowingConsumer;
-import org.junit.platform.engine.ConfigurationParameters;
+import org.junit.platform.engine.CancellationToken;
 import org.junit.platform.engine.EngineExecutionListener;
 import org.junit.platform.engine.ExecutionRequest;
 import org.junit.platform.engine.TestDescriptor;
@@ -53,6 +52,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.stubbing.Answer;
 import org.opentest4j.TestAbortedException;
 
@@ -70,6 +70,8 @@ class HierarchicalTestExecutorTests {
 	@Mock
 	EngineExecutionListener listener;
 
+	CancellationToken cancellationToken = CancellationToken.create();
+
 	MyEngineExecutionContext rootContext = new MyEngineExecutionContext();
 	HierarchicalTestExecutor<MyEngineExecutionContext> executor;
 
@@ -80,8 +82,10 @@ class HierarchicalTestExecutorTests {
 
 	private HierarchicalTestExecutor<MyEngineExecutionContext> createExecutor(
 			HierarchicalTestExecutorService executorService) {
-		var request = ExecutionRequest.create(root, listener, mock(ConfigurationParameters.class),
-			dummyOutputDirectoryProvider(), dummyNamespacedHierarchicalStore());
+		ExecutionRequest request = mock();
+		when(request.getRootTestDescriptor()).thenReturn(root);
+		when(request.getEngineExecutionListener()).thenReturn(listener);
+		when(request.getCancellationToken()).thenReturn(cancellationToken);
 		return new HierarchicalTestExecutor<>(request, rootContext, executorService,
 			OpenTest4JAwareThrowableCollector::new);
 	}
@@ -552,6 +556,7 @@ class HierarchicalTestExecutorTests {
 	}
 
 	@Test
+	@MockitoSettings(strictness = LENIENT)
 	void canAbortExecutionOfDynamicChild() throws Exception {
 
 		var leafUniqueId = UniqueId.root("leaf", "child leaf");
@@ -704,6 +709,66 @@ class HierarchicalTestExecutorTests {
 		assertThat(childExecutionResult.getValue().getStatus()).isEqualTo(FAILED);
 		assertThat(childExecutionResult.getValue().getThrowable().get()).isSameAs(
 			exceptionInAfter).hasSuppressedException(exceptionInExecute);
+	}
+
+	@Test
+	void reportsNodeAsSkippedWhenCancelledPriorToExecution() {
+
+		var child = spy(new MyLeaf(UniqueId.root("leaf", "child container")));
+		root.addChild(child);
+
+		cancellationToken.cancel();
+		executor.execute();
+
+		var inOrder = inOrder(listener, root, child);
+		inOrder.verify(root).nodeSkipped(rootContext, root, NodeTestTask.CANCELLED_SKIP_RESULT);
+		inOrder.verify(listener).executionSkipped(root, NodeTestTask.CANCELLED_SKIP_RESULT.getReason().orElseThrow());
+		inOrder.verifyNoMoreInteractions();
+	}
+
+	@Test
+	void reportsNodeAsSkippedWhenCancelledDuringPrepare() throws Exception {
+
+		var child = spy(new MyLeaf(UniqueId.root("leaf", "child container")));
+		root.addChild(child);
+
+		when(root.prepare(any())).thenAnswer(invocation -> {
+			cancellationToken.cancel();
+			return invocation.callRealMethod();
+		});
+
+		executor.execute();
+
+		var inOrder = inOrder(listener, root, child);
+		inOrder.verify(root).prepare(rootContext);
+		inOrder.verify(root).nodeSkipped(rootContext, root, NodeTestTask.CANCELLED_SKIP_RESULT);
+		inOrder.verify(listener).executionSkipped(root, NodeTestTask.CANCELLED_SKIP_RESULT.getReason().orElseThrow());
+		inOrder.verifyNoMoreInteractions();
+	}
+
+	@Test
+	void reportsNodeAsSkippedWhenCancelledDuringBefore() throws Exception {
+
+		var child = spy(new MyLeaf(UniqueId.root("leaf", "child container")));
+		root.addChild(child);
+
+		when(root.before(any())).thenAnswer(invocation -> {
+			cancellationToken.cancel();
+			return invocation.callRealMethod();
+		});
+
+		executor.execute();
+
+		var inOrder = inOrder(listener, root, child);
+		inOrder.verify(listener).executionStarted(root);
+		inOrder.verify(root).before(any());
+		inOrder.verify(root).execute(any(), any());
+		inOrder.verify(child).nodeSkipped(any(), eq(child), eq(NodeTestTask.CANCELLED_SKIP_RESULT));
+		inOrder.verify(listener).executionSkipped(child, NodeTestTask.CANCELLED_SKIP_RESULT.getReason().orElseThrow());
+		inOrder.verify(root).after(any());
+		inOrder.verify(root).cleanUp(any());
+		inOrder.verify(listener).executionFinished(root, TestExecutionResult.successful());
+		inOrder.verifyNoMoreInteractions();
 	}
 
 	// -------------------------------------------------------------------

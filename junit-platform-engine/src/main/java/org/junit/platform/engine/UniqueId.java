@@ -10,10 +10,9 @@
 
 package org.junit.platform.engine;
 
-import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableList;
 import static org.apiguardian.api.API.Status.STABLE;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -22,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.JUnitException;
 import org.junit.platform.commons.util.Preconditions;
 import org.junit.platform.commons.util.ToStringBuilder;
@@ -35,8 +35,9 @@ import org.junit.platform.commons.util.ToStringBuilder;
  * @since 1.0
  */
 @API(status = STABLE, since = "1.0")
-public class UniqueId implements Cloneable, Serializable {
+public final class UniqueId implements Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	private static final String ENGINE_SEGMENT_TYPE = "engine";
@@ -90,10 +91,10 @@ public class UniqueId implements Cloneable, Serializable {
 	private transient int hashCode;
 
 	// lazily computed
-	private transient SoftReference<String> toString;
+	private transient @Nullable SoftReference<String> toString;
 
 	private UniqueId(UniqueIdFormat uniqueIdFormat, Segment segment) {
-		this(uniqueIdFormat, singletonList(segment));
+		this(uniqueIdFormat, List.of(segment));
 	}
 
 	/**
@@ -105,7 +106,7 @@ public class UniqueId implements Cloneable, Serializable {
 	 */
 	UniqueId(UniqueIdFormat uniqueIdFormat, List<Segment> segments) {
 		this.uniqueIdFormat = uniqueIdFormat;
-		this.segments = segments;
+		this.segments = List.copyOf(segments);
 	}
 
 	final Optional<Segment> getRoot() {
@@ -126,7 +127,7 @@ public class UniqueId implements Cloneable, Serializable {
 	 * {@code UniqueId}.
 	 */
 	public final List<Segment> getSegments() {
-		return unmodifiableList(this.segments);
+		return this.segments;
 	}
 
 	/**
@@ -214,7 +215,7 @@ public class UniqueId implements Cloneable, Serializable {
 	@API(status = STABLE, since = "1.5")
 	public UniqueId removeLastSegment() {
 		Preconditions.condition(this.segments.size() > 1, "Cannot remove last remaining segment");
-		return new UniqueId(uniqueIdFormat, new ArrayList<>(this.segments.subList(0, this.segments.size() - 1)));
+		return new UniqueId(uniqueIdFormat, List.copyOf(this.segments.subList(0, this.segments.size() - 1)));
 	}
 
 	/**
@@ -294,8 +295,9 @@ public class UniqueId implements Cloneable, Serializable {
 	 * <em>value</em>.
 	 */
 	@API(status = STABLE, since = "1.0")
-	public static class Segment implements Serializable {
+	public static final class Segment implements Serializable {
 
+		@Serial
 		private static final long serialVersionUID = 1L;
 
 		private final String type;

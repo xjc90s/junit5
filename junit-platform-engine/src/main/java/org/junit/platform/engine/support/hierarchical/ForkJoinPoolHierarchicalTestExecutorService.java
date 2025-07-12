@@ -16,12 +16,12 @@ import static org.junit.platform.engine.support.hierarchical.ExclusiveResource.G
 import static org.junit.platform.engine.support.hierarchical.Node.ExecutionMode.CONCURRENT;
 import static org.junit.platform.engine.support.hierarchical.Node.ExecutionMode.SAME_THREAD;
 
+import java.io.Serial;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Constructor;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -35,6 +35,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.JUnitException;
 import org.junit.platform.commons.function.Try;
 import org.junit.platform.commons.logging.LoggerFactory;
@@ -126,7 +127,8 @@ public class ForkJoinPoolHierarchicalTestExecutorService implements Hierarchical
 	}
 
 	@Override
-	public Future<Void> submit(TestTask testTask) {
+	@SuppressWarnings("NullAway")
+	public Future<@Nullable Void> submit(TestTask testTask) {
 		ExclusiveTask exclusiveTask = new ExclusiveTask(testTask);
 		if (!isAlreadyRunningInForkJoinPool()) {
 			// ensure we're running inside the ForkJoinPool so we
@@ -159,9 +161,9 @@ public class ForkJoinPoolHierarchicalTestExecutorService implements Hierarchical
 			new ExclusiveTask(tasks.get(0)).execSync();
 			return;
 		}
-		Deque<ExclusiveTask> isolatedTasks = new LinkedList<>();
-		Deque<ExclusiveTask> sameThreadTasks = new LinkedList<>();
-		Deque<ExclusiveTask> concurrentTasksInReverseOrder = new LinkedList<>();
+		Deque<ExclusiveTask> isolatedTasks = new ArrayDeque<>();
+		Deque<ExclusiveTask> sameThreadTasks = new ArrayDeque<>();
+		Deque<ExclusiveTask> concurrentTasksInReverseOrder = new ArrayDeque<>();
 		forkConcurrentTasks(tasks, isolatedTasks, sameThreadTasks, concurrentTasksInReverseOrder);
 		executeSync(sameThreadTasks);
 		joinConcurrentTasksInReverseOrderToEnableWorkStealing(concurrentTasksInReverseOrder);
@@ -222,6 +224,9 @@ public class ForkJoinPoolHierarchicalTestExecutorService implements Hierarchical
 	@SuppressWarnings({ "serial", "RedundantSuppression" })
 	class ExclusiveTask extends ForkJoinTask<Void> {
 
+		@Serial
+		private static final long serialVersionUID = 1;
+
 		private final TestTask testTask;
 
 		ExclusiveTask(TestTask testTask) {
@@ -233,6 +238,7 @@ public class ForkJoinPoolHierarchicalTestExecutorService implements Hierarchical
 		 *
 		 * @return {@code null} always
 		 */
+		@Override
 		public final Void getRawResult() {
 			return null;
 		}
@@ -240,6 +246,7 @@ public class ForkJoinPoolHierarchicalTestExecutorService implements Hierarchical
 		/**
 		 * Requires null completion value.
 		 */
+		@Override
 		protected final void setRawResult(Void mustBeNull) {
 		}
 

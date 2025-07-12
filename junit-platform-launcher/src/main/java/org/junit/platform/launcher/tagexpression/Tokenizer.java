@@ -10,7 +10,6 @@
 
 package org.junit.platform.launcher.tagexpression;
 
-import static java.util.Collections.emptyList;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 
 import java.util.ArrayList;
@@ -18,24 +17,26 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * @since 1.1
  */
 class Tokenizer {
 
-	private static final Pattern PATTERN = Pattern.compile("\\s*(?:(?:(?:any|none)\\(\\))|[()!|&]|(?:[^\\s()!|&]+))",
+	private static final Pattern PATTERN = Pattern.compile("\\s*(?:(?:any|none)\\(\\)|[()!|&]|[^\\s()!|&]+)",
 		CASE_INSENSITIVE);
 
-	List<Token> tokenize(String infixTagExpression) {
+	List<Token> tokenize(@Nullable String infixTagExpression) {
 		if (infixTagExpression == null) {
-			return emptyList();
+			return List.of();
 		}
 		List<Token> parts = new ArrayList<>();
 		Matcher matcher = PATTERN.matcher(infixTagExpression);
 		while (matcher.find()) {
 			parts.add(new Token(matcher.start(), matcher.group()));
 		}
-		return parts;
+		return List.copyOf(parts);
 	}
 
 }

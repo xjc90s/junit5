@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.Extension;
@@ -138,24 +139,24 @@ final class ExtensionUtils {
 	/**
 	 * @since 5.11
 	 */
-	private static Extension readAndValidateExtensionFromField(Field field, Object instance,
+	@SuppressWarnings("NullAway")
+	private static Extension readAndValidateExtensionFromField(Field field, @Nullable Object instance,
 			List<Class<? extends Extension>> declarativeExtensionTypes) {
 		Object value = tryToReadFieldValue(field, instance) //
 				.getOrThrow(e -> new PreconditionViolationException(
-					String.format("Failed to read @RegisterExtension field [%s]", field), e));
+					"Failed to read @RegisterExtension field [%s]".formatted(field), e));
 
-		Preconditions.condition(value instanceof Extension, () -> String.format(
-			"Failed to register extension via @RegisterExtension field [%s]: field value's type [%s] must implement an [%s] API.",
-			field, (value != null ? value.getClass().getName() : null), Extension.class.getName()));
+		Preconditions.condition(value instanceof Extension,
+			() -> "Failed to register extension via @RegisterExtension field [%s]: field value's type [%s] must implement an [%s] API.".formatted(
+				field, (value != null ? value.getClass().getName() : null), Extension.class.getName()));
 
 		declarativeExtensionTypes.forEach(extensionType -> {
 			Class<?> valueType = value.getClass();
-			Preconditions.condition(!extensionType.equals(valueType),
-				() -> String.format(
-					"Failed to register extension via field [%s]. "
-							+ "The field registers an extension of type [%s] via @RegisterExtension and @ExtendWith, "
-							+ "but only one registration of a given extension type is permitted.",
-					field, valueType.getName()));
+			Preconditions.condition(!extensionType.equals(valueType), () -> """
+					Failed to register extension via field [%s]. \
+					The field registers an extension of type [%s] via @RegisterExtension and @ExtendWith, \
+					but only one registration of a given extension type is permitted.""".formatted(field,
+				valueType.getName()));
 		});
 
 		return (Extension) value;

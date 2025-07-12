@@ -13,7 +13,6 @@ package org.junit.platform.engine.support.store;
 import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,8 +27,8 @@ import org.junit.platform.commons.util.Preconditions;
  * mixing data between extensions or across different invocations within the
  * lifecycle of a single extension.
  */
-@API(status = EXPERIMENTAL, since = "1.13")
-public class Namespace {
+@API(status = EXPERIMENTAL, since = "6.0")
+public final class Namespace {
 
 	/**
 	 * The default, global namespace which allows access to stored data from
@@ -48,7 +47,7 @@ public class Namespace {
 	public static Namespace create(Object... parts) {
 		Preconditions.notEmpty(parts, "parts array must not be null or empty");
 		Preconditions.containsNoNullElements(parts, "individual parts must not be null");
-		return new Namespace(Arrays.asList(parts));
+		return new Namespace(List.of(parts));
 	}
 
 	/**
@@ -68,7 +67,7 @@ public class Namespace {
 	private final List<Object> parts;
 
 	private Namespace(List<Object> parts) {
-		this.parts = new ArrayList<>(parts);
+		this.parts = List.copyOf(parts);
 	}
 
 	@Override

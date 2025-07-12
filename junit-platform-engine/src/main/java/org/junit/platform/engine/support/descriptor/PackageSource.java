@@ -12,6 +12,7 @@ package org.junit.platform.engine.support.descriptor;
 
 import static org.apiguardian.api.API.Status.STABLE;
 
+import java.io.Serial;
 import java.util.Objects;
 
 import org.apiguardian.api.API;
@@ -29,8 +30,9 @@ import org.junit.platform.engine.TestSource;
  * @see org.junit.platform.engine.discovery.PackageSelector
  */
 @API(status = STABLE, since = "1.0")
-public class PackageSource implements TestSource {
+public final class PackageSource implements TestSource {
 
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	/**

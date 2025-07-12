@@ -1,3 +1,5 @@
+import junitbuild.extensions.isSnapshot
+
 plugins {
 	`maven-publish`
 	signing
@@ -9,33 +11,11 @@ val jupiterProjects: List<Project> by rootProject
 val platformProjects: List<Project> by rootProject
 val vintageProjects: List<Project> by rootProject
 
-when (project) {
-	in jupiterProjects -> {
-		group = property("jupiterGroup")!!
-	}
-	in platformProjects -> {
-		group = property("platformGroup")!!
-		version = property("platformVersion")!!
-	}
-	in vintageProjects -> {
-		group = property("vintageGroup")!!
-		version = property("vintageVersion")!!
-	}
-}
-
-// ensure project is built successfully before publishing it
-tasks.withType<PublishToMavenRepository>().configureEach {
-	dependsOn(provider {
-		val tempRepoName: String by rootProject
-		if (repository.name != tempRepoName) {
-			listOf(tasks.build)
-		} else {
-			emptyList()
-		}
-	})
-}
-tasks.withType<PublishToMavenLocal>().configureEach {
-	dependsOn(tasks.build)
+group = when (project) {
+	in jupiterProjects -> "org.junit.jupiter"
+	in platformProjects -> "org.junit.platform"
+	in vintageProjects -> "org.junit.vintage"
+	else -> "org.junit"
 }
 
 val signArtifacts = buildParameters.publishing.signArtifacts.getOrElse(!(project.version.isSnapshot() || buildParameters.ci))
@@ -57,11 +37,11 @@ publishing {
 				name.set(provider {
 					project.description ?: "${project.group}:${project.name}"
 				})
-				url = "https://junit.org/junit5/"
+				url = "https://junit.org/"
 				scm {
-					connection = "scm:git:git://github.com/junit-team/junit5.git"
-					developerConnection = "scm:git:git://github.com/junit-team/junit5.git"
-					url = "https://github.com/junit-team/junit5"
+					connection = "scm:git:git://github.com/junit-team/junit-framework.git"
+					developerConnection = "scm:git:git://github.com/junit-team/junit-framework.git"
+					url = "https://github.com/junit-team/junit-framework"
 				}
 				licenses {
 					license {

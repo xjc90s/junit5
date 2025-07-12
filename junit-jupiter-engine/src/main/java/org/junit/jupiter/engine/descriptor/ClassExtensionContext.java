@@ -15,6 +15,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestInstances;
@@ -33,7 +34,7 @@ final class ClassExtensionContext extends AbstractExtensionContext<ClassBasedTes
 
 	private final ThrowableCollector throwableCollector;
 
-	private TestInstances testInstances;
+	private @Nullable TestInstances testInstances;
 
 	ClassExtensionContext(ExtensionContext parent, EngineExecutionListener engineExecutionListener,
 			ClassBasedTestDescriptor testDescriptor, Lifecycle lifecycle, JupiterConfiguration configuration,

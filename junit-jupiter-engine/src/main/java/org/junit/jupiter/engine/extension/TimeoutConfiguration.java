@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Timeout.DEFAULT_TIMEOUT_THREAD_MODE_PROPERTY
 import static org.junit.jupiter.api.Timeout.ThreadMode.SAME_THREAD;
 import static org.junit.jupiter.api.Timeout.ThreadMode.SEPARATE_THREAD;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -105,7 +106,7 @@ class TimeoutConfiguration {
 			}
 			catch (Exception e) {
 				logger.warn(e,
-					() -> String.format("Ignored invalid timeout '%s' set via the '%s' configuration parameter.", value,
+					() -> "Ignored invalid timeout '%s' set via the '%s' configuration parameter.".formatted(value,
 						key));
 				return null;
 			}
@@ -126,19 +127,19 @@ class TimeoutConfiguration {
 	private Optional<ThreadMode> parseTimeoutThreadModeConfiguration() {
 		return extensionContext.getConfigurationParameter(DEFAULT_TIMEOUT_THREAD_MODE_PROPERTY_NAME).map(value -> {
 			try {
-				ThreadMode threadMode = ThreadMode.valueOf(value.toUpperCase());
+				ThreadMode threadMode = ThreadMode.valueOf(value.toUpperCase(Locale.ROOT));
 				if (threadMode == ThreadMode.INFERRED) {
-					logger.warn(() -> String.format(
-						"Invalid timeout thread mode '%s', only %s and %s can be used as configuration parameter for %s.",
-						value, SAME_THREAD, SEPARATE_THREAD, DEFAULT_TIMEOUT_THREAD_MODE_PROPERTY_NAME));
+					logger.warn(
+						() -> "Invalid timeout thread mode '%s', only %s and %s can be used as configuration parameter for %s.".formatted(
+							value, SAME_THREAD, SEPARATE_THREAD, DEFAULT_TIMEOUT_THREAD_MODE_PROPERTY_NAME));
 					return null;
 				}
 				return threadMode;
 			}
 			catch (Exception e) {
 				logger.warn(e,
-					() -> String.format("Invalid timeout thread mode '%s' set via the '%s' configuration parameter.",
-						value, DEFAULT_TIMEOUT_THREAD_MODE_PROPERTY_NAME));
+					() -> "Invalid timeout thread mode '%s' set via the '%s' configuration parameter.".formatted(value,
+						DEFAULT_TIMEOUT_THREAD_MODE_PROPERTY_NAME));
 				return null;
 			}
 		});

@@ -10,12 +10,14 @@
 
 package org.junit.platform.console.tasks;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.platform.engine.TestExecutionResult.Status.SUCCESSFUL;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.util.ExceptionUtils;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
@@ -29,7 +31,8 @@ class TestFeedPrintingListener implements DetailsPrintingListener {
 
 	private final PrintWriter out;
 	private final ColorPalette colorPalette;
-	private TestPlan testPlan;
+
+	private @Nullable TestPlan testPlan;
 
 	TestFeedPrintingListener(PrintWriter out, ColorPalette colorPalette) {
 		this.out = out;
@@ -50,9 +53,9 @@ class TestFeedPrintingListener implements DetailsPrintingListener {
 	public void executionSkipped(TestIdentifier testIdentifier, String reason) {
 		if (shouldPrint(testIdentifier)) {
 			String msg = formatTestIdentifier(testIdentifier);
-			String indentedReason = indented(String.format("Reason: %s", reason));
+			String indentedReason = indented("Reason: %s".formatted(reason));
 			println(Style.SKIPPED,
-				String.format("%s" + STATUS_SEPARATOR + "SKIPPED%n" + INDENTATION + "%s", msg, indentedReason));
+				("%s" + STATUS_SEPARATOR + "SKIPPED%n" + INDENTATION + "%s").formatted(msg, indentedReason));
 		}
 	}
 
@@ -60,7 +63,7 @@ class TestFeedPrintingListener implements DetailsPrintingListener {
 	public void executionStarted(TestIdentifier testIdentifier) {
 		if (shouldPrint(testIdentifier)) {
 			String msg = formatTestIdentifier(testIdentifier);
-			println(Style.NONE, String.format("%s" + STATUS_SEPARATOR + "STARTED", msg));
+			println(Style.NONE, ("%s" + STATUS_SEPARATOR + "STARTED").formatted(msg));
 		}
 	}
 
@@ -72,13 +75,12 @@ class TestFeedPrintingListener implements DetailsPrintingListener {
 			String msg = formatTestIdentifier(testIdentifier);
 			Throwable throwable = testExecutionResult.getThrowable().get();
 			String stacktrace = indented(ExceptionUtils.readStackTrace(throwable));
-			println(style,
-				String.format("%s" + STATUS_SEPARATOR + "%s%n" + INDENTATION + "%s", msg, status, stacktrace));
+			println(style, ("%s" + STATUS_SEPARATOR + "%s%n" + INDENTATION + "%s").formatted(msg, status, stacktrace));
 		}
 		else if (shouldPrint(testIdentifier) || testExecutionResult.getStatus() != SUCCESSFUL) {
 			Style style = Style.valueOf(testExecutionResult);
 			String msg = formatTestIdentifier(testIdentifier);
-			println(style, String.format("%s" + STATUS_SEPARATOR + "%s", msg, status));
+			println(style, ("%s" + STATUS_SEPARATOR + "%s").formatted(msg, status));
 		}
 	}
 
@@ -94,7 +96,7 @@ class TestFeedPrintingListener implements DetailsPrintingListener {
 		int size = uniqueId.getSegments().size();
 		List<String> displayNames = new ArrayList<>(size);
 		for (int i = 0; i < size; i++) {
-			displayNames.add(0, testPlan.getTestIdentifier(uniqueId).getDisplayName());
+			displayNames.add(0, requireNonNull(testPlan).getTestIdentifier(uniqueId).getDisplayName());
 			if (i < size - 1) {
 				uniqueId = uniqueId.removeLastSegment();
 			}

@@ -18,9 +18,9 @@ class TokenTests {
 
 	@Test
 	void startIndexOfTokenString() {
-		assertThat(new Token(0, "!").trimmedTokenStartIndex()).isEqualTo(0);
-		assertThat(new Token(0, "  !").trimmedTokenStartIndex()).isEqualTo(2);
-		assertThat(new Token(7, "!").trimmedTokenStartIndex()).isEqualTo(7);
+		assertThat(new Token(0, "!").strippedTokenStartIndex()).isEqualTo(0);
+		assertThat(new Token(0, "  !").strippedTokenStartIndex()).isEqualTo(2);
+		assertThat(new Token(7, "!").strippedTokenStartIndex()).isEqualTo(7);
 	}
 
 	@Test
@@ -43,8 +43,8 @@ class TokenTests {
 		var one = tokens.get(0);
 		var two = tokens.get(1);
 		var joined = one.concatenate(two);
-		assertThat(joined.rawString).isEqualTo(" ! foo");
-		assertThat(joined.startIndex).isEqualTo(0);
+		assertThat(joined.rawString()).isEqualTo(" ! foo");
+		assertThat(joined.startIndex()).isEqualTo(0);
 	}
 
 }

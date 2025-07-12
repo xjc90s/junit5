@@ -47,7 +47,7 @@ class DynamicTestsDemo {
 	@TestFactory
 	// end::user_guide[]
 	@Tag("exclude")
-	DynamicTest dummy() { return null; }
+	DynamicTest dummy() { return dynamicTest("dummy", () -> {}); }
 	// tag::user_guide[]
 	List<String> dynamicTestsWithInvalidReturnType() {
 		return Arrays.asList("Hello");
@@ -103,7 +103,7 @@ class DynamicTestsDemo {
 
 		// Generates random positive integers between 0 and 100 until
 		// a number evenly divisible by 7 is encountered.
-		Iterator<Integer> inputGenerator = new Iterator<Integer>() {
+		Iterator<Integer> inputGenerator = new Iterator<>() {
 
 			Random random = new Random();
 			// end::user_guide[]

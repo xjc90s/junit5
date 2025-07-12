@@ -21,10 +21,9 @@ import java.net.URL;
 import java.util.Currency;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.function.Function;
 
 import org.apiguardian.api.API;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.params.support.FieldContext;
 import org.junit.platform.commons.support.conversion.ConversionException;
@@ -52,48 +51,28 @@ import org.junit.platform.commons.util.ReflectionUtils;
 @API(status = INTERNAL, since = "5.0")
 public class DefaultArgumentConverter implements ArgumentConverter {
 
-	/**
-	 * Property name used to set the format for the conversion of {@link Locale}
-	 * arguments: {@value}
-	 *
-	 * <h4>Supported Values</h4>
-	 * <ul>
-	 * <li>{@code bcp_47}: uses the IETF BCP 47 language tag format, delegating
-	 * the conversion to {@link Locale#forLanguageTag(String)}</li>
-	 * <li>{@code iso_639}: uses the ISO 639 alpha-2 or alpha-3 language code
-	 * format, delegating the conversion to {@link Locale#Locale(String)}</li>
-	 * </ul>
-	 *
-	 * <p>If not specified, the default is {@code bcp_47}.
-	 *
-	 * @since 5.13
-	 */
-	public static final String DEFAULT_LOCALE_CONVERSION_FORMAT_PROPERTY_NAME = "junit.jupiter.params.arguments.conversion.locale.format";
+	public static final DefaultArgumentConverter INSTANCE = new DefaultArgumentConverter();
 
-	private static final Function<String, LocaleConversionFormat> TRANSFORMER = value -> LocaleConversionFormat.valueOf(
-		value.trim().toUpperCase(Locale.ROOT));
-
-	private final ExtensionContext context;
-
-	public DefaultArgumentConverter(ExtensionContext context) {
-		this.context = context;
+	private DefaultArgumentConverter() {
 	}
 
 	@Override
-	public final Object convert(Object source, ParameterContext context) {
+	public final @Nullable Object convert(@Nullable Object source, ParameterContext context) {
 		Class<?> targetType = context.getParameter().getType();
 		ClassLoader classLoader = getClassLoader(context.getDeclaringExecutable().getDeclaringClass());
 		return convert(source, targetType, classLoader);
 	}
 
 	@Override
-	public final Object convert(Object source, FieldContext context) throws ArgumentConversionException {
+	public final @Nullable Object convert(@Nullable Object source, FieldContext context)
+			throws ArgumentConversionException {
+
 		Class<?> targetType = context.getField().getType();
 		ClassLoader classLoader = getClassLoader(context.getField().getDeclaringClass());
 		return convert(source, targetType, classLoader);
 	}
 
-	public final Object convert(Object source, Class<?> targetType, ClassLoader classLoader) {
+	public final @Nullable Object convert(@Nullable Object source, Class<?> targetType, ClassLoader classLoader) {
 		if (source == null) {
 			if (targetType.isPrimitive()) {
 				throw new ArgumentConversionException(
@@ -106,39 +85,22 @@ public class DefaultArgumentConverter implements ArgumentConverter {
 			return source;
 		}
 
-		if (source instanceof String) {
-			if (targetType == Locale.class && getLocaleConversionFormat() == LocaleConversionFormat.BCP_47) {
-				return Locale.forLanguageTag((String) source);
-			}
-
+		if (source instanceof String string) {
 			try {
-				return convert((String) source, targetType, classLoader);
+				return convert(string, targetType, classLoader);
 			}
 			catch (ConversionException ex) {
 				throw new ArgumentConversionException(ex.getMessage(), ex);
 			}
 		}
 
-		throw new ArgumentConversionException(
-			String.format("No built-in converter for source type %s and target type %s",
-				source.getClass().getTypeName(), targetType.getTypeName()));
+		throw new ArgumentConversionException("No built-in converter for source type %s and target type %s".formatted(
+			source.getClass().getTypeName(), targetType.getTypeName()));
 	}
 
-	private LocaleConversionFormat getLocaleConversionFormat() {
-		return context.getConfigurationParameter(DEFAULT_LOCALE_CONVERSION_FORMAT_PROPERTY_NAME, TRANSFORMER) //
-				.orElse(LocaleConversionFormat.BCP_47);
-	}
-
-	Object convert(String source, Class<?> targetType, ClassLoader classLoader) {
+	@Nullable
+	Object convert(@Nullable String source, Class<?> targetType, ClassLoader classLoader) {
 		return ConversionSupport.convert(source, targetType, classLoader);
-	}
-
-	enum LocaleConversionFormat {
-
-		BCP_47,
-
-		ISO_639
-
 	}
 
 }

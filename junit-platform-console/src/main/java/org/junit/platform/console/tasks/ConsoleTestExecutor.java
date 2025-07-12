@@ -10,6 +10,7 @@
 
 package org.junit.platform.console.tasks;
 
+import static java.util.Objects.requireNonNullElseGet;
 import static org.apiguardian.api.API.Status.INTERNAL;
 import static org.junit.platform.console.tasks.DiscoveryRequestCreator.toDiscoveryRequestBuilder;
 import static org.junit.platform.launcher.LauncherConstants.OUTPUT_DIR_PROPERTY_NAME;
@@ -25,17 +26,18 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.JUnitException;
 import org.junit.platform.commons.util.ClassLoaderUtils;
 import org.junit.platform.console.options.Details;
 import org.junit.platform.console.options.TestConsoleOutputOptions;
 import org.junit.platform.console.options.TestDiscoveryOptions;
 import org.junit.platform.console.options.Theme;
+import org.junit.platform.engine.CancellationToken;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestPlan;
-import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
@@ -50,29 +52,46 @@ public class ConsoleTestExecutor {
 	private final TestDiscoveryOptions discoveryOptions;
 	private final TestConsoleOutputOptions outputOptions;
 	private final Supplier<Launcher> launcherSupplier;
+	private final CustomClassLoaderCloseStrategy classLoaderCloseStrategy;
 
 	public ConsoleTestExecutor(TestDiscoveryOptions discoveryOptions, TestConsoleOutputOptions outputOptions) {
-		this(discoveryOptions, outputOptions, LauncherFactory::create);
+		this(discoveryOptions, outputOptions, CustomClassLoaderCloseStrategy.CLOSE_AFTER_CALLING_LAUNCHER);
+	}
+
+	public ConsoleTestExecutor(TestDiscoveryOptions discoveryOptions, TestConsoleOutputOptions outputOptions,
+			CustomClassLoaderCloseStrategy classLoaderCloseStrategy) {
+		this(discoveryOptions, outputOptions, classLoaderCloseStrategy, LauncherFactory::create);
 	}
 
 	// for tests only
 	ConsoleTestExecutor(TestDiscoveryOptions discoveryOptions, TestConsoleOutputOptions outputOptions,
 			Supplier<Launcher> launcherSupplier) {
+		this(discoveryOptions, outputOptions, CustomClassLoaderCloseStrategy.CLOSE_AFTER_CALLING_LAUNCHER,
+			launcherSupplier);
+	}
+
+	private ConsoleTestExecutor(TestDiscoveryOptions discoveryOptions, TestConsoleOutputOptions outputOptions,
+			CustomClassLoaderCloseStrategy classLoaderCloseStrategy, Supplier<Launcher> launcherSupplier) {
 		this.discoveryOptions = discoveryOptions;
 		this.outputOptions = outputOptions;
 		this.launcherSupplier = launcherSupplier;
+		this.classLoaderCloseStrategy = classLoaderCloseStrategy;
 	}
 
 	public void discover(PrintWriter out) {
-		new CustomContextClassLoaderExecutor(createCustomClassLoader()).invoke(() -> {
+		createCustomContextClassLoaderExecutor().invoke(() -> {
 			discoverTests(out);
 			return null;
 		});
 	}
 
-	public TestExecutionSummary execute(PrintWriter out, Optional<Path> reportsDir) {
-		return new CustomContextClassLoaderExecutor(createCustomClassLoader()) //
-				.invoke(() -> executeTests(out, reportsDir));
+	public TestExecutionSummary execute(PrintWriter out, Optional<Path> reportsDir, boolean failFast) {
+		return createCustomContextClassLoaderExecutor() //
+				.invoke(() -> executeTests(out, reportsDir, failFast));
+	}
+
+	private CustomContextClassLoaderExecutor createCustomContextClassLoaderExecutor() {
+		return new CustomContextClassLoaderExecutor(createCustomClassLoader(), classLoaderCloseStrategy);
 	}
 
 	private void discoverTests(PrintWriter out) {
@@ -98,16 +117,17 @@ public class ConsoleTestExecutor {
 		out.flush();
 	}
 
-	private TestExecutionSummary executeTests(PrintWriter out, Optional<Path> reportsDir) {
+	private TestExecutionSummary executeTests(PrintWriter out, Optional<Path> reportsDir, boolean failFast) {
 		Launcher launcher = launcherSupplier.get();
-		SummaryGeneratingListener summaryListener = registerListeners(out, reportsDir, launcher);
+		CancellationToken cancellationToken = failFast ? CancellationToken.create() : null;
+		SummaryGeneratingListener summaryListener = registerListeners(out, reportsDir, launcher, cancellationToken);
 
 		PrintStream originalOut = System.out;
 		PrintStream originalErr = System.err;
 		try (StandardStreamsHandler standardStreamsHandler = new StandardStreamsHandler()) {
 			standardStreamsHandler.redirectStandardStreams(outputOptions.getStdoutPath(),
 				outputOptions.getStderrPath());
-			launchTests(launcher, reportsDir);
+			launchTests(launcher, reportsDir, cancellationToken);
 		}
 		finally {
 			System.setOut(originalOut);
@@ -119,14 +139,24 @@ public class ConsoleTestExecutor {
 			printSummary(summary, out);
 		}
 
+		if (cancellationToken != null && cancellationToken.isCancellationRequested()) {
+			out.println("Test execution was cancelled due to --fail-fast mode.");
+			out.println();
+		}
+
 		return summary;
 	}
 
-	private void launchTests(Launcher launcher, Optional<Path> reportsDir) {
-		LauncherDiscoveryRequestBuilder discoveryRequestBuilder = toDiscoveryRequestBuilder(discoveryOptions);
+	private void launchTests(Launcher launcher, Optional<Path> reportsDir,
+			@Nullable CancellationToken cancellationToken) {
+
+		var discoveryRequestBuilder = toDiscoveryRequestBuilder(discoveryOptions);
 		reportsDir.ifPresent(dir -> discoveryRequestBuilder.configurationParameter(OUTPUT_DIR_PROPERTY_NAME,
 			dir.toAbsolutePath().toString()));
-		launcher.execute(discoveryRequestBuilder.build());
+		var executionRequest = discoveryRequestBuilder.forExecution() //
+				.cancellationToken(requireNonNullElseGet(cancellationToken, CancellationToken::disabled)) //
+				.build();
+		launcher.execute(executionRequest);
 	}
 
 	private Optional<ClassLoader> createCustomClassLoader() {
@@ -149,7 +179,9 @@ public class ConsoleTestExecutor {
 		}
 	}
 
-	private SummaryGeneratingListener registerListeners(PrintWriter out, Optional<Path> reportsDir, Launcher launcher) {
+	private SummaryGeneratingListener registerListeners(PrintWriter out, Optional<Path> reportsDir, Launcher launcher,
+			@Nullable CancellationToken cancellationToken) {
+
 		// always register summary generating listener
 		SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
 		launcher.registerTestExecutionListeners(summaryListener);
@@ -157,27 +189,23 @@ public class ConsoleTestExecutor {
 		createDetailsPrintingListener(out).ifPresent(launcher::registerTestExecutionListeners);
 		// optionally, register XML reports writing listener
 		createXmlWritingListener(out, reportsDir).ifPresent(launcher::registerTestExecutionListeners);
+		createFailFastListener(cancellationToken).ifPresent(launcher::registerTestExecutionListeners);
 		return summaryListener;
 	}
 
 	private Optional<DetailsPrintingListener> createDetailsPrintingListener(PrintWriter out) {
 		ColorPalette colorPalette = getColorPalette();
 		Theme theme = outputOptions.getTheme();
-		switch (outputOptions.getDetails()) {
-			case SUMMARY:
-				// summary listener is always created and registered
-				return Optional.empty();
-			case FLAT:
-				return Optional.of(new FlatPrintingListener(out, colorPalette));
-			case TREE:
-				return Optional.of(new TreePrintingListener(out, colorPalette, theme));
-			case VERBOSE:
-				return Optional.of(new VerboseTreePrintingListener(out, colorPalette, 16, theme));
-			case TESTFEED:
-				return Optional.of(new TestFeedPrintingListener(out, colorPalette));
-			default:
-				return Optional.empty();
-		}
+		return switch (outputOptions.getDetails()) {
+			case SUMMARY ->
+					// summary listener is always created and registered
+					Optional.empty();
+			case FLAT -> Optional.of(new FlatPrintingListener(out, colorPalette));
+			case TREE -> Optional.of(new TreePrintingListener(out, colorPalette, theme));
+			case VERBOSE -> Optional.of(new VerboseTreePrintingListener(out, colorPalette, 16, theme));
+			case TESTFEED -> Optional.of(new TestFeedPrintingListener(out, colorPalette));
+			case NONE -> Optional.empty();
+		};
 	}
 
 	private ColorPalette getColorPalette() {
@@ -195,6 +223,10 @@ public class ConsoleTestExecutor {
 
 	private Optional<TestExecutionListener> createXmlWritingListener(PrintWriter out, Optional<Path> reportsDir) {
 		return reportsDir.map(it -> new LegacyXmlReportGeneratingListener(it, out));
+	}
+
+	private Optional<TestExecutionListener> createFailFastListener(@Nullable CancellationToken cancellationToken) {
+		return Optional.ofNullable(cancellationToken).map(FailFastListener::new);
 	}
 
 	private void printSummary(TestExecutionSummary summary, PrintWriter out) {

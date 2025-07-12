@@ -10,19 +10,17 @@
 
 package org.junit.platform.launcher.core;
 
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.TemporaryClasspathExecutor.withAdditionalClasspathRoot;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 import static org.junit.platform.launcher.LauncherConstants.DEACTIVATE_LISTENERS_PATTERN_PROPERTY_NAME;
 import static org.junit.platform.launcher.LauncherConstants.ENABLE_LAUNCHER_INTERCEPTORS;
 import static org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder.request;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.LogRecord;
 
@@ -65,6 +63,7 @@ import org.junit.platform.launcher.listeners.UnusedTestExecutionListener;
  */
 class LauncherFactoryTests {
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	@Test
 	void preconditions() {
 		assertThrows(PreconditionViolationException.class, () -> LauncherFactory.create(null));
@@ -81,7 +80,7 @@ class LauncherFactoryTests {
 
 			NoopTestExecutionListener.called = false;
 
-			launcher.execute(request().build());
+			launcher.execute(request().forExecution().build());
 
 			assertTrue(NoopTestExecutionListener.called);
 		});
@@ -102,7 +101,7 @@ class LauncherFactoryTests {
 				UnusedTestExecutionListener.called = false;
 				AnotherUnusedTestExecutionListener.called = false;
 
-				launcher.execute(request().build());
+				launcher.execute(request().forExecution().build());
 
 				var logMessage = listener.stream(ServiceLoaderRegistry.class) //
 						.map(LogRecord::getMessage) //
@@ -317,21 +316,27 @@ class LauncherFactoryTests {
 					.enableTestEngineAutoRegistration(false) //
 					.addTestEngines(engine) //
 					.build();
-			var launcher = LauncherFactory.create(config);
-			var request = request().configurationParameter(LauncherConstants.STACKTRACE_PRUNING_ENABLED_PROPERTY_NAME,
-				"false").build();
 
 			AtomicReference<TestExecutionResult> result = new AtomicReference<>();
-			launcher.execute(request, new TestExecutionListener() {
+			var listener = new TestExecutionListener() {
 				@Override
 				public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
 					if (testIdentifier.getParentId().isEmpty()) {
 						result.set(testExecutionResult);
 					}
 				}
-			});
+			};
 
-			assertThat(result.get().getThrowable().orElseThrow()) //
+			var request = request() //
+					.configurationParameter(LauncherConstants.STACKTRACE_PRUNING_ENABLED_PROPERTY_NAME, "false") //
+					.forExecution() //
+					.listeners(listener) //
+					.build();
+
+			var launcher = LauncherFactory.create(config);
+			launcher.execute(request);
+
+			assertThat(requireNonNull(result.get()).getThrowable().orElseThrow()) //
 					.hasRootCauseMessage("from execution") //
 					.hasStackTraceContaining(TestLauncherInterceptor1.class.getName() + ".intercept(") //
 					.hasStackTraceContaining(TestLauncherInterceptor2.class.getName() + ".intercept(");
@@ -346,16 +351,22 @@ class LauncherFactoryTests {
 				.build();
 
 		try (LauncherSession session = LauncherFactory.openSession(config)) {
-			var launcher = session.getLauncher();
-			var request = request().selectors(selectClass(SessionTrackingTestCase.class)).build();
 
 			AtomicReference<Throwable> errorRef = new AtomicReference<>();
-			launcher.execute(request, new TestExecutionListener() {
+			var listener = new TestExecutionListener() {
 				@Override
 				public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
 					testExecutionResult.getThrowable().ifPresent(errorRef::set);
 				}
-			});
+			};
+
+			var request = request() //
+					.selectors(selectClass(SessionTrackingTestCase.class)) //
+					.forExecution() //
+					.listeners(listener) //
+					.build();
+
+			session.getLauncher().execute(request);
 
 			assertThat(errorRef.get()).isNull();
 		}
@@ -368,16 +379,22 @@ class LauncherFactoryTests {
 				.build();
 
 		try (LauncherSession session = LauncherFactory.openSession(config)) {
-			var launcher = session.getLauncher();
-			var request = request().selectors(selectClass(SessionStoringTestCase.class)).build();
 
 			AtomicReference<Throwable> errorRef = new AtomicReference<>();
-			launcher.execute(request, new TestExecutionListener() {
+			var listener = new TestExecutionListener() {
 				@Override
 				public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
 					testExecutionResult.getThrowable().ifPresent(errorRef::set);
 				}
-			});
+			};
+
+			var request = request() //
+					.selectors(selectClass(SessionStoringTestCase.class)) //
+					.forExecution() //
+					.listeners(listener) //
+					.build();
+
+			session.getLauncher().execute(request);
 
 			assertThat(errorRef.get()).isNull();
 		}
@@ -391,10 +408,12 @@ class LauncherFactoryTests {
 				.build();
 
 		try (LauncherSession session = LauncherFactory.openSession(config)) {
-			var launcher = session.getLauncher();
-			var request = request().selectors(selectClass(SessionResourceAutoCloseTestCase.class)).build();
+			var request = request() //
+					.selectors(selectClass(SessionResourceAutoCloseTestCase.class)) //
+					.forExecution() //
+					.build();
 
-			launcher.execute(request);
+			session.getLauncher().execute(request);
 			assertThat(CloseTrackingResource.closed).isFalse();
 		}
 
@@ -407,10 +426,12 @@ class LauncherFactoryTests {
 		var config = LauncherConfig.builder().build();
 
 		try (LauncherSession session = LauncherFactory.openSession(config)) {
-			var launcher = session.getLauncher();
-			var request = request().selectors(selectClass(RequestResourceAutoCloseTestCase.class)).build();
+			var request = request() //
+					.selectors(selectClass(RequestResourceAutoCloseTestCase.class)) //
+					.forExecution() //
+					.build();
 
-			launcher.execute(request);
+			session.getLauncher().execute(request);
 
 			assertThat(CloseTrackingResource.closed).isTrue();
 		}
@@ -434,18 +455,7 @@ class LauncherFactoryTests {
 	}
 
 	private static void withTestServices(Runnable runnable) {
-		var current = Thread.currentThread().getContextClassLoader();
-		var url = LauncherFactoryTests.class.getClassLoader().getResource("testservices/");
-		try (var classLoader = new URLClassLoader(new URL[] { url }, current)) {
-			Thread.currentThread().setContextClassLoader(classLoader);
-			runnable.run();
-		}
-		catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-		finally {
-			Thread.currentThread().setContextClassLoader(current);
-		}
+		withAdditionalClasspathRoot("testservices/", runnable);
 	}
 
 	private LauncherDiscoveryRequest createLauncherDiscoveryRequestForBothStandardEngineExampleClasses() {
@@ -453,6 +463,7 @@ class LauncherFactoryTests {
 		return request()
 				.selectors(selectClass(JUnit4Example.class))
 				.selectors(selectClass(JUnit5Example.class))
+				.enableImplicitConfigurationParameters(false)
 				.build();
 		// @formatter:on
 	}
@@ -591,6 +602,7 @@ class LauncherFactoryTests {
 					.getStore() //
 					.get(Namespace.GLOBAL, "sessionResource", CloseTrackingResource.class);
 
+			assertThat(sessionResource).isNotNull();
 			assertThat(sessionResource.isClosed()).isFalse();
 		}
 	}

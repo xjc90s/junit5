@@ -10,6 +10,7 @@
 
 package org.junit.jupiter.params;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.platform.commons.support.AnnotationSupport.findAnnotation;
 
 import java.util.Optional;
@@ -17,13 +18,12 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
-import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 
 /**
  * @since 5.0
  */
-class ParameterizedTestExtension extends ParameterizedInvocationContextProvider<TestTemplateInvocationContext>
+class ParameterizedTestExtension extends ParameterizedInvocationContextProvider<ParameterizedTestInvocationContext>
 		implements TestTemplateInvocationContextProvider {
 
 	static final String DECLARATION_CONTEXT_KEY = "context";
@@ -31,7 +31,7 @@ class ParameterizedTestExtension extends ParameterizedInvocationContextProvider<
 	@Override
 	public boolean supportsTestTemplate(ExtensionContext context) {
 		Optional<ParameterizedTest> annotation = findAnnotation(context.getTestMethod(), ParameterizedTest.class);
-		if (!annotation.isPresent()) {
+		if (annotation.isEmpty()) {
 			return false;
 		}
 
@@ -44,7 +44,7 @@ class ParameterizedTestExtension extends ParameterizedInvocationContextProvider<
 	}
 
 	@Override
-	public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(
+	public Stream<ParameterizedTestInvocationContext> provideTestTemplateInvocationContexts(
 			ExtensionContext extensionContext) {
 
 		return provideInvocationContexts(extensionContext, getDeclarationContext(extensionContext));
@@ -56,8 +56,8 @@ class ParameterizedTestExtension extends ParameterizedInvocationContextProvider<
 	}
 
 	private ParameterizedTestContext getDeclarationContext(ExtensionContext extensionContext) {
-		return getStore(extensionContext)//
-				.get(DECLARATION_CONTEXT_KEY, ParameterizedTestContext.class);
+		return requireNonNull(getStore(extensionContext)//
+				.get(DECLARATION_CONTEXT_KEY, ParameterizedTestContext.class));
 	}
 
 	private ExtensionContext.Store getStore(ExtensionContext context) {

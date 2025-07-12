@@ -12,11 +12,14 @@ package org.junit.platform.launcher.core;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.Consumer;
+
+import org.jspecify.annotations.Nullable;
 
 /**
  * @since 1.3
@@ -112,7 +115,7 @@ class StreamInterceptor extends PrintStream {
 		}
 	}
 
-	private RewindableByteArrayOutputStream getOutput() {
+	private @Nullable RewindableByteArrayOutputStream getOutput() {
 		RewindableByteArrayOutputStream out = output.get();
 		return out.isMarked() ? out : mostRecentOutputs.peek();
 	}
@@ -136,7 +139,7 @@ class StreamInterceptor extends PrintStream {
 			}
 			int length = count - position;
 			count -= length;
-			return new String(buf, position, length);
+			return new String(buf, position, length, Charset.defaultCharset());
 		}
 	}
 }

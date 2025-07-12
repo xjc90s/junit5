@@ -15,17 +15,19 @@ import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.ANONYMOUS_CLASSES;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.TOP_LEVEL_CLASSES;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
-import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameEndingWith;
 import static com.tngtech.archunit.core.domain.JavaModifier.PUBLIC;
 import static com.tngtech.archunit.core.domain.properties.HasModifiers.Predicates.modifier;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.name;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameContaining;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameStartingWith;
+import static com.tngtech.archunit.lang.conditions.ArchConditions.onlyBeAccessedByClassesThat;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.annotation.Annotation;
@@ -34,10 +36,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.Arrays;
 import java.util.function.BiPredicate;
+import java.util.stream.Stream;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaPackage;
+import com.tngtech.archunit.core.domain.PackageMatcher;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchCondition;
@@ -45,6 +50,9 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
 import org.apiguardian.api.API;
+import org.jspecify.annotations.NullMarked;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 
 @AnalyzeClasses(packages = { "org.junit.platform", "org.junit.jupiter", "org.junit.vintage" })
 class ArchUnitTests {
@@ -61,7 +69,9 @@ class ArchUnitTests {
 			.and(TOP_LEVEL_CLASSES) //
 			.and(not(ANONYMOUS_CLASSES)) //
 			.and(not(describe("are Kotlin SAM type implementations", simpleName("")))) //
-			.and(not(describe("are shadowed", resideInAnyPackage("..shadow..")))) //
+			.and(not(describe("are Kotlin-generated classes that contain only top-level functions",
+				simpleNameEndingWith("Kt")))) //
+			.and(not(describe("are shadowed", resideInAPackage("..shadow..")))) //
 			.should().beAnnotatedWith(API.class);
 
 	@SuppressWarnings("unused")
@@ -72,6 +82,35 @@ class ArchUnitTests {
 			.and().areAnnotatedWith(Repeatable.class) //
 			.should(haveContainerAnnotationWithSameRetentionPolicy()) //
 			.andShould(haveContainerAnnotationWithSameTargetTypes());
+
+	private final DescribedPredicate<? super JavaClass> jupiterAssertions = name(Assertions.class.getName()) //
+			.or(name(Assumptions.class.getName())).or(name("org.junit.jupiter.api.AssertionsKt"));
+
+	@SuppressWarnings("unused")
+	@ArchTest // https://github.com/junit-team/junit-framework/issues/4604
+	private final ArchRule jupiterAssertionsShouldBeSelfContained = classes().that(jupiterAssertions) //
+			.should(onlyBeAccessedByClassesThat(jupiterAssertions));
+
+	@ArchTest
+	void packagesShouldBeNullMarked(JavaClasses classes) {
+		var exclusions = Stream.of( //
+			"..shadow.." //
+		).map(PackageMatcher::of).toList();
+
+		var subpackages = Stream.of("org.junit.platform", "org.junit.jupiter", "org.junit.vintage") //
+				.map(classes::getPackage) //
+				.flatMap(rootPackage -> rootPackage.getSubpackagesInTree().stream()) //
+				.filter(pkg -> exclusions.stream().noneMatch(it -> it.matches(pkg.getName()))) //
+				.filter(pkg -> !pkg.getClasses().isEmpty()) //
+				.toList();
+		assertThat(subpackages).isNotEmpty();
+
+		var violations = subpackages.stream() //
+				.filter(pkg -> !pkg.isAnnotatedWith(NullMarked.class)) //
+				.map(JavaPackage::getName) //
+				.sorted();
+		assertThat(violations).describedAs("The following packages are missing the @NullMarked annotation").isEmpty();
+	}
 
 	@ArchTest
 	void allAreIn(JavaClasses classes) {
@@ -106,12 +145,11 @@ class ArchUnitTests {
 				.that(are(not(name("org.junit.platform.console.ConsoleLauncher")))) //
 				.that(are(not(name("org.junit.platform.console.tasks.ConsoleTestExecutor")))) //
 				.that(are(not(name("org.junit.platform.launcher.core.StreamInterceptor")))) //
-				.that(are(not(name("org.junit.platform.runner.JUnitPlatformRunnerListener")))) //
 				.that(are(not(name("org.junit.platform.testkit.engine.Events")))) //
 				.that(are(not(name("org.junit.platform.testkit.engine.Executions")))) //
 				//The PreInterruptThreadDumpPrinter writes to StdOut by contract to dump threads
 				.that(are(not(name("org.junit.jupiter.engine.extension.PreInterruptThreadDumpPrinter")))) //
-				.that(are(not(resideInAPackage("org.junit.platform.console.shadow.picocli"))));
+				.that(are(not(nameContaining(".shadow."))));
 		GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS.check(subset);
 	}
 

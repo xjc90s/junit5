@@ -5,8 +5,6 @@ plugins {
 	`java-library`
 }
 
-val importAPIGuardian = "org.apiguardian.*;resolution:=\"optional\""
-
 val projectDescription = objects.property<String>().convention(provider { project.description })
 
 // This task enhances `jar` and `shadowJar` tasks with the bnd
@@ -15,7 +13,9 @@ val projectDescription = objects.property<String>().convention(provider { projec
 tasks.withType<Jar>().named {
 	it == "jar" || it == "shadowJar"
 }.all { // configure tasks eagerly as workaround for https://github.com/bndtools/bnd/issues/5695
-	extra["importAPIGuardian"] = importAPIGuardian
+
+	val importAPIGuardian by extra { "org.apiguardian.*;resolution:=\"optional\"" }
+	val importJSpecify by extra { "org.jspecify.*;resolution:=\"optional\"" }
 
 	extensions.create<BundleTaskExtension>(BundleTaskExtension.NAME, this).apply {
 		properties.set(projectDescription.map {
@@ -37,6 +37,7 @@ tasks.withType<Jar>().named {
 				# These are the general rules for package imports.
 				Import-Package: \
 					${importAPIGuardian},\
+					${importJSpecify},\
 					org.junit.platform.commons.logging;status=INTERNAL,\
 					kotlin.*;resolution:="optional",\
 					*
@@ -45,6 +46,7 @@ tasks.withType<Jar>().named {
 				# the kotlin and apiguardian packages, but enough modules do to make it a default.
 				-fixupmessages.kotlin.import: "Unused Import-Package instructions: \\[kotlin.*\\]";is:=ignore
 				-fixupmessages.apiguardian.import: "Unused Import-Package instructions: \\[org.apiguardian.*\\]";is:=ignore
+				-fixupmessages.jspecify.import: "Unused Import-Package instructions: \\[org.jspecify.*\\]";is:=ignore
 
 				# This tells bnd to ignore classes it finds in `META-INF/versions/`
 				# because bnd doesn't yet support multi-release jars.
@@ -65,6 +67,11 @@ tasks.withType<Jar>().named {
 				# Instruct the APIGuardianAnnotations how to operate.
 				# See https://bnd.bndtools.org/instructions/export-apiguardian.html
 				-export-apiguardian: *;version=${'$'}{versionmask;===;${'$'}{version_cleanup;${'$'}{task.archiveVersion}}}
+
+				# Avoid including java packages in Import-Package header to maximize compatibility with older OSGi runtimes.
+				# See https://bnd.bndtools.org/instructions/noimportjava.html
+				# Issue: https://github.com/junit-team/junit-framework/issues/4733
+				-noimportjava: true
 			"""
 		)
 
@@ -79,8 +86,8 @@ tasks.withType<Jar>().named {
 val osgiProperties by tasks.registering(WriteProperties::class) {
 	destinationFile = layout.buildDirectory.file("verifyOSGiProperties.bndrun")
 	property("-standalone", true)
-	project.extensions.getByType(JavaLibraryExtension::class.java).let { javaLibrary ->
-		property("-runee", "JavaSE-${javaLibrary.mainJavaVersion}")
+	project.extensions.getByType(JavaLibraryExtension::class).let { javaLibrary ->
+		property("-runee", Callable { "JavaSE-${javaLibrary.mainJavaVersion.get()}" })
 	}
 	property("-runrequires", "osgi.identity;filter:='(osgi.identity=${project.name})'")
 	property("-runsystempackages", "jdk.internal.misc,jdk.jfr,sun.misc")

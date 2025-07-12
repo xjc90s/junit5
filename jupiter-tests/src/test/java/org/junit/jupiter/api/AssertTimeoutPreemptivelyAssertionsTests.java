@@ -18,16 +18,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.condition.OS.WINDOWS;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.platform.commons.util.ExceptionUtils;
 import org.opentest4j.AssertionFailedError;
@@ -40,8 +39,6 @@ import org.opentest4j.AssertionFailedError;
 class AssertTimeoutPreemptivelyAssertionsTests {
 
 	private static final Duration PREEMPTIVE_TIMEOUT = ofMillis(WINDOWS.isCurrentOs() ? 1000 : 100);
-	private static final Assertions.TimeoutFailureFactory<TimeoutException> TIMEOUT_EXCEPTION_FACTORY = (__, ___, ____,
-			_____) -> new TimeoutException();
 
 	private static final ThreadLocal<AtomicBoolean> changed = ThreadLocal.withInitial(() -> new AtomicBoolean(false));
 
@@ -81,7 +78,7 @@ class AssertTimeoutPreemptivelyAssertionsTests {
 			() -> assertTimeoutPreemptively(PREEMPTIVE_TIMEOUT, this::waitForInterrupt));
 		assertMessageEquals(error, "execution timed out after " + PREEMPTIVE_TIMEOUT.toMillis() + " ms");
 		assertMessageStartsWith(error.getCause(), "Execution timed out in ");
-		assertStackTraceContains(error.getCause().getStackTrace(), "CountDownLatch", "await");
+		assertStackTraceContains(error.getCause(), "CountDownLatch", "await");
 	}
 
 	@Test
@@ -91,7 +88,7 @@ class AssertTimeoutPreemptivelyAssertionsTests {
 		assertMessageEquals(error,
 			"Tempus Fugit ==> execution timed out after " + PREEMPTIVE_TIMEOUT.toMillis() + " ms");
 		assertMessageStartsWith(error.getCause(), "Execution timed out in ");
-		assertStackTraceContains(error.getCause().getStackTrace(), "CountDownLatch", "await");
+		assertStackTraceContains(error.getCause(), "CountDownLatch", "await");
 	}
 
 	@Test
@@ -102,7 +99,7 @@ class AssertTimeoutPreemptivelyAssertionsTests {
 		assertMessageEquals(error,
 			"Tempus Fugit ==> execution timed out after " + PREEMPTIVE_TIMEOUT.toMillis() + " ms");
 		assertMessageStartsWith(error.getCause(), "Execution timed out in ");
-		assertStackTraceContains(error.getCause().getStackTrace(), "CountDownLatch", "await");
+		assertStackTraceContains(error.getCause(), "CountDownLatch", "await");
 	}
 
 	@Test
@@ -156,7 +153,7 @@ class AssertTimeoutPreemptivelyAssertionsTests {
 
 		assertMessageEquals(error, "execution timed out after " + PREEMPTIVE_TIMEOUT.toMillis() + " ms");
 		assertMessageStartsWith(error.getCause(), "Execution timed out in ");
-		assertStackTraceContains(error.getCause().getStackTrace(), "CountDownLatch", "await");
+		assertStackTraceContains(error.getCause(), "CountDownLatch", "await");
 	}
 
 	@Test
@@ -171,7 +168,7 @@ class AssertTimeoutPreemptivelyAssertionsTests {
 		assertMessageEquals(error,
 			"Tempus Fugit ==> execution timed out after " + PREEMPTIVE_TIMEOUT.toMillis() + " ms");
 		assertMessageStartsWith(error.getCause(), "Execution timed out in ");
-		assertStackTraceContains(error.getCause().getStackTrace(), "CountDownLatch", "await");
+		assertStackTraceContains(error.getCause(), "CountDownLatch", "await");
 	}
 
 	@Test
@@ -186,49 +183,16 @@ class AssertTimeoutPreemptivelyAssertionsTests {
 		assertMessageEquals(error,
 			"Tempus Fugit ==> execution timed out after " + PREEMPTIVE_TIMEOUT.toMillis() + " ms");
 		assertMessageStartsWith(error.getCause(), "Execution timed out in ");
-		assertStackTraceContains(error.getCause().getStackTrace(), "CountDownLatch", "await");
+		assertStackTraceContains(error.getCause(), "CountDownLatch", "await");
 	}
 
 	@Test
 	void assertTimeoutPreemptivelyUsesThreadsWithSpecificNamePrefix() {
 		AtomicReference<String> threadName = new AtomicReference<>("");
 		assertTimeoutPreemptively(ofMillis(1000), () -> threadName.set(Thread.currentThread().getName()));
-		assertTrue(threadName.get().startsWith("junit-timeout-thread-"),
-			"Thread name does not match the expected prefix");
-	}
-
-	@Test
-	void assertTimeoutPreemptivelyThrowingTimeoutExceptionWithMessageForSupplierThatCompletesAfterTheTimeout() {
-		assertThrows(TimeoutException.class, () -> Assertions.assertTimeoutPreemptively(PREEMPTIVE_TIMEOUT, () -> {
-			waitForInterrupt();
-			return "Tempus Fugit";
-		}, () -> "Tempus Fugit", TIMEOUT_EXCEPTION_FACTORY));
-	}
-
-	@Test
-	void assertTimeoutPreemptivelyThrowingTimeoutExceptionWithMessageForSupplierThatThrowsAnAssertionFailedError() {
-		AssertionFailedError exception = assertThrows(AssertionFailedError.class,
-			() -> Assertions.assertTimeoutPreemptively(ofMillis(500), () -> fail("enigma"), () -> "Tempus Fugit",
-				TIMEOUT_EXCEPTION_FACTORY));
-		assertMessageEquals(exception, "enigma");
-	}
-
-	@Test
-	void assertTimeoutPreemptivelyThrowingTimeoutExceptionWithMessageForSupplierThatThrowsAnException() {
-		RuntimeException exception = assertThrows(RuntimeException.class,
-			() -> Assertions.assertTimeoutPreemptively(ofMillis(500),
-				() -> ExceptionUtils.throwAsUncheckedException(new RuntimeException(":(")), () -> "Tempus Fugit",
-				TIMEOUT_EXCEPTION_FACTORY));
-		assertMessageEquals(exception, ":(");
-	}
-
-	@Test
-	void assertTimeoutPreemptivelyThrowingTimeoutExceptionWithMessageForSupplierThatCompletesBeforeTimeout()
-			throws Exception {
-		var result = Assertions.assertTimeoutPreemptively(PREEMPTIVE_TIMEOUT, () -> "Tempus Fugit",
-			() -> "Tempus Fugit", TIMEOUT_EXCEPTION_FACTORY);
-
-		assertThat(result).isEqualTo("Tempus Fugit");
+		assertThat(threadName.get()) //
+				.withFailMessage("Thread name does not match the expected prefix") //
+				.startsWith("junit-timeout-thread-");
 	}
 
 	private void waitForInterrupt() {
@@ -244,8 +208,9 @@ class AssertTimeoutPreemptivelyAssertionsTests {
 	/**
 	 * Assert the given stack trace elements contain an element with the given class name and method name.
 	 */
-	private static void assertStackTraceContains(StackTraceElement[] stackTrace, String className, String methodName) {
-		assertThat(stackTrace).anySatisfy(element -> {
+	private static void assertStackTraceContains(@Nullable Throwable throwable, String className, String methodName) {
+		assertThat(throwable).isNotNull();
+		assertThat(throwable.getStackTrace()).anySatisfy(element -> {
 			assertThat(element.getClassName()).endsWith(className);
 			assertThat(element.getMethodName()).isEqualTo(methodName);
 		});

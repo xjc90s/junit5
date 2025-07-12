@@ -10,6 +10,7 @@
 
 package org.junit.jupiter.params;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 import static org.junit.jupiter.params.ParameterizedClassContext.InjectionType.CONSTRUCTOR;
 import static org.junit.platform.commons.support.AnnotationSupport.findAnnotation;
@@ -20,7 +21,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ClassTemplateInvocationContext;
 import org.junit.jupiter.api.extension.ClassTemplateInvocationContextProvider;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
@@ -34,7 +34,7 @@ import org.junit.platform.commons.PreconditionViolationException;
 /**
  * @since 5.13
  */
-class ParameterizedClassExtension extends ParameterizedInvocationContextProvider<ClassTemplateInvocationContext>
+class ParameterizedClassExtension extends ParameterizedInvocationContextProvider<ParameterizedClassInvocationContext>
 		implements ClassTemplateInvocationContextProvider, ParameterResolver {
 
 	private static final String DECLARATION_CONTEXT_KEY = "context";
@@ -69,7 +69,7 @@ class ParameterizedClassExtension extends ParameterizedInvocationContextProvider
 	}
 
 	@Override
-	public Stream<? extends ClassTemplateInvocationContext> provideClassTemplateInvocationContexts(
+	public Stream<ParameterizedClassInvocationContext> provideClassTemplateInvocationContexts(
 			ExtensionContext extensionContext) {
 
 		return provideInvocationContexts(extensionContext, getDeclarationContext(extensionContext));
@@ -97,7 +97,7 @@ class ParameterizedClassExtension extends ParameterizedInvocationContextProvider
 
 		Optional<ParameterizedClass> annotation = findAnnotation(extensionContext.getTestClass(),
 			ParameterizedClass.class);
-		if (!annotation.isPresent()) {
+		if (annotation.isEmpty()) {
 			return false;
 		}
 
@@ -124,8 +124,8 @@ class ParameterizedClassExtension extends ParameterizedInvocationContextProvider
 	}
 
 	private ParameterizedClassContext getDeclarationContext(ExtensionContext extensionContext) {
-		return getStore(extensionContext)//
-				.get(DECLARATION_CONTEXT_KEY, ParameterizedClassContext.class);
+		return requireNonNull(getStore(extensionContext)//
+				.get(DECLARATION_CONTEXT_KEY, ParameterizedClassContext.class));
 	}
 
 	private Store getStore(ExtensionContext context) {

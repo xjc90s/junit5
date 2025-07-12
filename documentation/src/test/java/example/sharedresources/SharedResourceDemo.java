@@ -24,6 +24,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 
 class SharedResourceDemo {
 
+	@SuppressWarnings({ "DataFlowIssue", "NullAway" })
 	//tag::user_guide[]
 	@Test
 	void runBothCustomEnginesTest() {
@@ -38,7 +39,7 @@ class SharedResourceDemo {
 				// tag::custom_line_break[]
 				.build());
 
-		launcher.execute(request().build());
+		launcher.execute(request().forExecution().build());
 
 		assertSame(firstCustomEngine.socket, secondCustomEngine.socket);
 		assertTrue(firstCustomEngine.socket.isClosed(), "socket should be closed");

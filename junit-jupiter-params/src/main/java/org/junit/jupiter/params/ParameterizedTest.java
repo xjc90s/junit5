@@ -11,7 +11,7 @@
 package org.junit.jupiter.params;
 
 import static org.apiguardian.api.API.Status.DEPRECATED;
-import static org.apiguardian.api.API.Status.EXPERIMENTAL;
+import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.apiguardian.api.API.Status.STABLE;
 
 import java.lang.annotation.Documented;
@@ -161,7 +161,7 @@ public @interface ParameterizedTest {
 	 */
 	@API(status = DEPRECATED, since = "5.13")
 	@Deprecated
-	String INDEX_PLACEHOLDER = "{index}";
+	String INDEX_PLACEHOLDER = ParameterizedInvocationConstants.INDEX_PLACEHOLDER;
 
 	/**
 	 * See {@link ParameterizedInvocationConstants#ARGUMENTS_PLACEHOLDER}.
@@ -173,7 +173,7 @@ public @interface ParameterizedTest {
 	 */
 	@API(status = DEPRECATED, since = "5.13")
 	@Deprecated
-	String ARGUMENTS_PLACEHOLDER = "{arguments}";
+	String ARGUMENTS_PLACEHOLDER = ParameterizedInvocationConstants.ARGUMENTS_PLACEHOLDER;
 
 	/**
 	 * See
@@ -188,7 +188,7 @@ public @interface ParameterizedTest {
 	 */
 	@API(status = DEPRECATED, since = "5.13")
 	@Deprecated
-	String ARGUMENTS_WITH_NAMES_PLACEHOLDER = "{argumentsWithNames}";
+	String ARGUMENTS_WITH_NAMES_PLACEHOLDER = ParameterizedInvocationConstants.ARGUMENTS_WITH_NAMES_PLACEHOLDER;
 
 	/**
 	 * See
@@ -204,7 +204,7 @@ public @interface ParameterizedTest {
 	 */
 	@API(status = DEPRECATED, since = "5.13")
 	@Deprecated
-	String ARGUMENT_SET_NAME_PLACEHOLDER = "{argumentSetName}";
+	String ARGUMENT_SET_NAME_PLACEHOLDER = ParameterizedInvocationConstants.ARGUMENT_SET_NAME_PLACEHOLDER;
 
 	/**
 	 * See
@@ -222,7 +222,8 @@ public @interface ParameterizedTest {
 	 */
 	@API(status = DEPRECATED, since = "5.13")
 	@Deprecated
-	String ARGUMENT_SET_NAME_OR_ARGUMENTS_WITH_NAMES_PLACEHOLDER = "{argumentSetNameOrArgumentsWithNames}";
+	String ARGUMENT_SET_NAME_OR_ARGUMENTS_WITH_NAMES_PLACEHOLDER = //
+		ParameterizedInvocationConstants.ARGUMENT_SET_NAME_OR_ARGUMENTS_WITH_NAMES_PLACEHOLDER;
 
 	/**
 	 * See
@@ -313,7 +314,7 @@ public @interface ParameterizedTest {
 	 *
 	 * @since 5.12
 	 */
-	@API(status = EXPERIMENTAL, since = "5.12")
+	@API(status = MAINTAINED, since = "5.13.3")
 	boolean allowZeroInvocations() default false;
 
 	/**
@@ -334,7 +335,7 @@ public @interface ParameterizedTest {
 	 * @since 5.12
 	 * @see ArgumentCountValidationMode
 	 */
-	@API(status = EXPERIMENTAL, since = "5.12")
+	@API(status = MAINTAINED, since = "5.13.3")
 	ArgumentCountValidationMode argumentCountValidation() default ArgumentCountValidationMode.DEFAULT;
 
 }

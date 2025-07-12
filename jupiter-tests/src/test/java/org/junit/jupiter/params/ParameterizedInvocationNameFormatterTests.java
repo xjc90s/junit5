@@ -37,6 +37,8 @@ import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Locale;
 
+import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -154,7 +156,7 @@ class ParameterizedInvocationNameFormatterTests {
 	void formatsCompleteArgumentsListWithArrays() {
 		var formatter = formatter(ARGUMENTS_PLACEHOLDER, "enigma");
 
-		// Explicit test for https://github.com/junit-team/junit5/issues/814
+		// Explicit test for https://github.com/junit-team/junit-framework/issues/814
 		assertEquals("[foo, bar]", format(formatter, 1, arguments((Object) new String[] { "foo", "bar" })));
 
 		assertEquals("[foo, bar], 42, true", format(formatter, 1, arguments(new String[] { "foo", "bar" }, 42, true)));
@@ -346,6 +348,7 @@ class ParameterizedInvocationNameFormatterTests {
 		return formatter.format(invocationIndex, EvaluatedArgumentSet.allOf(arguments));
 	}
 
+	@NullUnmarked
 	private static class ToStringReturnsNull {
 
 		@Override
@@ -386,7 +389,7 @@ class ParameterizedInvocationNameFormatterTests {
 
 		private static class CustomAggregator extends SimpleArgumentsAggregator {
 			@Override
-			protected Object aggregateArguments(ArgumentsAccessor accessor, Class<?> targetType,
+			protected @Nullable Object aggregateArguments(ArgumentsAccessor accessor, Class<?> targetType,
 					AnnotatedElementContext context, int parameterIndex) {
 				return accessor.get(0);
 			}

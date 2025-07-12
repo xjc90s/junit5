@@ -1,13 +1,13 @@
 :javadoc-root:                               link:../api
 ifdef::backend-pdf[]
-:javadoc-root:                               https://junit.org/junit5/docs/{docs-version}/api
+:javadoc-root:                               https://docs.junit.org/{docs-version}/api
 endif::[]
 // Snapshot Repository
-:snapshot-repo:                              https://oss.sonatype.org/content/repositories/snapshots
+:snapshot-repo:                              https://central.sonatype.com/service/rest/repository/browse/maven-snapshots
 // Base Links
 :junit-team:                                 https://github.com/junit-team
-:junit5-repo:                                {junit-team}/junit5
-:current-branch:                             {junit5-repo}/tree/{release-branch}
+:junit-framework-repo:                       {junit-team}/junit-framework
+:current-branch:                             {junit-framework-repo}/tree/{release-branch}
 // Platform Commons
 :junit-platform-support-package:             {javadoc-root}/org.junit.platform.commons/org/junit/platform/commons/support/package-summary.html[org.junit.platform.commons.support]
 :AnnotationSupport:                          {javadoc-root}/org.junit.platform.commons/org/junit/platform/commons/support/AnnotationSupport.html[AnnotationSupport]
@@ -22,6 +22,7 @@ endif::[]
 // Platform Engine
 :junit-platform-engine:                      {javadoc-root}/org.junit.platform.engine/org/junit/platform/engine/package-summary.html[junit-platform-engine]
 :junit-platform-engine-support-discovery:    {javadoc-root}/org.junit.platform.engine/org/junit/platform/engine/support/discovery/package-summary.html[org.junit.platform.engine.support.discovery]
+:CancellationToken:                          {javadoc-root}/org.junit.platform.engine/org/junit/platform/engine/CancellationToken.html[CancellationToken]
 :ClasspathResourceSelector:                  {javadoc-root}/org.junit.platform.engine/org/junit/platform/engine/discovery/ClasspathResourceSelector.html[ClasspathResourceSelector]
 :ClasspathRootSelector:                      {javadoc-root}/org.junit.platform.engine/org/junit/platform/engine/discovery/ClasspathRootSelector.html[ClasspathRootSelector]
 :ClassSelector:                              {javadoc-root}/org.junit.platform.engine/org/junit/platform/engine/discovery/ClassSelector.html[ClassSelector]
@@ -66,6 +67,7 @@ endif::[]
 :LauncherDiscoveryListener:                  {javadoc-root}/org.junit.platform.launcher/org/junit/platform/launcher/LauncherDiscoveryListener.html[LauncherDiscoveryListener]
 :LauncherDiscoveryRequest:                   {javadoc-root}/org.junit.platform.launcher/org/junit/platform/launcher/LauncherDiscoveryRequest.html[LauncherDiscoveryRequest]
 :LauncherDiscoveryRequestBuilder:            {javadoc-root}/org.junit.platform.launcher/org/junit/platform/launcher/core/LauncherDiscoveryRequestBuilder.html[LauncherDiscoveryRequestBuilder]
+:LauncherExecutionRequest:                   {javadoc-root}/org.junit.platform.launcher/org/junit/platform/launcher/LauncherExecutionRequest.html[LauncherExecutionRequest]
 :LauncherFactory:                            {javadoc-root}/org.junit.platform.launcher/org/junit/platform/launcher/core/LauncherFactory.html[LauncherFactory]
 :LauncherInterceptor:                        {javadoc-root}/org.junit.platform.launcher/org/junit/platform/launcher/LauncherInterceptor.html[LauncherInterceptor]
 :LauncherSession:                            {javadoc-root}/org.junit.platform.launcher/org/junit/platform/launcher/LauncherSession.html[LauncherSession]
@@ -79,8 +81,6 @@ endif::[]
 // Platform Reporting
 :LegacyXmlReportGeneratingListener:          {javadoc-root}/org.junit.platform.reporting/org/junit/platform/reporting/legacy/xml/LegacyXmlReportGeneratingListener.html[LegacyXmlReportGeneratingListener]
 :OpenTestReportGeneratingListener:           {javadoc-root}/org.junit.platform.reporting/org/junit/platform/reporting/open/xml/OpenTestReportGeneratingListener.html[OpenTestReportGeneratingListener]
-// Platform Runner
-:JUnitPlatform-Runner:                       {javadoc-root}/org.junit.platform.runnner/org/junit/platform/runner/JUnitPlatform.html[JUnitPlatform]
 // Platform Suite
 :suite-api-package:                          {javadoc-root}/org.junit.platform.suite.api/org/junit/platform/suite/api/package-summary.html[org.junit.platform.suite.api]
 :junit-platform-suite-engine:                {javadoc-root}/org.junit.platform.suite.engine/org/junit/platform/suite/engine/package-summary.html[junit-platform-suite-engine]
@@ -118,7 +118,6 @@ endif::[]
 :ClassOrderer:                               {javadoc-root}/org.junit.jupiter.api/org/junit/jupiter/api/ClassOrderer.html[ClassOrderer]
 :ClassTemplate:                              {javadoc-root}/org.junit.jupiter.api/org/junit/jupiter/api/ClassTemplate.html[@ClassTemplate]
 :Disabled:                                   {javadoc-root}/org.junit.jupiter.api/org/junit/jupiter/api/Disabled.html[@Disabled]
-:MethodOrderer_Alphanumeric:                 {javadoc-root}/org.junit.jupiter.api/org/junit/jupiter/api/MethodOrderer.Alphanumeric.html[MethodOrderer.Alphanumeric]
 :MethodOrderer_DisplayName:                  {javadoc-root}/org.junit.jupiter.api/org/junit/jupiter/api/MethodOrderer.DisplayName.html[MethodOrderer.DisplayName]
 :MethodOrderer_MethodName:                   {javadoc-root}/org.junit.jupiter.api/org/junit/jupiter/api/MethodOrderer.MethodName.html[MethodOrderer.MethodName]
 :MethodOrderer_OrderAnnotation:              {javadoc-root}/org.junit.jupiter.api/org/junit/jupiter/api/MethodOrderer.OrderAnnotation.html[MethodOrderer.OrderAnnotation]
@@ -199,7 +198,7 @@ endif::[]
 :ArgumentsAccessor:                          {javadoc-root}/org.junit.jupiter.params/org/junit/jupiter/params/aggregator/ArgumentsAccessor.html[ArgumentsAccessor]
 :ArgumentsAggregator:                        {javadoc-root}/org.junit.jupiter.params/org/junit/jupiter/params/aggregator/ArgumentsAggregator.html[ArgumentsAggregator]
 :BeforeParameterizedClassInvocation:         {javadoc-root}/org.junit.jupiter.params/org/junit/jupiter/params/BeforeParameterizedClassInvocation.html[@BeforeParameterizedClassInvocation]
-:CsvArgumentsProvider:                       {junit5-repo}/blob/main/junit-jupiter-params/src/main/java/org/junit/jupiter/params/provider/CsvArgumentsProvider.java[CsvArgumentsProvider]
+:CsvArgumentsProvider:                       {junit-framework-repo}/blob/main/junit-jupiter-params/src/main/java/org/junit/jupiter/params/provider/CsvArgumentsProvider.java[CsvArgumentsProvider]
 :EmptySource:                                {javadoc-root}/org.junit.jupiter.params/org/junit/jupiter/params/provider/EmptySource.html[@EmptySource]
 :FieldSource:                                {javadoc-root}/org.junit.jupiter.params/org/junit/jupiter/params/provider/FieldSource.html[@FieldSource]
 :MethodSource:                               {javadoc-root}/org.junit.jupiter.params/org/junit/jupiter/params/provider/MethodSource.html[@MethodSource]
@@ -209,7 +208,7 @@ endif::[]
 :ParameterizedClass:                         {javadoc-root}/org.junit.jupiter.params/org/junit/jupiter/params/ParameterizedClass.html[@ParameterizedClass]
 :ParameterizedTest:                          {javadoc-root}/org.junit.jupiter.params/org/junit/jupiter/params/ParameterizedTest.html[@ParameterizedTest]
 :ParameterInfo:                              {javadoc-root}/org.junit.jupiter.params/org/junit/jupiter/params/support/ParameterInfo.html[ParameterInfo]
-:ValueArgumentsProvider:                     {junit5-repo}/blob/main/junit-jupiter-params/src/main/java/org/junit/jupiter/params/provider/ValueArgumentsProvider.java[ValueArgumentsProvider]
+:ValueArgumentsProvider:                     {junit-framework-repo}/blob/main/junit-jupiter-params/src/main/java/org/junit/jupiter/params/provider/ValueArgumentsProvider.java[ValueArgumentsProvider]
 // Jupiter Engine
 :junit-jupiter-engine:                       {javadoc-root}/org.junit.jupiter.engine/org/junit/jupiter/engine/package-summary.html[junit-jupiter-engine]
 // Jupiter Extension Implementations
@@ -229,19 +228,20 @@ endif::[]
 :EnableRuleMigrationSupport:                 {javadoc-root}/org.junit.jupiter.migrationsupport/org/junit/jupiter/migrationsupport/rules/EnableRuleMigrationSupport.html[@EnableRuleMigrationSupport]
 // Vintage
 :junit-vintage-engine:                       {javadoc-root}/org.junit.vintage.engine/org/junit/vintage/engine/package-summary.html[junit-vintage-engine]
-// Samples Repository
-:junit5-samples-repo:                        {junit-team}/junit5-samples
-:junit5-jupiter-starter-ant:                 {junit5-samples-repo}/tree/{release-branch}/junit5-jupiter-starter-ant[junit5-jupiter-starter-ant]
-:junit5-jupiter-starter-gradle-groovy:       {junit5-samples-repo}/tree/{release-branch}/junit5-jupiter-starter-gradle-groovy[junit5-jupiter-starter-gradle-groovy]
-:junit5-jupiter-starter-gradle-kotlin:       {junit5-samples-repo}/tree/{release-branch}/junit5-jupiter-starter-gradle-kotlin[junit5-jupiter-starter-gradle-kotlin]
-:junit5-jupiter-starter-gradle:              {junit5-samples-repo}/tree/{release-branch}/junit5-jupiter-starter-gradle[junit5-jupiter-starter-gradle]
-:junit5-jupiter-starter-maven:               {junit5-samples-repo}/tree/{release-branch}/junit5-jupiter-starter-maven[junit5-jupiter-starter-maven]
-:RandomParametersExtension:                  {junit5-samples-repo}/tree/{release-branch}/junit5-jupiter-extensions/src/main/java/com/example/random/RandomParametersExtension.java[RandomParametersExtension]
+// Examples Repository
+:junit-examples-repo:                        {junit-team}/junit-examples
+:junit-jupiter-starter-ant:                  {junit-examples-repo}/tree/{release-branch}/junit-jupiter-starter-ant[junit-jupiter-starter-ant]
+:junit-jupiter-starter-gradle-groovy:        {junit-examples-repo}/tree/{release-branch}/junit-jupiter-starter-gradle-groovy[junit-jupiter-starter-gradle-groovy]
+:junit-jupiter-starter-gradle-kotlin:        {junit-examples-repo}/tree/{release-branch}/junit-jupiter-starter-gradle-kotlin[junit-jupiter-starter-gradle-kotlin]
+:junit-jupiter-starter-gradle:               {junit-examples-repo}/tree/{release-branch}/junit-jupiter-starter-gradle[junit-jupiter-starter-gradle]
+:junit-jupiter-starter-maven:                {junit-examples-repo}/tree/{release-branch}/junit-jupiter-starter-maven[junit-jupiter-starter-maven]
+:RandomParametersExtension:                  {junit-examples-repo}/tree/{release-branch}/junit-jupiter-extensions/src/main/java/com/example/random/RandomParametersExtension.java[RandomParametersExtension]
 // Third-party Links
 :API:                                        https://apiguardian-team.github.io/apiguardian/docs/current/api/[@API]
 :API_Guardian:                               https://github.com/apiguardian-team/apiguardian[@API Guardian]
 :AssertJ:                                    https://assertj.github.io/doc/[AssertJ]
-:Gitter:                                     https://gitter.im/junit-team/junit5[Gitter]
+:Checkstyle:                                 https://checkstyle.sourceforge.io[Checkstyle]
+:DiscussionsQA:                              https://github.com/junit-team/junit-framework/discussions/categories/q-a[Q&A category on GitHub Discussions]
 :Hamcrest:                                   https://hamcrest.org/JavaHamcrest/[Hamcrest]
 :Jimfs:                                      https://google.github.io/jimfs/[Jimfs]
 :Log4j:                                      https://logging.apache.org/log4j/2.x/[Log4j]

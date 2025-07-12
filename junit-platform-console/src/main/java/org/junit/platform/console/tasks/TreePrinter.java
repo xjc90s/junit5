@@ -10,6 +10,7 @@
 
 package org.junit.platform.console.tasks;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.platform.commons.util.CollectionUtils.getOnlyElement;
 
 import java.io.PrintWriter;
@@ -80,7 +81,7 @@ class TreePrinter {
 			out.print(" ");
 			out.print(duration);
 		}
-		boolean nodeIsBeingListed = node.duration == 0 && !node.result().isPresent() && !node.reason().isPresent();
+		boolean nodeIsBeingListed = node.duration == 0 && node.result().isEmpty() && node.reason().isEmpty();
 		if (!nodeIsBeingListed) {
 			out.print(" ");
 			out.print(icon);
@@ -96,7 +97,7 @@ class TreePrinter {
 		// We might be the "last" node in this level, that means
 		// `continuous == false`, but still need to include a vertical
 		// bar for printing stack traces, messages and reports.
-		// See https://github.com/junit-team/junit5/issues/1531
+		// See https://github.com/junit-team/junit-framework/issues/1531
 		if (node.children.size() > 0) {
 			return theme.blank() + theme.vertical();
 		}
@@ -120,7 +121,7 @@ class TreePrinter {
 	}
 
 	private void printThrowable(String indent, TestExecutionResult result) {
-		if (!result.getThrowable().isPresent()) {
+		if (result.getThrowable().isEmpty()) {
 			return;
 		}
 		Throwable throwable = result.getThrowable().get();
@@ -128,7 +129,7 @@ class TreePrinter {
 		if (StringUtils.isBlank(message)) {
 			message = throwable.toString();
 		}
-		printMessage(Style.FAILED, indent, message);
+		printMessage(Style.FAILED, indent, requireNonNull(message));
 	}
 
 	private void printReportEntry(String indent, ReportEntry reportEntry) {

@@ -1,5 +1,6 @@
 plugins {
 	id("junitbuild.kotlin-library-conventions")
+	id("junitbuild.java-nullability-conventions")
 	id("junitbuild.code-generator")
 	`java-test-fixtures`
 }
@@ -12,16 +13,21 @@ dependencies {
 	api(projects.junitPlatformCommons)
 
 	compileOnlyApi(libs.apiguardian)
+	compileOnlyApi(libs.jspecify)
 
 	compileOnly(kotlin("stdlib"))
 
 	testFixturesImplementation(libs.assertj)
+	testFixturesImplementation(testFixtures(projects.junitPlatformCommons))
 
 	osgiVerification(projects.junitJupiterEngine)
 	osgiVerification(projects.junitPlatformLauncher)
 }
 
 tasks {
+	compileJava {
+		options.compilerArgs.add("-Xlint:-module") // due to qualified exports
+	}
 	jar {
 		bundle {
 			val version = project.version

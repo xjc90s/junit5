@@ -1,12 +1,15 @@
-
 import com.gradle.develocity.agent.gradle.internal.test.TestDistributionConfigurationInternal
 import junitbuild.extensions.capitalized
+import junitbuild.extensions.dependencyProject
+import net.ltgt.gradle.errorprone.errorprone
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
+import org.gradle.jvm.toolchain.JvmVendorSpec.GRAAL_VM
 import org.gradle.kotlin.dsl.support.listFilesOrdered
 import java.time.Duration
 
 plugins {
 	id("junitbuild.build-parameters")
+	id("junitbuild.java-nullability-conventions")
 	id("junitbuild.kotlin-library-conventions")
 	id("junitbuild.testing-conventions")
 }
@@ -55,10 +58,13 @@ dependencies {
 		because("it uses the OS enum to support Windows")
 	}
 
-	thirdPartyJars(libs.junit4)
+	thirdPartyJars(libs.junit4) {
+		exclude(group = "org.hamcrest")
+	}
 	thirdPartyJars(libs.assertj)
 	thirdPartyJars(libs.apiguardian)
 	thirdPartyJars(libs.hamcrest)
+	thirdPartyJars(libs.jspecify)
 	thirdPartyJars(libs.opentest4j)
 	thirdPartyJars(libs.openTestReporting.tooling.spi)
 	thirdPartyJars(libs.jimfs)
@@ -114,11 +120,15 @@ val normalizeMavenRepo by tasks.registering(Sync::class) {
 val archUnit by testing.suites.registering(JvmTestSuite::class) {
 	dependencies {
 		implementation(libs.archunit) {
-			because("checking the architecture of JUnit 5")
+			because("checking the architecture")
 		}
 		implementation(libs.apiguardian) {
 			because("we validate that public classes are annotated")
 		}
+		implementation(libs.jspecify) {
+			because("we validate that packages are annotated")
+		}
+		implementation(libs.assertj)
 		runtimeOnly.bundle(libs.bundles.log4j)
 		val modularProjects: List<Project> by rootProject
 		modularProjects.forEach {
@@ -141,6 +151,12 @@ val archUnit by testing.suites.registering(JvmTestSuite::class) {
 				}
 			}
 		}
+	}
+}
+
+tasks.compileJava {
+	options.errorprone {
+		disableAllChecks = true
 	}
 }
 
@@ -192,12 +208,6 @@ val test by testing.suites.getting(JvmTestSuite::class) {
 				jvmArgumentProviders += JarPath(project, antJarsClasspath.get(), "antJars")
 				jvmArgumentProviders += MavenDistribution(project, unzipMavenDistribution, mavenDistributionDir)
 
-				if (buildParameters.javaToolchain.version.getOrElse(21) < 24) {
-					(options as JUnitPlatformOptions).apply {
-						includeEngines("archunit")
-					}
-				}
-
 				inputs.apply {
 					dir("projects").withPathSensitivity(RELATIVE)
 					file("${rootDir}/gradle.properties").withPathSensitivity(RELATIVE)
@@ -217,17 +227,17 @@ val test by testing.suites.getting(JvmTestSuite::class) {
 
 				develocity {
 					testDistribution {
-						requirements.add("jdk=8")
+						requirements.add("jdk=17")
 						this as TestDistributionConfigurationInternal
 						preferredMaxDuration = Duration.ofMillis(500)
 					}
 				}
-				jvmArgumentProviders += JavaHomeDir(project, 8, develocity.testDistribution.enabled)
+				jvmArgumentProviders += JavaHomeDir(project, 17, develocity.testDistribution.enabled)
 				jvmArgumentProviders += JavaHomeDir(project, 17, develocity.testDistribution.enabled)
 
-				val gradleJavaVersion = JavaVersion.current().majorVersion.toInt()
+				val gradleJavaVersion = 21
 				jvmArgumentProviders += JavaHomeDir(project, gradleJavaVersion, develocity.testDistribution.enabled)
-				jvmArgumentProviders += JavaHomeDir(project, gradleJavaVersion, develocity.testDistribution.enabled, nativeImage = true)
+				jvmArgumentProviders += JavaHomeDir(project, gradleJavaVersion, develocity.testDistribution.enabled, graalvm = true)
 				systemProperty("gradle.java.version", gradleJavaVersion)
 			}
 		}
@@ -254,7 +264,7 @@ class MavenRepo(project: Project, @get:Internal val repoDir: Provider<File>) : C
 	override fun asArguments() = listOf("-Dmaven.repo=${repoDir.get().absolutePath}")
 }
 
-class JavaHomeDir(project: Project, @Input val version: Int, testDistributionEnabled: Provider<Boolean>, @Input val nativeImage: Boolean = false) : CommandLineArgumentProvider {
+class JavaHomeDir(project: Project, @Input val version: Int, testDistributionEnabled: Provider<Boolean>, @Input val graalvm: Boolean = false) : CommandLineArgumentProvider {
 
 	@Internal
 	val javaLauncher: Property<JavaLauncher> = project.objects.property<JavaLauncher>()
@@ -262,7 +272,10 @@ class JavaHomeDir(project: Project, @Input val version: Int, testDistributionEna
 				try {
 					project.javaToolchains.launcherFor {
 						languageVersion = JavaLanguageVersion.of(version)
-						nativeImageCapable = nativeImage
+						if (graalvm) {
+							vendor = GRAAL_VM
+							nativeImageCapable = true
+						}
 					}.get()
 				} catch (e: Exception) {
 					null
@@ -278,7 +291,7 @@ class JavaHomeDir(project: Project, @Input val version: Int, testDistributionEna
 		}
 		val metadata = javaLauncher.map { it.metadata }
 		val javaHome = metadata.map { it.installationPath.asFile.absolutePath }.orNull
-		return javaHome?.let { listOf("-Djava.home.$version${if (nativeImage) ".nativeImage" else ""}=$it") } ?: emptyList()
+		return javaHome?.let { listOf("-Djava.home.$version${if (graalvm) ".nativeImage" else ""}=$it") } ?: emptyList()
 	}
 }
 

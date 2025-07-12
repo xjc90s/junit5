@@ -10,6 +10,8 @@
 
 package org.junit.platform.engine.support.hierarchical;
 
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toCollection;
 import static org.junit.platform.engine.TestExecutionResult.failed;
@@ -23,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.platform.commons.JUnitException;
 import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
@@ -46,17 +49,22 @@ class NodeTestTask<C extends EngineExecutionContext> implements TestTask {
 	private static final Runnable NOOP = () -> {
 	};
 
+	static final SkipResult CANCELLED_SKIP_RESULT = SkipResult.skip("Execution cancelled");
+
 	private final NodeTestTaskContext taskContext;
 	private final TestDescriptor testDescriptor;
 	private final Node<C> node;
 	private final Runnable finalizer;
 
-	private C parentContext;
-	private C context;
+	private @Nullable C parentContext;
 
-	private SkipResult skipResult;
+	private @Nullable C context;
+
+	private @Nullable SkipResult skipResult;
+
 	private boolean started;
-	private ThrowableCollector throwableCollector;
+
+	private @Nullable ThrowableCollector throwableCollector;
 
 	NodeTestTask(NodeTestTaskContext taskContext, TestDescriptor testDescriptor) {
 		this(taskContext, testDescriptor, NOOP);
@@ -71,13 +79,18 @@ class NodeTestTask<C extends EngineExecutionContext> implements TestTask {
 
 	@Override
 	public ResourceLock getResourceLock() {
-		return taskContext.getExecutionAdvisor().getResourceLock(testDescriptor);
+		return taskContext.executionAdvisor().getResourceLock(testDescriptor);
 	}
 
 	@Override
 	public ExecutionMode getExecutionMode() {
-		return taskContext.getExecutionAdvisor().getForcedExecutionMode(testDescriptor) //
+		return taskContext.executionAdvisor().getForcedExecutionMode(testDescriptor) //
 				.orElseGet(node::getExecutionMode);
+	}
+
+	@Override
+	public TestDescriptor getTestDescriptor() {
+		return testDescriptor;
 	}
 
 	@Override
@@ -85,19 +98,21 @@ class NodeTestTask<C extends EngineExecutionContext> implements TestTask {
 		return "NodeTestTask [" + testDescriptor + "]";
 	}
 
-	void setParentContext(C parentContext) {
+	void setParentContext(@Nullable C parentContext) {
 		this.parentContext = parentContext;
 	}
 
 	@Override
 	public void execute() {
 		try {
-			throwableCollector = taskContext.getThrowableCollectorFactory().create();
-			prepare();
-			if (throwableCollector.isEmpty()) {
-				checkWhetherSkipped();
+			throwableCollector = taskContext.throwableCollectorFactory().create();
+			if (!taskContext.cancellationToken().isCancellationRequested()) {
+				prepare();
 			}
-			if (throwableCollector.isEmpty() && !skipResult.isSkipped()) {
+			if (throwableCollector.isEmpty()) {
+				throwableCollector.execute(() -> skipResult = checkWhetherSkipped());
+			}
+			if (throwableCollector.isEmpty() && !requiredSkipResult().isSkipped()) {
 				executeRecursively();
 			}
 			if (context != null) {
@@ -108,41 +123,45 @@ class NodeTestTask<C extends EngineExecutionContext> implements TestTask {
 		finally {
 			// Ensure that the 'interrupted status' flag for the current thread
 			// is cleared for reuse of the thread in subsequent task executions.
-			// See https://github.com/junit-team/junit5/issues/1688
+			// See https://github.com/junit-team/junit-framework/issues/1688
 			if (Thread.interrupted()) {
-				logger.debug(() -> String.format(
-					"Execution of TestDescriptor with display name [%s] "
-							+ "and unique ID [%s] failed to clear the 'interrupted status' flag for the "
-							+ "current thread. JUnit has cleared the flag, but you may wish to investigate "
-							+ "why the flag was not cleared by user code.",
-					this.testDescriptor.getDisplayName(), this.testDescriptor.getUniqueId()));
+				logger.debug(() -> """
+						Execution of TestDescriptor with display name [%s] \
+						and unique ID [%s] failed to clear the 'interrupted status' flag for the \
+						current thread. JUnit has cleared the flag, but you may wish to investigate \
+						why the flag was not cleared by user code.""".formatted(this.testDescriptor.getDisplayName(),
+					this.testDescriptor.getUniqueId()));
 			}
 			finalizer.run();
 		}
 
 		// Clear reference to context to allow it to be garbage collected.
-		// See https://github.com/junit-team/junit5/issues/1578
+		// See https://github.com/junit-team/junit-framework/issues/1578
 		context = null;
 	}
 
 	private void prepare() {
-		throwableCollector.execute(() -> context = node.prepare(parentContext));
+		requiredThrowableCollector().execute(() -> context = node.prepare(requireNonNull(parentContext)));
 
 		// Clear reference to parent context to allow it to be garbage collected.
-		// See https://github.com/junit-team/junit5/issues/1578
+		// See https://github.com/junit-team/junit-framework/issues/1578
 		parentContext = null;
 	}
 
-	private void checkWhetherSkipped() {
-		throwableCollector.execute(() -> skipResult = node.shouldBeSkipped(context));
+	private SkipResult checkWhetherSkipped() throws Exception {
+		return taskContext.cancellationToken().isCancellationRequested() //
+				? CANCELLED_SKIP_RESULT //
+				: node.shouldBeSkipped(requiredContext());
 	}
 
 	private void executeRecursively() {
-		taskContext.getListener().executionStarted(testDescriptor);
+		taskContext.listener().executionStarted(testDescriptor);
 		started = true;
 
+		var throwableCollector = requiredThrowableCollector();
+
 		throwableCollector.execute(() -> {
-			node.around(context, ctx -> {
+			node.around(requiredContext(), ctx -> {
 				context = ctx;
 				throwableCollector.execute(() -> {
 					// @formatter:off
@@ -151,63 +170,80 @@ class NodeTestTask<C extends EngineExecutionContext> implements TestTask {
 							.collect(toCollection(ArrayList::new));
 					// @formatter:on
 
-					context = node.before(context);
+					context = node.before(requiredContext());
 
 					final DynamicTestExecutor dynamicTestExecutor = new DefaultDynamicTestExecutor();
-					context = node.execute(context, dynamicTestExecutor);
+					context = node.execute(requiredContext(), dynamicTestExecutor);
 
 					if (!children.isEmpty()) {
 						children.forEach(child -> child.setParentContext(context));
-						taskContext.getExecutorService().invokeAll(children);
+						taskContext.executorService().invokeAll(children);
 					}
 
 					throwableCollector.execute(dynamicTestExecutor::awaitFinished);
 				});
 
-				throwableCollector.execute(() -> node.after(context));
+				throwableCollector.execute(() -> node.after(requiredContext()));
 			});
 		});
 	}
 
 	private void cleanUp() {
-		throwableCollector.execute(() -> node.cleanUp(context));
+		requiredThrowableCollector().execute(() -> node.cleanUp(requiredContext()));
 	}
 
 	private void reportCompletion() {
-		if (throwableCollector.isEmpty() && skipResult.isSkipped()) {
+
+		var throwableCollector = requiredThrowableCollector();
+
+		if (throwableCollector.isEmpty() && requiredSkipResult().isSkipped()) {
+			var skipResult = requiredSkipResult();
 			try {
-				node.nodeSkipped(context, testDescriptor, skipResult);
+				node.nodeSkipped(requireNonNullElse(context, parentContext), testDescriptor, skipResult);
 			}
 			catch (Throwable throwable) {
 				UnrecoverableExceptions.rethrowIfUnrecoverable(throwable);
 				logger.debug(throwable,
-					() -> String.format("Failed to invoke nodeSkipped() on Node %s", testDescriptor.getUniqueId()));
+					() -> "Failed to invoke nodeSkipped() on Node %s".formatted(testDescriptor.getUniqueId()));
 			}
-			taskContext.getListener().executionSkipped(testDescriptor, skipResult.getReason().orElse("<unknown>"));
+			taskContext.listener().executionSkipped(testDescriptor, skipResult.getReason().orElse("<unknown>"));
 			return;
 		}
 		if (!started) {
 			// Call executionStarted first to comply with the contract of EngineExecutionListener.
-			taskContext.getListener().executionStarted(testDescriptor);
+			taskContext.listener().executionStarted(testDescriptor);
 		}
 		try {
-			node.nodeFinished(context, testDescriptor, throwableCollector.toTestExecutionResult());
+			node.nodeFinished(requiredContext(), testDescriptor, throwableCollector.toTestExecutionResult());
 		}
 		catch (Throwable throwable) {
 			UnrecoverableExceptions.rethrowIfUnrecoverable(throwable);
 			logger.debug(throwable,
-				() -> String.format("Failed to invoke nodeFinished() on Node %s", testDescriptor.getUniqueId()));
+				() -> "Failed to invoke nodeFinished() on Node %s".formatted(testDescriptor.getUniqueId()));
 		}
-		taskContext.getListener().executionFinished(testDescriptor, throwableCollector.toTestExecutionResult());
-		throwableCollector = null;
+		taskContext.listener().executionFinished(testDescriptor, throwableCollector.toTestExecutionResult());
+		this.throwableCollector = null;
+	}
+
+	private C requiredContext() {
+		return requireNonNull(context);
+	}
+
+	private SkipResult requiredSkipResult() {
+		return requireNonNull(skipResult);
+	}
+
+	private ThrowableCollector requiredThrowableCollector() {
+		return requireNonNull(throwableCollector);
 	}
 
 	private class DefaultDynamicTestExecutor implements DynamicTestExecutor {
 		private final Map<UniqueId, DynamicTaskState> unfinishedTasks = new ConcurrentHashMap<>();
 
 		@Override
+		@SuppressWarnings("FutureReturnValueIgnored")
 		public void execute(TestDescriptor testDescriptor) {
-			execute(testDescriptor, taskContext.getListener());
+			execute(testDescriptor, taskContext.listener());
 		}
 
 		@Override
@@ -229,7 +265,7 @@ class NodeTestTask<C extends EngineExecutionContext> implements TestTask {
 					testDescriptor, () -> unfinishedTasks.remove(uniqueId));
 				nodeTestTask.setParentContext(context);
 				unfinishedTasks.put(uniqueId, DynamicTaskState.unscheduled());
-				Future<Void> future = taskContext.getExecutorService().submit(nodeTestTask);
+				Future<@Nullable Void> future = taskContext.executorService().submit(nodeTestTask);
 				unfinishedTasks.computeIfPresent(uniqueId, (__, state) -> DynamicTaskState.scheduled(future));
 				return future;
 			}
@@ -245,7 +281,7 @@ class NodeTestTask<C extends EngineExecutionContext> implements TestTask {
 					// Futures returned by execute() may have been cancelled
 				}
 				catch (ExecutionException e) {
-					throw ExceptionUtils.throwAsUncheckedException(e.getCause());
+					throw ExceptionUtils.throwAsUncheckedException(requireNonNullElse(e.getCause(), e));
 				}
 			}
 		}
@@ -261,7 +297,7 @@ class NodeTestTask<C extends EngineExecutionContext> implements TestTask {
 			return UNSCHEDULED;
 		}
 
-		static DynamicTaskState scheduled(Future<Void> future) {
+		static DynamicTaskState scheduled(Future<@Nullable Void> future) {
 			return future::get;
 		}
 

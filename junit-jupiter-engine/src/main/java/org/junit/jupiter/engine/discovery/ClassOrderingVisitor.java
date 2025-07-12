@@ -28,7 +28,6 @@ import org.junit.platform.commons.util.LruCache;
 import org.junit.platform.engine.DiscoveryIssue;
 import org.junit.platform.engine.DiscoveryIssue.Severity;
 import org.junit.platform.engine.TestDescriptor;
-import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.discovery.DiscoveryIssueReporter;
 import org.junit.platform.engine.support.discovery.DiscoveryIssueReporter.Condition;
 
@@ -49,11 +48,13 @@ class ClassOrderingVisitor extends AbstractOrderingVisitor {
 		this.globalOrderer = createGlobalOrderer(configuration);
 		this.noOrderAnnotation = issueReporter.createReportingCondition(
 			testDescriptor -> !isAnnotated(testDescriptor.getTestClass(), Order.class), testDescriptor -> {
-				String message = String.format(
-					"Ineffective @Order annotation on class '%s'. It will not be applied because ClassOrderer.OrderAnnotation is not in use.",
-					testDescriptor.getTestClass().getName());
+				String message = """
+						Ineffective @Order annotation on class '%s'. \
+						It will not be applied because ClassOrderer.OrderAnnotation is not in use. \
+						Note that the annotation may be either directly present or meta-present on the class."""//
+						.formatted(testDescriptor.getTestClass().getName());
 				return DiscoveryIssue.builder(Severity.INFO, message) //
-						.source(ClassSource.from(testDescriptor.getTestClass())) //
+						.source(testDescriptor.getSource()) //
 						.build();
 			});
 	}
@@ -117,8 +118,7 @@ class ClassOrderingVisitor extends AbstractOrderingVisitor {
 				.map(this::createDescriptorWrapperOrderer)//
 				.orElseGet(() -> {
 					Object parent = classBasedTestDescriptor.getParent().orElse(null);
-					if (parent instanceof ClassBasedTestDescriptor) {
-						ClassBasedTestDescriptor parentClassTestDescriptor = (ClassBasedTestDescriptor) parent;
+					if (parent instanceof ClassBasedTestDescriptor parentClassTestDescriptor) {
 						DescriptorWrapperOrderer<ClassOrderer, DefaultClassDescriptor> cacheEntry = ordererCache.get(
 							parentClassTestDescriptor);
 						return cacheEntry != null ? cacheEntry : createClassLevelOrderer(parentClassTestDescriptor);
@@ -132,11 +132,9 @@ class ClassOrderingVisitor extends AbstractOrderingVisitor {
 		Consumer<List<DefaultClassDescriptor>> orderingAction = classDescriptors -> classOrderer.orderClasses(
 			new DefaultClassOrdererContext(classDescriptors, this.configuration));
 
-		MessageGenerator descriptorsAddedMessageGenerator = number -> String.format(
-			"ClassOrderer [%s] added %s ClassDescriptor(s) which will be ignored.", classOrderer.getClass().getName(),
-			number);
-		MessageGenerator descriptorsRemovedMessageGenerator = number -> String.format(
-			"ClassOrderer [%s] removed %s ClassDescriptor(s) which will be retained with arbitrary ordering.",
+		MessageGenerator descriptorsAddedMessageGenerator = number -> "ClassOrderer [%s] added %s ClassDescriptor(s) which will be ignored.".formatted(
+			classOrderer.getClass().getName(), number);
+		MessageGenerator descriptorsRemovedMessageGenerator = number -> "ClassOrderer [%s] removed %s ClassDescriptor(s) which will be retained with arbitrary ordering.".formatted(
 			classOrderer.getClass().getName(), number);
 
 		return new DescriptorWrapperOrderer<>(classOrderer, orderingAction, descriptorsAddedMessageGenerator,

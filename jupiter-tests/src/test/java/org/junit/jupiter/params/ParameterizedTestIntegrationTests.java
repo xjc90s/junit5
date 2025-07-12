@@ -11,6 +11,7 @@
 package org.junit.jupiter.params;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,7 +23,6 @@ import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 import static org.junit.jupiter.engine.discovery.JupiterUniqueIdBuilder.appendTestTemplateInvocationSegment;
 import static org.junit.jupiter.engine.discovery.JupiterUniqueIdBuilder.uniqueIdForTestTemplateMethod;
-import static org.junit.jupiter.params.converter.DefaultArgumentConverter.DEFAULT_LOCALE_CONVERSION_FORMAT_PROPERTY_NAME;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectIteration;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
@@ -63,6 +63,7 @@ import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
@@ -98,6 +99,7 @@ import org.junit.jupiter.params.aggregator.SimpleArgumentsAggregator;
 import org.junit.jupiter.params.converter.ArgumentConversionException;
 import org.junit.jupiter.params.converter.ArgumentConverter;
 import org.junit.jupiter.params.converter.ConvertWith;
+import org.junit.jupiter.params.converter.TypedArgumentConverter;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -113,6 +115,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.support.ParameterDeclarations;
 import org.junit.platform.commons.PreconditionViolationException;
 import org.junit.platform.commons.util.ClassUtils;
+import org.junit.platform.engine.DiscoveryIssue;
+import org.junit.platform.engine.DiscoveryIssue.Severity;
 import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.testkit.engine.EngineExecutionResults;
@@ -224,7 +228,7 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 		assertFruitTable(fruit, rank, testInfo);
 	}
 
-	private void assertFruitTable(String fruit, double rank, TestInfo testInfo) {
+	private void assertFruitTable(@Nullable String fruit, double rank, TestInfo testInfo) {
 		String displayName = testInfo.getDisplayName();
 
 		if (fruit == null) {
@@ -487,17 +491,20 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 	}
 
 	@Test
-	void executesWithBcp47LocaleConversionFormat() {
-		var results = execute(Map.of(DEFAULT_LOCALE_CONVERSION_FORMAT_PROPERTY_NAME, "bcp_47"),
-			LocaleConversionTestCase.class, "testWithBcp47", Locale.class);
+	void emitsWarningForNoLongerSupportedConfigurationParameter() {
+		var results = discoverTests(request -> request //
+				.configurationParameter("junit.jupiter.params.arguments.conversion.locale.format", "iso_639") //
+				.selectors(selectMethod(LocaleConversionTestCase.class, "testWithBcp47", Locale.class)));
 
-		results.allEvents().assertStatistics(stats -> stats.started(4).succeeded(4));
+		assertThat(results.getDiscoveryIssues()) //
+				.contains(DiscoveryIssue.create(Severity.WARNING, """
+						The 'junit.jupiter.params.arguments.conversion.locale.format' configuration parameter \
+						is no longer supported. Please remove it from your configuration."""));
 	}
 
 	@Test
-	void executesWithIso639LocaleConversionFormat() {
-		var results = execute(Map.of(DEFAULT_LOCALE_CONVERSION_FORMAT_PROPERTY_NAME, "iso_639"),
-			LocaleConversionTestCase.class, "testWithIso639", Locale.class);
+	void executesWithCustomLocalConverterUsingIso639Format() {
+		var results = execute(LocaleConversionTestCase.class, "testWithIso639", Locale.class);
 
 		results.allEvents().assertStatistics(stats -> stats.started(4).succeeded(4));
 	}
@@ -928,8 +935,7 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 		void reportsContainerWithAssumptionFailureInMethodSourceAsAborted() {
 			execute("assumptionFailureInMethodSourceFactoryMethod", String.class).allEvents().assertThatEvents() //
 					.haveExactly(1, event(container("test-template:assumptionFailureInMethodSourceFactoryMethod"), //
-						abortedWithReason(instanceOf(TestAbortedException.class),
-							message("Assumption failed: nothing to test"))));
+						abortedWithReason(instanceOf(TestAbortedException.class), message("nothing to test"))));
 		}
 
 		@Test
@@ -952,7 +958,7 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 
 		/**
 		 * @since 5.9.1
-		 * @see https://github.com/junit-team/junit5/issues/3001
+		 * @see https://github.com/junit-team/junit-framework/issues/3001
 		 */
 		@Test
 		void duplicateMethodNames() {
@@ -1175,8 +1181,8 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 			var results = execute(ArgumentCountValidationMode.STRICT, UnusedArgumentsTestCase.class,
 				"testWithTwoUnusedStringArgumentsProvider", String.class);
 			results.allEvents().assertThatEvents() //
-					.haveExactly(1, event(finishedWithFailure(message(String.format(
-						"Configuration error: @ParameterizedTest consumes 1 parameter but there were 2 arguments provided.%nNote: the provided arguments were [foo, unused1]")))));
+					.haveExactly(1, event(finishedWithFailure(message(
+						"Configuration error: @ParameterizedTest consumes 1 parameter but there were 2 arguments provided.%nNote: the provided arguments were [foo, unused1]".formatted()))));
 		}
 
 		@Test
@@ -1184,8 +1190,8 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 			var results = execute(ArgumentCountValidationMode.STRICT, UnusedArgumentsTestCase.class,
 				"testWithMethodSourceProvidingUnusedArguments", String.class);
 			results.allEvents().assertThatEvents() //
-					.haveExactly(1, event(finishedWithFailure(message(String.format(
-						"Configuration error: @ParameterizedTest consumes 1 parameter but there were 2 arguments provided.%nNote: the provided arguments were [foo, unused1]")))));
+					.haveExactly(1, event(finishedWithFailure(message(
+						"Configuration error: @ParameterizedTest consumes 1 parameter but there were 2 arguments provided.%nNote: the provided arguments were [foo, unused1]".formatted()))));
 		}
 
 		@Test
@@ -1193,8 +1199,8 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 			var results = execute(ArgumentCountValidationMode.NONE, UnusedArgumentsTestCase.class,
 				"testWithStrictArgumentCountValidation", String.class);
 			results.allEvents().assertThatEvents() //
-					.haveExactly(1, event(finishedWithFailure(message(String.format(
-						"Configuration error: @ParameterizedTest consumes 1 parameter but there were 2 arguments provided.%nNote: the provided arguments were [foo, unused1]")))));
+					.haveExactly(1, event(finishedWithFailure(message(
+						"Configuration error: @ParameterizedTest consumes 1 parameter but there were 2 arguments provided.%nNote: the provided arguments were [foo, unused1]".formatted()))));
 		}
 
 		@Test
@@ -1202,8 +1208,8 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 			var results = execute(ArgumentCountValidationMode.STRICT, UnusedArgumentsTestCase.class,
 				"testWithCsvSourceContainingDifferentNumbersOfArguments", String.class);
 			results.allEvents().assertThatEvents() //
-					.haveExactly(1, event(finishedWithFailure(message(String.format(
-						"Configuration error: @ParameterizedTest consumes 1 parameter but there were 2 arguments provided.%nNote: the provided arguments were [foo, unused1]"))))) //
+					.haveExactly(1, event(finishedWithFailure(message(
+						"Configuration error: @ParameterizedTest consumes 1 parameter but there were 2 arguments provided.%nNote: the provided arguments were [foo, unused1]".formatted())))) //
 					.haveExactly(1,
 						event(test(), displayName("[2] argument=bar"), finishedWithFailure(message("bar"))));
 		}
@@ -1231,8 +1237,8 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 			var results = execute(ArgumentCountValidationMode.STRICT, UnusedArgumentsTestCase.class,
 				"testWithEvaluationReportingArgumentsProvider", String.class);
 			results.allEvents().assertThatEvents() //
-					.haveExactly(1, event(finishedWithFailure(message(String.format(
-						"Configuration error: @ParameterizedTest consumes 1 parameter but there were 2 arguments provided.%nNote: the provided arguments were [foo, unused]")))));
+					.haveExactly(1, event(finishedWithFailure(message(
+						"Configuration error: @ParameterizedTest consumes 1 parameter but there were 2 arguments provided.%nNote: the provided arguments were [foo, unused]".formatted()))));
 			results.allEvents().reportingEntryPublished().assertThatEvents() //
 					.haveExactly(1, event(EventConditions.reportEntry(Map.of("evaluated", "true"))));
 		}
@@ -1928,15 +1934,15 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 		}
 
 		static List<String> assumptionFailureInMethodSourceFactoryMethod() {
-			Assumptions.assumeFalse(true, "nothing to test");
-			return null;
+			Assumptions.abort("nothing to test");
+			return List.of();
 		}
 
 	}
 
 	/**
 	 * @since 5.9.1
-	 * @see https://github.com/junit-team/junit5/issues/3001
+	 * @see https://github.com/junit-team/junit-framework/issues/3001
 	 */
 	static class DuplicateMethodNamesMethodSourceTestCase {
 
@@ -2508,7 +2514,8 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 		record ArgumentConverterWithConstructorParameter(String value) implements ArgumentConverter {
 
 			@Override
-			public Object convert(Object source, ParameterContext context) throws ArgumentConversionException {
+			public Object convert(@Nullable Object source, ParameterContext context)
+					throws ArgumentConversionException {
 				return value;
 			}
 		}
@@ -2565,9 +2572,22 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 
 		@ParameterizedTest
 		@ValueSource(strings = "en-US")
-		void testWithIso639(Locale locale) {
+		void testWithIso639(@ConvertWith(Iso639Converter.class) Locale locale) {
 			assertEquals("en-us", locale.getLanguage());
 			assertEquals("", locale.getCountry());
+		}
+
+		static class Iso639Converter extends TypedArgumentConverter<String, Locale> {
+
+			Iso639Converter() {
+				super(String.class, Locale.class);
+			}
+
+			@SuppressWarnings("deprecation")
+			@Override
+			protected Locale convert(@Nullable String source) throws ArgumentConversionException {
+				return new Locale(requireNonNull(source));
+			}
 		}
 
 	}
@@ -2593,7 +2613,7 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 	private static class StringLengthConverter implements ArgumentConverter {
 
 		@Override
-		public Object convert(Object source, ParameterContext context) throws ArgumentConversionException {
+		public Object convert(@Nullable Object source, ParameterContext context) throws ArgumentConversionException {
 			return String.valueOf(source).length();
 		}
 	}
@@ -2610,7 +2630,7 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 	private static class ErroneousConverter implements ArgumentConverter {
 
 		@Override
-		public Object convert(Object source, ParameterContext context) throws ArgumentConversionException {
+		public Object convert(@Nullable Object source, ParameterContext context) throws ArgumentConversionException {
 			throw new ArgumentConversionException("something went horribly wrong");
 		}
 	}
@@ -2666,8 +2686,9 @@ class ParameterizedTestIntegrationTests extends AbstractJupiterTestEngineTests {
 
 		static {
 			//noinspection ConstantValue
-			if (true)
+			if (true) {
 				throw new RuntimeException("boom");
+			}
 		}
 
 		private static Stream<String> getArguments() {
