@@ -13,7 +13,6 @@ package org.junit.jupiter.params;
 import java.util.List;
 
 import org.junit.jupiter.api.extension.Extension;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.params.provider.Arguments;
 
@@ -29,20 +28,10 @@ class ParameterizedTestInvocationContext extends ParameterizedInvocationContext<
 	}
 
 	@Override
-	public String getDisplayName(int invocationIndex) {
-		return super.getDisplayName(invocationIndex);
-	}
-
-	@Override
 	public List<Extension> getAdditionalExtensions() {
 		return List.of( //
 			new ParameterizedTestMethodParameterResolver(this.declarationContext, this.arguments, this.invocationIndex) //
 		);
-	}
-
-	@Override
-	public void prepareInvocation(ExtensionContext context) {
-		super.prepareInvocation(context);
 	}
 
 }
