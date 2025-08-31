@@ -374,7 +374,9 @@ public interface ExtensionContext {
 	 * @see org.junit.platform.engine.EngineExecutionListener#reportingEntryPublished
 	 */
 	default void publishReportEntry(String key, String value) {
-		this.publishReportEntry(Collections.singletonMap(key, value));
+		Preconditions.notBlank(key, "key must not be null or blank");
+		Preconditions.notBlank(value, "value must not be null or blank");
+		publishReportEntry(Map.of(key, value));
 	}
 
 	/**
@@ -394,7 +396,7 @@ public interface ExtensionContext {
 	 */
 	@API(status = STABLE, since = "5.3")
 	default void publishReportEntry(String value) {
-		this.publishReportEntry("value", value);
+		publishReportEntry("value", value);
 	}
 
 	/**

@@ -11,7 +11,6 @@
 package org.junit.platform.launcher;
 
 import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
 import static java.util.Collections.unmodifiableSet;
 import static org.apiguardian.api.API.Status.INTERNAL;
 import static org.apiguardian.api.API.Status.STABLE;
@@ -99,7 +98,7 @@ public final class TestIdentifier implements Serializable {
 	private Set<TestTag> copyOf(Set<TestTag> tags) {
 		return switch (tags.size()) {
 			case 0 -> emptySet();
-			case 1 -> singleton(getOnlyElement(tags));
+			case 1 -> Set.of(getOnlyElement(tags));
 			default -> new LinkedHashSet<>(tags);
 		};
 	}

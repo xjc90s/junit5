@@ -33,8 +33,8 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -271,8 +271,8 @@ public class ExtensionContextTests {
 			engineExecutionListener, classTestDescriptor, PER_METHOD, configuration, extensionRegistry,
 			launcherStoreFacade, mock());
 
-		var map1 = Collections.singletonMap("key", "value");
-		var map2 = Collections.singletonMap("other key", "other value");
+		var map1 = Map.of("key", "value");
+		var map2 = Map.of("other key", "other value");
 
 		extensionContext.publishReportEntry(map1);
 		extensionContext.publishReportEntry(map2);

@@ -11,7 +11,6 @@
 package org.junit.platform.engine.support.discovery;
 
 import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
 import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.apiguardian.api.API.Status.STABLE;
 
@@ -473,7 +472,8 @@ public interface SelectorResolver {
 		 * {@code null}
 		 */
 		public static Resolution match(Match match) {
-			return new Resolution(singleton(match), emptySet());
+			Preconditions.notNull(match, "match must not be null");
+			return new Resolution(Set.of(match), emptySet());
 		}
 
 		/**
@@ -486,8 +486,9 @@ public interface SelectorResolver {
 		 * never {@code null}
 		 */
 		public static Resolution matches(Set<Match> matches) {
-			Preconditions.containsNoNullElements(matches, "matches must not contain null elements");
+			Preconditions.notNull(matches, "matches must not be null");
 			Preconditions.notEmpty(matches, "matches must not be empty");
+			Preconditions.containsNoNullElements(matches, "matches must not contain null elements");
 			return new Resolution(matches, emptySet());
 		}
 
@@ -501,8 +502,9 @@ public interface SelectorResolver {
 		 * {@code DiscoverySelectors}; never {@code null}
 		 */
 		public static Resolution selectors(Set<? extends DiscoverySelector> selectors) {
-			Preconditions.containsNoNullElements(selectors, "selectors must not contain null elements");
+			Preconditions.notNull(selectors, "selectors must not be null");
 			Preconditions.notEmpty(selectors, "selectors must not be empty");
+			Preconditions.containsNoNullElements(selectors, "selectors must not contain null elements");
 			return new Resolution(emptySet(), selectors);
 		}
 

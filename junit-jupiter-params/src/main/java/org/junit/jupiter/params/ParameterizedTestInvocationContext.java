@@ -10,8 +10,6 @@
 
 package org.junit.jupiter.params;
 
-import static java.util.Collections.singletonList;
-
 import java.util.List;
 
 import org.junit.jupiter.api.extension.Extension;
@@ -37,7 +35,7 @@ class ParameterizedTestInvocationContext extends ParameterizedInvocationContext<
 
 	@Override
 	public List<Extension> getAdditionalExtensions() {
-		return singletonList( //
+		return List.of( //
 			new ParameterizedTestMethodParameterResolver(this.declarationContext, this.arguments, this.invocationIndex) //
 		);
 	}

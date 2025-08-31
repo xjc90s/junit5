@@ -66,6 +66,8 @@ public interface TestReporter {
 	 * @see #publishEntry(String)
 	 */
 	default void publishEntry(String key, String value) {
+		Preconditions.notBlank(key, "key must not be null or blank");
+		Preconditions.notBlank(value, "value must not be null or blank");
 		publishEntry(Map.of(key, value));
 	}
 
