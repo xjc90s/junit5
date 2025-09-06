@@ -13,9 +13,7 @@ allows existing tests based on JUnit 3 and JUnit 4 to be executed using the JUni
 infrastructure. Since all classes and annotations specific to JUnit Jupiter reside under
 the `org.junit.jupiter` base package, having both JUnit 4 and JUnit Jupiter in the
 classpath does not lead to any conflicts. It is therefore safe to maintain existing JUnit
-4 tests alongside JUnit Jupiter tests. Furthermore, since the JUnit team will continue to
-provide maintenance and bug fix releases for the JUnit 4.x baseline, developers have
-plenty of time to migrate to JUnit Jupiter on their own schedule.
+4 tests alongside JUnit Jupiter tests and migrate them gradually.
 
 
 [[migrating-from-junit4-running]]
