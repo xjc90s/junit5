@@ -59,6 +59,12 @@ tasks {
 				"--main-class", "org.junit.platform.console.ConsoleLauncher",
 			)
 		})
+		bundle {
+			// Ignore warning for package that is only exported as "INTERNAL"
+			bnd("""
+				-fixupmessages.picocli.export: "Export org.junit.platform.console.options";is:=ignore
+			""")
+		}
 	}
 	codeCoverageClassesJar {
 		exclude("org/junit/platform/console/options/ConsoleUtils.class")
