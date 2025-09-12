@@ -244,7 +244,7 @@ val test by testing.suites.getting(JvmTestSuite::class) {
 						preferredMaxDuration = Duration.ofMillis(500)
 					}
 				}
-				jvmArgumentProviders += JavaHomeDir(project, 17, develocity.testDistribution.enabled)
+
 				jvmArgumentProviders += JavaHomeDir(project, 17, develocity.testDistribution.enabled)
 
 				val gradleJavaVersion = 21
