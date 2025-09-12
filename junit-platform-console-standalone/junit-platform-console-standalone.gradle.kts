@@ -22,15 +22,16 @@ dependencies {
 	osgiVerification(libs.openTestReporting.tooling.spi)
 }
 
+japicmp {
+	enabled = false // already checked by individual projects
+}
+
 tasks {
 	jar {
 		manifest {
 			attributes("Automatic-Module-Name" to "org.junit.platform.console.standalone")
 			attributes("Main-Class" to "org.junit.platform.console.ConsoleLauncher")
 		}
-	}
-	checkBackwardCompatibility {
-		enabled = false // already checked by individual projects
 	}
 	val shadowedArtifactsFile by registering(WriteArtifactsFile::class) {
 		from(configurations.shadowedClasspath)
