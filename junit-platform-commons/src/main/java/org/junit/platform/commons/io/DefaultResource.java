@@ -8,35 +8,35 @@
  * https://www.eclipse.org/legal/epl-v20.html
  */
 
-package org.junit.platform.commons.support;
+package org.junit.platform.commons.io;
 
 import java.net.URI;
 import java.util.Objects;
 
-import org.junit.platform.commons.util.Preconditions;
-import org.junit.platform.commons.util.ToStringBuilder;
+import org.jspecify.annotations.Nullable;
+import org.junit.platform.commons.PreconditionViolationException;
+import org.junit.platform.commons.annotation.Contract;
 
 /**
  * Default implementation of {@link Resource}.
  *
- * @since 1.11
+ * @since 6.0
  */
-@SuppressWarnings("removal")
 record DefaultResource(String name, URI uri) implements Resource {
 
-	public DefaultResource {
-		Preconditions.notNull(name, "name must not be null");
-		Preconditions.notNull(uri, "uri must not be null");
+	DefaultResource {
+		checkNotNull(name, "name");
+		checkNotNull(uri, "uri");
 	}
 
 	@Override
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	@Override
 	public URI getUri() {
-		return uri;
+		return this.uri;
 	}
 
 	@Override
@@ -56,12 +56,12 @@ record DefaultResource(String name, URI uri) implements Resource {
 		return Objects.hash(name, uri);
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this) //
-				.append("name", name) //
-				.append("uri", uri) //
-				.toString();
+	// Cannot use Preconditions due to package cycle
+	@Contract("null, _ -> fail; !null, _ -> param1")
+	private static <T> void checkNotNull(@Nullable T input, String title) {
+		if (input == null) {
+			throw new PreconditionViolationException(title + " must not be null");
+		}
 	}
 
 }

@@ -62,10 +62,7 @@ import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.TestReporter;
-import org.junit.platform.commons.support.Resource;
 import org.junit.platform.commons.support.scanning.ClasspathScanner;
-import org.junit.platform.commons.util.ModuleUtils;
-import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.engine.OutputDirectoryCreator;
 import org.junit.platform.engine.TestDescriptor;
 
@@ -163,14 +160,7 @@ class ArchUnitTests {
 				.ignoreDependency(TestReporter.class, org.junit.jupiter.api.extension.MediaType.class) //
 
 				// https://github.com/junit-team/junit-framework/issues/4885
-				.ignoreDependency(ModuleUtils.class, Resource.class) //
-				.ignoreDependency(
-					Class.forName("org.junit.platform.commons.util.ModuleUtils$ModuleReferenceResourceScanner"),
-					Resource.class) //
-				.ignoreDependency(ReflectionUtils.class, Resource.class) //
-				.ignoreDependency(ClasspathScanner.class, Resource.class) //
-				.ignoreDependency(Class.forName("org.junit.platform.commons.util.DefaultClasspathScanner"),
-					Resource.class) //
+				.ignoreDependency(ClasspathScanner.class, org.junit.platform.commons.support.Resource.class) //
 
 				// https://github.com/junit-team/junit-framework/issues/4919
 				.ignoreDependency(org.junit.jupiter.params.support.ParameterInfo.class,
