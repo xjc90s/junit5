@@ -98,7 +98,7 @@ jobs:
       with:
         encryptionKey: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
         arguments: |
-          publish -x check \
+          publishAllPublicationsToMavenCentralSnapshotsRepository -x check \
           prepareGitHubAttestation
     - name: Generate build provenance attestations
       uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
