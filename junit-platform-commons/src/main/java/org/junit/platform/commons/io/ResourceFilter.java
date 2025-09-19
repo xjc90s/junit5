@@ -15,6 +15,7 @@ import static org.apiguardian.api.API.Status.MAINTAINED;
 import java.util.function.Predicate;
 
 import org.apiguardian.api.API;
+import org.junit.platform.commons.util.Preconditions;
 
 /**
  * Resource filter used by reflection and classpath scanning support.
@@ -32,7 +33,7 @@ public class ResourceFilter {
 	 * @return an instance of {@code ResourceFilter}; never {@code null}
 	 */
 	public static ResourceFilter of(Predicate<? super Resource> resourcePredicate) {
-		return new ResourceFilter(resourcePredicate);
+		return new ResourceFilter(Preconditions.notNull(resourcePredicate, "resourcePredicate must not be null"));
 	}
 
 	private final Predicate<? super Resource> predicate;
@@ -41,8 +42,15 @@ public class ResourceFilter {
 		this.predicate = predicate;
 	}
 
+	/**
+	 * Test whether the given resource matches this filter.
+	 *
+	 * @param resource the resource to test; never {@code null}
+	 * @return {@code true} if the resource matches this filter, otherwise
+	 * {@code false}
+	 */
 	public boolean match(Resource resource) {
-		return predicate.test(resource);
+		return predicate.test(Preconditions.notNull(resource, "resource must not be null"));
 	}
 
 }
