@@ -27,12 +27,7 @@ import org.apiguardian.api.API;
  * collection or map.
  *
  * @since 6.0
- * @see org.junit.platform.commons.support.ResourceSupport#findAllResourcesInClasspathRoot(URI, ResourceFilter)
- * @see org.junit.platform.commons.support.ResourceSupport#findAllResourcesInPackage(String, ResourceFilter)
- * @see org.junit.platform.commons.support.ResourceSupport#findAllResourcesInModule(String, ResourceFilter)
- * @see org.junit.platform.commons.support.ResourceSupport#streamAllResourcesInClasspathRoot(URI, ResourceFilter)
- * @see org.junit.platform.commons.support.ResourceSupport#streamAllResourcesInPackage(String, ResourceFilter)
- * @see org.junit.platform.commons.support.ResourceSupport#streamAllResourcesInModule(String, ResourceFilter)
+ * @see org.junit.platform.commons.support.ResourceSupport
  */
 @API(status = MAINTAINED, since = "6.0")
 public interface Resource {
