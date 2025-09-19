@@ -15,7 +15,9 @@ import static org.apiguardian.api.API.Status.MAINTAINED;
 import java.util.function.Predicate;
 
 import org.apiguardian.api.API;
-import org.junit.platform.commons.util.Preconditions;
+import org.jspecify.annotations.Nullable;
+import org.junit.platform.commons.PreconditionViolationException;
+import org.junit.platform.commons.annotation.Contract;
 
 /**
  * Resource filter used by reflection and classpath scanning support.
@@ -33,7 +35,7 @@ public class ResourceFilter {
 	 * @return an instance of {@code ResourceFilter}; never {@code null}
 	 */
 	public static ResourceFilter of(Predicate<? super Resource> resourcePredicate) {
-		return new ResourceFilter(Preconditions.notNull(resourcePredicate, "resourcePredicate must not be null"));
+		return new ResourceFilter(checkNotNull(resourcePredicate, "resourcePredicate"));
 	}
 
 	private final Predicate<? super Resource> predicate;
@@ -50,7 +52,16 @@ public class ResourceFilter {
 	 * {@code false}
 	 */
 	public boolean match(Resource resource) {
-		return predicate.test(Preconditions.notNull(resource, "resource must not be null"));
+		return predicate.test(checkNotNull(resource, "resource"));
+	}
+
+	// Cannot use Preconditions due to package cycle
+	@Contract("null, _ -> fail; !null, _ -> param1")
+	private static <T> T checkNotNull(@Nullable T input, String title) {
+		if (input == null) {
+			throw new PreconditionViolationException(title + " must not be null");
+		}
+		return input;
 	}
 
 }
