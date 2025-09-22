@@ -190,9 +190,6 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
   names in JUnit Jupiter, `@SuiteDisplayName`, and any other test engines that subclass
   `AbstractTestDescriptor`. Please refer to the
   <<../user-guide/index.adoc#writing-tests-display-names, User Guide>> for details.
-* To help diagnosing potentially invalid invocations, the Console Launcher now logs
-  warnings for nonexistent classpath roots added via `--classpath` or `--scan-classpath`
-  rather than silently ignoring them.
 * New `selectClasses(...)` and `selectClassesByName(...)` factory methods have been
   introduced in `{DiscoverySelectors}` to simplify use cases where one needs to select
   multiple individual test classes for the `Launcher` or `EngineTestKit`.
