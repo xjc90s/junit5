@@ -122,15 +122,6 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
   deterministic but intentionally nonobvious way.
 * Serialization support for `TestIdentifier` has been changed in a backwards-incompatible
   way in order to simplify the implementation.
-* Deprecate `OutputDirectoryProvider` interface in favor of the new
-  `OutputDirectoryCreator` interface to resolve cyclic package dependency along
-  with the following APIs (which all have replacements working with
-  `OutputDirectoryCreator`):
-  - `EngineDiscoveryRequest.getOutputDirectoryProvider()`
-  - `ExecutionRequest.getOutputDirectoryProvider()`
-  - `LauncherDiscoveryRequestBuilder.outputDirectoryProvider(OutputDirectoryProvider)`
-  - `TestPlan.getOutputDirectoryProvider()`
-  - `EngineTestKit.Builder.outputDirectoryProvider(OutputDirectoryProvider)`
 * Deprecate `org.junit.platform.commons.support.Resource` interface in favor of the new
   `org.junit.platform.commons.io.Resource` one.
 * Deprecate `Resource`-related methods in `ReflectionSupport` in favor of corresponding
