@@ -166,8 +166,11 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
 ==== New Features and Improvements
 
 * Introduce new `Launcher.execute({LauncherExecutionRequest})` API with corresponding
-  `LauncherExecutionRequestBuilder` to enable the addition of parameters to test
+  `{LauncherExecutionRequestBuilder}` to enable the addition of parameters to test
   executions without additional overloads of `execute(...)`.
+* New `discoveryRequest()` method in `{LauncherDiscoveryRequestBuilder}` (analogous to
+  `executionRequest(...)` in `{LauncherExecutionRequestBuilder}`), which is an alias for
+  the existing `request()` method and is intended to be used via a `static` import.
 * Introduce `LauncherDiscoveryRequestBuilder.forExecution()` method as a convenience
   method for constructing a `{LauncherExecutionRequest}` that contains a
   `{LauncherDiscoveryRequest}`.
@@ -197,15 +200,6 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
 * To help diagnosing potentially invalid invocations, the Console Launcher now logs
   warnings for nonexistent classpath roots added via `--classpath` or `--scan-classpath`
   rather than silently ignoring them.
-* The `execute(TestPlan,{nbsp}TestExecutionListener...)` and
-  `execute(LauncherDiscoveryRequest,{nbsp}TestExecutionListener...)` methods in the
-  `Launcher` API are no longer deprecated.
-* New `discoveryRequest()` method in `{LauncherDiscoveryRequestBuilder}`, which is an
-  alias for the existing `request()` method and is intended to be used via a `static`
-  import.
-* New `executionRequest(...)` methods in `{LauncherExecutionRequestBuilder}`, which are
-  aliases for the existing `request(...)` methods and are intended to be used via a
-  `static` import.
 * New `selectClasses(...)` and `selectClassesByName(...)` factory methods have been
   introduced in `{DiscoverySelectors}` to simplify use cases where one needs to select
   multiple individual test classes for the `Launcher` or `EngineTestKit`.
