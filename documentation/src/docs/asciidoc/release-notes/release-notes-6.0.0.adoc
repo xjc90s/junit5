@@ -304,9 +304,6 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
   default ordering on a `@Nested` class and its `@Nested` inner classes when an enclosing
   class specifies a different orderer via `@TestMethodOrder` or `@TestClassOrder`,
   respectively.
-* `MediaType` now strips leading and trailing whitespace from a supplied `value`, `type`,
-  or `subtype`.
-* `MediaType` now eagerly rejects a _blank_ `value`, `type`, or `subtype`.
 
 
 [[release-notes-6.0.0-junit-vintage]]
