@@ -156,6 +156,9 @@ class ArchUnitTests {
 	void freeOfPackageCycles(JavaClasses classes) throws Exception {
 		slices().matching("org.junit.(**)").should().beFreeOfCycles() //
 
+				// Ignore shadowed packages
+				.ignoreDependency(nameContaining(".shadow."), nameContaining(".shadow.")) //
+
 				// https://github.com/junit-team/junit-framework/issues/4886
 				.ignoreDependency(TestReporter.class, org.junit.jupiter.api.extension.MediaType.class) //
 
