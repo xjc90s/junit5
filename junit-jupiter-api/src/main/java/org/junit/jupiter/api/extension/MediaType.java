@@ -55,8 +55,8 @@ public final class MediaType extends org.junit.jupiter.api.MediaType {
 	 * The {@code application/json; charset=UTF-8} media type.
 	 * @deprecated Use {@link #APPLICATION_JSON} instead.
 	 */
-	@Deprecated(since = "6.0")
-	@API(status = DEPRECATED, since = "6.0")
+	@Deprecated(since = "5.14")
+	@API(status = DEPRECATED, since = "5.14")
 	public static final MediaType APPLICATION_JSON_UTF_8 = create("application", "json", UTF_8);
 
 	/**
