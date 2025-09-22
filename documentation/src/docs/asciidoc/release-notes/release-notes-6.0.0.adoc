@@ -283,9 +283,6 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
 * For consistency with test methods, `@Nested` classes declared in the same enclosing
   class or interface are now ordered in a deterministic but intentionally nonobvious
   way.
-* `MediaType.APPLICATION_JSON_UTF_8` is now deprecated in favor of using
-  `MediaType.APPLICATION_JSON`, since the industry considers UTF-8 to be the implicit
-  default encoding for the `application/json` media type.
 * `org.junit.jupiter.api.extension.MediaType` is now deprecated in favor of the new
   `org.junit.jupiter.api.MediaType`.
 * The `publishFile(...)` methods in `TestReporter` which accept an
