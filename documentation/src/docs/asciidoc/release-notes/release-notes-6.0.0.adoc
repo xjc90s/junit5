@@ -288,8 +288,6 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
 * The `publishFile(...)` method in `ExtensionContext` which accepts an
   `org.junit.jupiter.api.extension.MediaType` is now deprecated in favor of a new variant
   which accepts an `org.junit.jupiter.api.MediaType`.
-* `org.junit.jupiter.params.support.ParameterInfo` is now deprecated in favor of the new
-  `org.junit.jupiter.params.ParameterInfo`.
 
 [[release-notes-6.0.0-junit-jupiter-new-features-and-improvements]]
 ==== New Features and Improvements
