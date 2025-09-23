@@ -20,7 +20,7 @@ import org.junit.platform.commons.annotation.Contract;
 /**
  * Default implementation of {@link Resource}.
  *
- * @since 6.0
+ * @since 1.14
  */
 record DefaultResource(String name, URI uri) implements Resource {
 

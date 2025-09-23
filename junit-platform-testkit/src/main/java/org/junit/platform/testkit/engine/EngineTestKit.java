@@ -459,8 +459,8 @@ public final class EngineTestKit {
 		 * {@link #outputDirectoryCreator(OutputDirectoryCreator)} instead
 		 */
 		@SuppressWarnings("removal")
-		@Deprecated(since = "6.0", forRemoval = true)
-		@API(status = DEPRECATED, since = "6.0")
+		@Deprecated(since = "1.14", forRemoval = true)
+		@API(status = DEPRECATED, since = "1.14")
 		public Builder outputDirectoryProvider(
 				org.junit.platform.engine.reporting.OutputDirectoryProvider outputDirectoryProvider) {
 			return outputDirectoryCreator(outputDirectoryProvider);
@@ -480,7 +480,7 @@ public final class EngineTestKit {
 		 * @since 1.12
 		 * @see OutputDirectoryCreator
 		 */
-		@API(status = MAINTAINED, since = "6.0")
+		@API(status = MAINTAINED, since = "1.14")
 		public Builder outputDirectoryCreator(OutputDirectoryCreator outputDirectoryCreator) {
 			this.requestBuilder.outputDirectoryCreator(outputDirectoryCreator);
 			return this;

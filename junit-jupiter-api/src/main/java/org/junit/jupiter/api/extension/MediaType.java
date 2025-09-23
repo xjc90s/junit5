@@ -32,8 +32,8 @@ import org.junit.platform.commons.util.Preconditions;
  * @see ExtensionContext#publishFile(String, MediaType, org.junit.jupiter.api.function.ThrowingConsumer)
  * @deprecated Use {@link org.junit.jupiter.api.MediaType} instead.
  */
-@Deprecated(since = "6.0", forRemoval = true)
-@API(status = Status.DEPRECATED, since = "6.0")
+@Deprecated(since = "5.14", forRemoval = true)
+@API(status = Status.DEPRECATED, since = "5.14")
 public final class MediaType extends org.junit.jupiter.api.MediaType {
 
 	/**

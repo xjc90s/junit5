@@ -230,8 +230,8 @@ public class EngineDiscoveryRequestResolver<T extends TestDescriptor> {
 		 * @since 1.12
 		 * @deprecated Please use {@link #addResourceContainerSelectorResolver(ResourceFilter)} instead.
 		 */
-		@API(status = DEPRECATED, since = "6.0")
-		@Deprecated(since = "6.0", forRemoval = true)
+		@API(status = DEPRECATED, since = "1.14")
+		@Deprecated(since = "1.14", forRemoval = true)
 		@SuppressWarnings("removal")
 		public Builder<T> addResourceContainerSelectorResolver(
 				Predicate<org.junit.platform.commons.support.Resource> resourceFilter) {
@@ -251,9 +251,9 @@ public class EngineDiscoveryRequestResolver<T extends TestDescriptor> {
 		 * @param resourceFilter filter the resolved classes must match; never
 		 * {@code null}
 		 * @return this builder for method chaining
-		 * @since 6.0
+		 * @since 1.14
 		 */
-		@API(status = MAINTAINED, since = "6.0")
+		@API(status = MAINTAINED, since = "1.14")
 		public Builder<T> addResourceContainerSelectorResolver(ResourceFilter resourceFilter) {
 			Preconditions.notNull(resourceFilter, "resourceFilter must not be null");
 			return addSelectorResolver(

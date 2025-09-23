@@ -36,8 +36,8 @@ import org.junit.platform.commons.util.Preconditions;
  * @deprecated Please use {@link org.junit.platform.commons.io.Resource} instead.
  */
 @SuppressWarnings("removal")
-@API(status = DEPRECATED, since = "6.0")
-@Deprecated(since = "6.0", forRemoval = true)
+@API(status = DEPRECATED, since = "1.14")
+@Deprecated(since = "1.14", forRemoval = true)
 public interface Resource extends org.junit.platform.commons.io.Resource {
 
 	/**
@@ -46,7 +46,7 @@ public interface Resource extends org.junit.platform.commons.io.Resource {
 	 *
 	 * @param resource the resource to copy attributes from; never {@code null}
 	 * @return a new {@code Resource}
-	 * @since 6.0
+	 * @since 1.14
 	 */
 	static Resource of(org.junit.platform.commons.io.Resource resource) {
 		Preconditions.notNull(resource, "resource must not be null");

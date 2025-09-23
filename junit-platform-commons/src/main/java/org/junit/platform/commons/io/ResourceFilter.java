@@ -22,10 +22,10 @@ import org.junit.platform.commons.annotation.Contract;
 /**
  * Resource filter used by reflection and classpath scanning support.
  *
- * @since 6.0
+ * @since 1.14
  * @see Resource
  */
-@API(status = MAINTAINED, since = "6.0")
+@API(status = MAINTAINED, since = "1.14")
 public class ResourceFilter {
 
 	/**

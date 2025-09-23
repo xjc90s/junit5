@@ -119,8 +119,8 @@ public final class ReflectionSupport {
 	 * @see #tryToGetResources(String, ClassLoader)
 	 * @deprecated Please use {@link ResourceSupport#tryToGetResources(String)} instead
 	 */
-	@API(status = DEPRECATED, since = "6.0")
-	@Deprecated(since = "6.0", forRemoval = true)
+	@API(status = DEPRECATED, since = "1.14")
+	@Deprecated(since = "1.14", forRemoval = true)
 	@SuppressWarnings("removal")
 	public static Try<Set<Resource>> tryToGetResources(String classpathResourceName) {
 		return ResourceSupport.tryToGetResources(classpathResourceName) //
@@ -148,8 +148,8 @@ public final class ReflectionSupport {
 	 * @see #tryToGetResources(String)
 	 * @deprecated Please use {@link ResourceSupport#tryToGetResources(String, ClassLoader)} instead
 	 */
-	@API(status = DEPRECATED, since = "6.0")
-	@Deprecated(since = "6.0", forRemoval = true)
+	@API(status = DEPRECATED, since = "1.14")
+	@Deprecated(since = "1.14", forRemoval = true)
 	@SuppressWarnings("removal")
 	public static Try<Set<Resource>> tryToGetResources(String classpathResourceName, ClassLoader classLoader) {
 		return ResourceSupport.tryToGetResources(classpathResourceName, classLoader) //
@@ -197,8 +197,8 @@ public final class ReflectionSupport {
 	 * @see #findAllResourcesInModule(String, Predicate)
 	 * @deprecated Please use {@link ResourceSupport#findAllResourcesInClasspathRoot(URI, ResourceFilter)} instead
 	 */
-	@API(status = DEPRECATED, since = "6.0")
-	@Deprecated(since = "6.0", forRemoval = true)
+	@API(status = DEPRECATED, since = "1.14")
+	@Deprecated(since = "1.14", forRemoval = true)
 	@SuppressWarnings("removal")
 	public static List<Resource> findAllResourcesInClasspathRoot(URI root, Predicate<Resource> resourceFilter) {
 		return toSupportResourcesList(
@@ -248,8 +248,8 @@ public final class ReflectionSupport {
 	 * @see #streamAllResourcesInModule(String, Predicate)
 	 * @deprecated Please use {@link ResourceSupport#streamAllResourcesInClasspathRoot(URI, ResourceFilter)} instead
 	 */
-	@API(status = DEPRECATED, since = "6.0")
-	@Deprecated(since = "6.0", forRemoval = true)
+	@API(status = DEPRECATED, since = "1.14")
+	@Deprecated(since = "1.14", forRemoval = true)
 	@SuppressWarnings("removal")
 	public static Stream<Resource> streamAllResourcesInClasspathRoot(URI root, Predicate<Resource> resourceFilter) {
 		return toSupportResourcesStream(
@@ -300,8 +300,8 @@ public final class ReflectionSupport {
 	 * @see #findAllResourcesInModule(String, Predicate)
 	 * @deprecated Please use {@link ResourceSupport#findAllResourcesInPackage(String, ResourceFilter)} instead
 	 */
-	@API(status = DEPRECATED, since = "6.0")
-	@Deprecated(since = "6.0", forRemoval = true)
+	@API(status = DEPRECATED, since = "1.14")
+	@Deprecated(since = "1.14", forRemoval = true)
 	@SuppressWarnings("removal")
 	public static List<Resource> findAllResourcesInPackage(String basePackageName, Predicate<Resource> resourceFilter) {
 		return toSupportResourcesList(
@@ -355,8 +355,8 @@ public final class ReflectionSupport {
 	 * @see #streamAllResourcesInModule(String, Predicate)
 	 * @deprecated Please use {@link ResourceSupport#streamAllResourcesInPackage(String, ResourceFilter)} instead
 	 */
-	@API(status = DEPRECATED, since = "6.0")
-	@Deprecated(since = "6.0", forRemoval = true)
+	@API(status = DEPRECATED, since = "1.14")
+	@Deprecated(since = "1.14", forRemoval = true)
 	@SuppressWarnings("removal")
 	public static Stream<Resource> streamAllResourcesInPackage(String basePackageName,
 			Predicate<Resource> resourceFilter) {
@@ -408,8 +408,8 @@ public final class ReflectionSupport {
 	 * @see #findAllResourcesInPackage(String, Predicate)
 	 * @deprecated Please use {@link ResourceSupport#findAllResourcesInModule(String, ResourceFilter)} instead
 	 */
-	@API(status = DEPRECATED, since = "6.0")
-	@Deprecated(since = "6.0", forRemoval = true)
+	@API(status = DEPRECATED, since = "1.14")
+	@Deprecated(since = "1.14", forRemoval = true)
 	@SuppressWarnings("removal")
 	public static List<Resource> findAllResourcesInModule(String moduleName, Predicate<Resource> resourceFilter) {
 		return toSupportResourcesList(
@@ -458,8 +458,8 @@ public final class ReflectionSupport {
 	 * @see #streamAllResourcesInPackage(String, Predicate)
 	 * @deprecated Please use {@link ResourceSupport#streamAllResourcesInModule(String, ResourceFilter)} instead
 	 */
-	@API(status = DEPRECATED, since = "6.0")
-	@Deprecated(since = "6.0", forRemoval = true)
+	@API(status = DEPRECATED, since = "1.14")
+	@Deprecated(since = "1.14", forRemoval = true)
 	@SuppressWarnings("removal")
 	public static Stream<Resource> streamAllResourcesInModule(String moduleName, Predicate<Resource> resourceFilter) {
 		return toSupportResourcesStream(

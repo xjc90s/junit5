@@ -365,8 +365,8 @@ public final class DiscoverySelectors {
 	 * @see ReflectionSupport#tryToGetResources(String)
 	 * @deprecated Please use {@link #selectClasspathResourceByName(Set)} instead.
 	 */
-	@API(status = DEPRECATED, since = "6.0")
-	@Deprecated(since = "6.0", forRemoval = true)
+	@API(status = DEPRECATED, since = "1.14")
+	@Deprecated(since = "1.14", forRemoval = true)
 	@SuppressWarnings("removal")
 	public static ClasspathResourceSelector selectClasspathResource(
 			Set<org.junit.platform.commons.support.Resource> classpathResources) {
@@ -397,13 +397,13 @@ public final class DiscoverySelectors {
 	 * @param classpathResources a set of classpath resources; never
 	 * {@code null} or empty. All resources must have the same name, may not
 	 * be {@code null} or blank.
-	 * @since 6.0
+	 * @since 1.14
 	 * @see #selectClasspathResource(String, FilePosition)
 	 * @see #selectClasspathResource(String)
 	 * @see ClasspathResourceSelector
 	 * @see org.junit.platform.commons.support.ResourceSupport#tryToGetResources(String)
 	 */
-	@API(status = MAINTAINED, since = "6.0")
+	@API(status = MAINTAINED, since = "1.14")
 	public static ClasspathResourceSelector selectClasspathResourceByName(Set<? extends Resource> classpathResources) {
 		Preconditions.notEmpty(classpathResources, "classpath resources must not be null or empty");
 		Preconditions.containsNoNullElements(classpathResources, "individual classpath resources must not be null");

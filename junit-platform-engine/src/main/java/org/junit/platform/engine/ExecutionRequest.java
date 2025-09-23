@@ -156,8 +156,8 @@ public class ExecutionRequest {
 	 * @since 1.12
 	 * @deprecated Please use {@link #getOutputDirectoryCreator()} instead
 	 */
-	@Deprecated(since = "6.0", forRemoval = true)
-	@API(status = DEPRECATED, since = "6.0")
+	@Deprecated(since = "1.14", forRemoval = true)
+	@API(status = DEPRECATED, since = "1.14")
 	@SuppressWarnings("removal")
 	public org.junit.platform.engine.reporting.OutputDirectoryProvider getOutputDirectoryProvider() {
 		return org.junit.platform.engine.reporting.OutputDirectoryProvider.castOrAdapt(getOutputDirectoryCreator());
@@ -169,9 +169,9 @@ public class ExecutionRequest {
 	 *
 	 * @throws PreconditionViolationException if the output directory creator is
 	 * not available
-	 * @since 6.0
+	 * @since 1.14
 	 */
-	@API(status = MAINTAINED, since = "6.0")
+	@API(status = MAINTAINED, since = "1.14")
 	public OutputDirectoryCreator getOutputDirectoryCreator() {
 		return Preconditions.notNull(this.outputDirectoryCreator,
 			"No OutputDirectoryCreator was configured for this request");
