@@ -34,10 +34,10 @@ val initializeAtBuildTime = mapOf(
 		"org.junit.platform.commons.util.KotlinReflectionUtils",
 		"org.junit.platform.launcher.core.DiscoveryIssueNotifier\$1",
 		"org.junit.platform.launcher.core.HierarchicalOutputDirectoryCreator",
-	)
+	),
 	"6.0" to listOf(
 		"org.junit.platform.commons.logging.LoggerFactory\$DelegatingLogger",
-	)
+	),
 )
 
 graalvmNative {
