@@ -103,7 +103,7 @@ public final class ClasspathResourceSelector implements DiscoverySelector {
 	 * @deprecated Please use {{@link #getResources()}} instead.
 	 */
 	@API(status = DEPRECATED, since = "6.0")
-	@Deprecated(since = "6.0")
+	@Deprecated(since = "6.0", forRemoval = true)
 	@SuppressWarnings("removal")
 	public Set<org.junit.platform.commons.support.Resource> getClasspathResources() {
 		return getResources().stream() //
