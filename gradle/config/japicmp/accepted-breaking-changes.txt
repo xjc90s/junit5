@@ -35,7 +35,7 @@ org.junit.platform.engine.discovery.PackageSelector
 org.junit.platform.engine.discovery.UniqueIdSelector
 org.junit.platform.engine.discovery.UriSelector
 org.junit.platform.engine.reporting.ReportEntry#ReportEntry
-org.junit.platform.engine.support.config.PrefixedConfigurationParameters
+org.junit.platform.engine.support.config.PrefixedConfigurationParameters#get
 org.junit.platform.engine.support.descriptor.ClasspathResourceSource
 org.junit.platform.engine.support.descriptor.ClassSource
 org.junit.platform.engine.support.descriptor.CompositeTestSource
@@ -48,7 +48,7 @@ org.junit.platform.engine.support.filter.ClasspathScanningSupport
 org.junit.platform.engine.support.hierarchical.SingleTestExecutor
 org.junit.platform.engine.support.hierarchical.SingleTestExecutor$Executable
 org.junit.platform.engine.support.store.Namespace
-org.junit.platform.engine.support.store.NamespacedHierarchicalStore
+org.junit.platform.engine.support.store.NamespacedHierarchicalStore#getOrComputeIfAbsent
 org.junit.platform.engine.UniqueId
 org.junit.platform.engine.UniqueId$Segment
 org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
