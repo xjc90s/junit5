@@ -474,7 +474,7 @@ tasks {
 		}
 		from(inputDir) {
 			filesMatching("**/*.html") {
-				val favicon = "<link rel=\"icon\" type=\"image/png\" href=\"https://junit.org/assets/img/junit5-logo.png\">"
+				val favicon = "<link rel=\"icon\" type=\"image/png\" href=\"https://junit.org/assets/img/junit6-temporary-logo.png\">"
 				filter { line ->
 					var result = if (line.startsWith("<head>")) line.replace("<head>", "<head>$favicon") else line
 					externalModulesWithoutModularJavadoc.forEach { (moduleName, baseUrl) ->
