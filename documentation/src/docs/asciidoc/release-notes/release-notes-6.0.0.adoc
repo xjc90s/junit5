@@ -1,22 +1,22 @@
 [[release-notes-6.0.0]]
 == 6.0.0
 
-*Date of Release:* ❓
+*Date of Release:* September ❓, 2025
 
 *Scope:*
 
 * Java 17 and Kotlin 2.2 baseline
 * Single version number for Platform, Jupiter, and Vintage
-* Use of JSpecify annotations to document nullability
-* Integration of JFR functionality into `junit-platform-launcher`
+* Use of JSpecify annotations to express nullability
+* Integration of JFR functionality in `junit-platform-launcher`
 * Removal of `junit-platform-runner` and `junit-platform-jfr`
+* Deterministic order of `@Nested` classes
+* `MethodOrderer.Default` and `ClassOrderer.Default` for `@Nested` classes
+* Inheritance of `@TestMethodOrder` by enclosed `@Nested` classes
 * Switch to FastCSV library for `@CsvSource` and `@CsvFileSource`
 * Support for using Kotlin `suspend` functions as test methods
-* Support for cancelling test execution via `CancellationToken`
 * New `--fail-fast` mode for ConsoleLauncher
-* Deterministic order of `@Nested` classes
-* Inheritance of `@TestMethodOrder` by enclosed `@Nested` classes
-* `MethodOrderer.Default` and `ClassOrderer.Default` for `@Nested` classes
+* Support for cancelling test execution via `CancellationToken`
 * Removal of various deprecated behaviors and APIs
 
 
@@ -61,17 +61,16 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
 [[release-notes-6.0.0-junit-platform-deprecations-and-breaking-changes]]
 ==== Deprecations and Breaking Changes
 
-* Remove deprecated support for running the `ConsoleLauncher` without specifying a
-  subcommand.
-* Remove support for deprecated non-conventional `ConsoleLauncher` options such as
-  `--h` (rather than `-h`) or `-help` (rather than `--help`).
-* The `junit-platform-runner` module that provided the JUnit 4 based `JUnitPlatform`
-  runner has been discontinued.
-* The `junit-platform-jfr` module that provided custom Java Flight Recorder (JFR) events
-  for test discovery and execution has been discontinued. Instead, the functionality is
-  now available directly in `junit-platform-launcher` without requiring an additional
-  dependency.
-* Support for Maven Surefire/Failsafe versions less than 3.0.0 has been dropped.
+* Support for running the `ConsoleLauncher` without specifying a subcommand has been
+  removed.
+* Support for non-conventional `ConsoleLauncher` options such as `--h` (rather than `-h`)
+  or `-help` (rather than `--help`) has been removed.
+* The `junit-platform-runner` module which provided the JUnit 4 based `JUnitPlatform`
+  runner has been removed.
+* The `junit-platform-jfr` module which provided custom Java Flight Recorder (JFR) events
+  for test discovery and execution has been removed. The functionality is now available
+  directly in the `junit-platform-launcher` module.
+* Support for Maven Surefire/Failsafe versions less than 3.0.0 has been removed.
 * The following deprecated APIs have been removed:
   - `ReflectionSupport.loadClass(String)` method
   - `ReflectionUtils.readFieldValue(...)` methods
@@ -88,11 +87,10 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
   - `LegacyReportingUtils` class
   - `TestPlan.add(TestIdentifier)`, `TestPlan.getChildren(String)`, and
     `TestPlan.getTestIdentifier(String)` methods
-  - `TestPlan.add(TestIdentifier)` and `TestPlan.getChildren(String)` methods
-  - `@UseTechnicalNames` annotation
+  - `@UseTechnicalNames` annotation for suites
   - `EngineTestKit.execute(String, EngineDiscoveryRequest)`,
     `EngineTestKit.execute(TestEngine, EngineDiscoveryRequest)`, and
-    `EngineTestKit.Builder.filters(...)` methods
+    `EngineTestKit.Builder.filters(DiscoveryFilter...)` methods
 * Support for "legacy semantics" for field and method searches that used to be
   configurable via the `junit.platform.reflection.search.useLegacySemantics` system
   property has been removed. JUnit now always adheres to standard Java semantics regarding
@@ -103,53 +101,55 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
   - `ConfigurationParameters.get(String, Function)`
   - `NamespacedHierarchicalStore.getOrComputeIfAbsent(N, K, Function)`
   - `NamespacedHierarchicalStore.getOrComputeIfAbsent(N, K, Function, Class)`
-* Discontinue `junit-platform-suite-commons` which is now integrated into
-  `junit-platform-suite`.
-* Deprecate `Launcher.execute(TestPlan, TestExecutionListener[])` and
-  `Launcher.execute(LauncherDiscoveryRequest, TestExecutionListener[])` in favor of
-  `Launcher.execute(LauncherExecutionRequest)`
+* The `junit-platform-suite-commons` module has been removed. Its functionality is now
+  integrated directly in the `junit-platform-suite` module.
 * `ConversionSupport` now converts `String` to `Locale` using the IETF BCP 47 language tag
   format supported by the `Locale.forLanguageTag(String)` factory method instead of the
   format used by the deprecated `Locale(String)` constructor.
-* Deprecate `getOrComputeIfAbsent(...)` methods in `NamespacedHierarchicalStore` in favor
-  of the new `computeIfAbsent(...)` methods.
+* All `getOrComputeIfAbsent(...)` methods in `NamespacedHierarchicalStore` have been
+  deprecated in favor of the new `computeIfAbsent(...)` methods.
 * Setting an invalid value for one of the following enum-based configuration parameters
   now causes test discovery to fail:
   - `junit.platform.discovery.issue.failure.phase`
   - `junit.platform.discovery.issue.severity.critical`
-* The methods `findNestedClasses` and `streamNestedClasses` in `ReflectionSupport` now
-  return nested classes declared in the same enclosing class or interface ordered in a
-  deterministic but intentionally nonobvious way.
+* The methods `findNestedClasses(...)` and `streamNestedClasses(...)` in
+  `ReflectionSupport` now return nested classes, which are declared in the same enclosing
+  class or interface, ordered in a deterministic but intentionally nonobvious way.
 * Serialization support for `TestIdentifier` has been changed in a backwards-incompatible
   way in order to simplify the implementation.
 
 [[release-notes-6.0.0-junit-platform-new-features-and-improvements]]
 ==== New Features and Improvements
 
-* Introduce new `Launcher.execute({LauncherExecutionRequest})` API with corresponding
+* New `Launcher.execute({LauncherExecutionRequest})` API with corresponding
   `{LauncherExecutionRequestBuilder}` to enable the addition of parameters to test
-  executions without additional overloads of `execute(...)`.
+  executions in the future without additional overloads of `execute(...)`.
 * New `discoveryRequest()` method in `{LauncherDiscoveryRequestBuilder}` (analogous to
   `executionRequest(...)` in `{LauncherExecutionRequestBuilder}`), which is an alias for
   the existing `request()` method and is intended to be used via a `static` import.
-* Introduce `LauncherDiscoveryRequestBuilder.forExecution()` method as a convenience
-  method for constructing a `{LauncherExecutionRequest}` that contains a
+* New `LauncherDiscoveryRequestBuilder.forExecution()` method which serves as a
+  convenience for constructing a `{LauncherExecutionRequest}` that contains a
   `{LauncherDiscoveryRequest}`.
-* Introduce support for cancelling a running test execution via a `{CancellationToken}`
-  passed to the `{Launcher}` as part of a `{LauncherExecutionRequest}` and from there to
-  all registered test engines. Please refer to the
+* New `selectClasses(...)` and `selectClassesByName(...)` factory methods have been
+  introduced in `{DiscoverySelectors}` to simplify use cases where one needs to select
+  multiple individual test classes for the `Launcher` or `EngineTestKit`.
+* New `selectors(List)` builder method for `{EngineTestKit}` which can be used in
+  conjunction with the new `selectClasses(...)` and `selectClassesByName(...)` factory
+  methods in `DiscoverySelectors`.
+* New support for cancelling a running test execution via a `{CancellationToken}` passed
+  to the `{Launcher}` as part of a `{LauncherExecutionRequest}` and from there to all
+  registered test engines. Please refer to the
   <<../user-guide/index.adoc#launcher-api-launcher-cancellation, User Guide>> for details
   and a usage example.
 * Passing the `--fail-fast` option to the `execute` subcommand of the `ConsoleLauncher`
   now causes test execution to be cancelled after the first failed test.
-* Provide cancellation support for implementations of `{HierarchicalTestEngine}` such as
-  JUnit Jupiter, Spock, and Cucumber.
-* Provide cancellation support for the `@Suite` test engine.
-* Introduce `TestTask.getTestDescriptor()` method for use in
-  `HierarchicalTestExecutorService` implementations.
-* Introduce `computeIfAbsent(...)` methods in `NamespacedHierarchicalStore` to simplify
-  working with non-nullable types.
-* Stack traces are now pruned up to the test method or lifecycle method.
+* Cancellation support for implementations of `{HierarchicalTestEngine}` such as JUnit
+  Jupiter, Spock, and Cucumber.
+* Cancellation support for the `@Suite` test engine.
+* New `TestTask.getTestDescriptor()` method for use in `HierarchicalTestExecutorService`
+  implementations.
+* New `computeIfAbsent(...)` methods in `NamespacedHierarchicalStore` to simplify working
+  with non-nullable types.
 * Convention-based conversion in `ConversionSupport` now supports factory methods and
   factory constructors that accept a single `CharSequence` argument in addition to the
   existing support for factories that accept a single `String` argument.
@@ -158,12 +158,7 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
   names in JUnit Jupiter, `@SuiteDisplayName`, and any other test engines that subclass
   `AbstractTestDescriptor`. Please refer to the
   <<../user-guide/index.adoc#writing-tests-display-names, User Guide>> for details.
-* New `selectClasses(...)` and `selectClassesByName(...)` factory methods have been
-  introduced in `{DiscoverySelectors}` to simplify use cases where one needs to select
-  multiple individual test classes for the `Launcher` or `EngineTestKit`.
-* New `selectors(List)` builder method for `{EngineTestKit}` which can be used in
-  conjunction with the new `selectClasses(...)` and `selectClassesByName(...)` factory
-  methods in `DiscoverySelectors`.
+* Stack traces are now pruned up to the test method or lifecycle method.
 
 
 [[release-notes-6.0.0-junit-jupiter]]
@@ -194,9 +189,11 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
   values less than 17.
 * `@EnabledForJreRange` and `@DisabledForJreRange` now use `JAVA_17` as their default
   `min` value.
-* The contracts for the `Executable` parameters of Kotlin-specific `assertTimeout`
-  functions were changed from `callsInPlace(executable, EXACTLY_ONCE)` to
-  `callsInPlace(executable, AT_MOST_ONCE)` which might result in compilation errors.
+* For consistency with test methods, `@Nested` classes declared in the same enclosing
+  class or interface are now ordered in a deterministic but intentionally nonobvious
+  way.
+* The `junit-jupiter-migrationsupport` module and its contained classes are now
+  deprecated and will be removed in the next major version.
 * As a result of migrating from
   https://github.com/uniVocity/univocity-parsers[univocity-parsers] to
   https://fastcsv.org/[FastCSV] for `@CsvSource` and `@CsvFileSource`, root causes and
@@ -213,23 +210,21 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
   `@CsvFileSource`. For example, if a single quote is used as the quote character,
   the following CSV value `'foo'INVALID,'bar'` will now cause an exception to be thrown.
   This helps ensure that malformed input is not silently accepted or misinterpreted.
-* The `junit-jupiter-migrationsupport` artifact and its contained classes are now
-  deprecated and will be removed in the next major version.
+* Support for the `junit.jupiter.params.arguments.conversion.locale.format` configuration
+  parameter has been removed. `Locale` conversions are now always performed using the IETF
+  BCP 47 language tag format supported by the `Locale.forLanguageTag(String)` factory
+  method.
+* The return type of the `provideTestTemplateInvocationContexts(ExtensionContext)` method
+  in the `TestTemplateInvocationContextProvider` interface has been changed from
+  `Stream<TestTemplateInvocationContext>` to
+  `Stream<?{nbsp}extends{nbsp}TestTemplateInvocationContext>`.
 * The type bounds of the following methods have been changed to be more flexible and allow
   nullable and non-nullable types:
   - `ExtensionContext.getConfigurationParameter(String, Function)`
   - `ExtensionContext.getOrComputeIfAbsent(K, Function)`
   - `ExtensionContext.getOrComputeIfAbsent(K, Function, Class)`
-* Change the return type of the `provideTestTemplateInvocationContexts(ExtensionContext)`
-  method in the `TestTemplateInvocationContextProvider` interface from
-  `Stream<TestTemplateInvocationContext>` to
-  `Stream<? extends TestTemplateInvocationContext>`.
-* Remove support for the `junit.jupiter.params.arguments.conversion.locale.format`
-  configuration parameter. `Locale` conversions are now always performed using the IETF
-  BCP 47 language tag format supported by the `Locale.forLanguageTag(String)` factory
-  method.
-* Deprecate `getOrComputeIfAbsent(...)` methods in `ExtensionContext.Store` in favor of
-  the new `computeIfAbsent(...)` methods.
+* All `getOrComputeIfAbsent(...)` methods in `ExtensionContext.Store` are now deprecated
+  in favor of the new `computeIfAbsent(...)` methods.
 * Setting an invalid value for one of the following enum-based configuration parameters
   now causes test discovery or execution to fail:
   - `junit.jupiter.execution.parallel.mode.default`
@@ -239,28 +234,30 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
   - `junit.jupiter.extensions.testinstantiation.extensioncontextscope.default`
   - `junit.jupiter.tempdir.cleanup.mode.default`
   - `junit.jupiter.testinstance.lifecycle.default`
-* For consistency with test methods, `@Nested` classes declared in the same enclosing
-  class or interface are now ordered in a deterministic but intentionally nonobvious
-  way.
+* The contracts for `Executable` parameters of Kotlin-specific `assertTimeout` functions
+  have been changed from `callsInPlace(executable, EXACTLY_ONCE)` to
+  `callsInPlace(executable, AT_MOST_ONCE)` which might result in compilation errors.
 
 [[release-notes-6.0.0-junit-jupiter-new-features-and-improvements]]
 ==== New Features and Improvements
 
-* Kotlin's `suspend` modifier may now be applied to test and lifecycle methods.
-* The `Arguments` interface for parameterized tests is now officially a
-  `@FunctionalInterface`.
+* Non-printable control characters in display names are now replaced with alternative
+  representations. Please refer to the
+  <<../user-guide/index.adoc#writing-tests-display-names, User Guide>> for details.
+* For consistency with `@TestClassOrder`, `@TestMethodOrder` annotations specified on a
+  test class are now inherited by its `@Nested` inner classes, recursively.
+* New `MethodOrderer.Default` and `ClassOrderer.Default` types for reverting back to
+  default ordering on a `@Nested` class and its `@Nested` inner classes when an enclosing
+  class specifies a different orderer via `@TestMethodOrder` or `@TestClassOrder`,
+  respectively.
 * The implementation of `@CsvSource` and `@CsvFileSource` has been migrated from the no
   longer maintained https://github.com/uniVocity/univocity-parsers[univocity-parsers] to
   https://fastcsv.org/[FastCSV]. This improves the consistency of CSV input handling,
-  including for malformed entries, and provides better error reporting and overall
+  especially for malformed entries, and provides better error reporting and overall
   performance.
 * Display names for `@ParameterizedClass` and `@ParameterizedTest` now consistently style
   name-value pairs for arguments using `name = value` formatting – for example,
   `fruit{nbsp}={nbsp}apple` instead of `fruit=apple`.
-* Reason strings supplied to `ConditionEvaluationResult` APIs are now officially declared
-  as `@Nullable`.
-* Introduce `computeIfAbsent(...)` methods in `ExtensionContext.Store` to simplify working
-  with non-nullable types.
 * Text-based arguments in display names for parameterized tests are now quoted by default.
   In addition, special characters are escaped within quoted text. Please refer to the
   <<../user-guide/index.adoc#writing-tests-parameterized-tests-display-names-quoted-text,
@@ -269,35 +266,27 @@ guidance on upgrading from JUnit 5.x.y to 6.0.0.
   Fallback String-to-Object Conversion>> for parameterized tests now supports factory
   methods and factory constructors that accept a single `CharSequence` argument in
   addition to the existing support for factories that accept a single `String` argument.
-* Non-printable control characters in display names are now replaced with alternative
-  representations. Please refer to the
-  <<../user-guide/index.adoc#writing-tests-display-names, User Guide>> for details.
-* For consistency with `@TestClassOrder`, `@TestMethodOrder` annotations specified on a
-  test class are now inherited by its `@Nested` inner classes, recursively.
-* Introduce `MethodOrderer.Default` and `ClassOrderer.Default` for reverting back to
-  default ordering on a `@Nested` class and its `@Nested` inner classes when an enclosing
-  class specifies a different orderer via `@TestMethodOrder` or `@TestClassOrder`,
-  respectively.
+* The `Arguments` interface for parameterized tests is now officially a
+  `@FunctionalInterface`.
+* Kotlin's `suspend` modifier may now be applied to test and lifecycle methods.
+* New `computeIfAbsent(...)` methods in `ExtensionContext.Store` to simplify working
+  with non-nullable types.
+* Reason strings supplied to `ConditionEvaluationResult` APIs are now officially declared
+  as `@Nullable`.
 
 
 [[release-notes-6.0.0-junit-vintage]]
 === JUnit Vintage
 
-[[release-notes-6.0.0-junit-vintage-bug-fixes]]
-==== Bug Fixes
-
-* ❓
-
 [[release-notes-6.0.0-junit-vintage-deprecations-and-breaking-changes]]
 ==== Deprecations and Breaking Changes
 
-* The JUnit Vintage engine is now deprecated and will report an INFO level discovery issue
-  when it finds at least one JUnit 4 test class. For now, the intent of the deprecation is
-  not to signal removal in the next major version but to clarify the intended purpose of
-  the engine. It should only be used temporarily while migrating tests to JUnit Jupiter or
-  another testing framework with native JUnit Platform support.
+* The JUnit Vintage test engine is now deprecated and will report an INFO level discovery
+  issue if it finds at least one JUnit 4 test class. The deprecation warning is intended
+  to clarify the purpose of the engine: it should only be used temporarily while migrating
+  tests to JUnit Jupiter or another testing framework with native JUnit Platform support.
 
 [[release-notes-6.0.0-junit-vintage-new-features-and-improvements]]
 ==== New Features and Improvements
 
-* Provide cancellation support for the Vintage test engine.
+* Cancellation support for the Vintage test engine.
