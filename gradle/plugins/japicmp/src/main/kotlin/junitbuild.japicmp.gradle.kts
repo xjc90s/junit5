@@ -37,6 +37,9 @@ val extension = extensions.create<JApiCmpExtension>("japicmp").apply {
 }
 
 val downloadPreviousReleaseJar by tasks.registering(Download::class) {
+	if (gradle.startParameter.isOffline) {
+		enabled = false
+	}
 	onlyIf { extension.enabled.get() }
 	val previousVersion = extension.previousVersion.get()
 	src("https://repo1.maven.org/maven2/${project.group.toString().replace(".", "/")}/${project.name}/$previousVersion/${project.name}-$previousVersion.jar")
@@ -48,6 +51,9 @@ val downloadPreviousReleaseJar by tasks.registering(Download::class) {
 }
 
 val checkBackwardCompatibility by tasks.registering(JapicmpTask::class) {
+	if (gradle.startParameter.isOffline) {
+		enabled = false
+	}
 	onlyIf { extension.enabled.get() }
 	oldClasspath.from(downloadPreviousReleaseJar.map { it.outputFiles })
 	newClasspath.from(tasks.jar)
