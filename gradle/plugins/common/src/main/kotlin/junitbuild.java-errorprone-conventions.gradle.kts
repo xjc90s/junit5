@@ -53,6 +53,7 @@ tasks.withType<JavaCompile>().configureEach {
 			)
 			error(
 				"CanonicalAnnotationSyntax",
+				"IsInstanceLambdaUsage",
 				"PackageLocation",
 				"RedundantStringConversion",
 				"RedundantStringEscape",
