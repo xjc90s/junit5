@@ -11,7 +11,9 @@
 package org.junit.platform.commons.util;
 
 import static java.util.stream.Collectors.joining;
-import static org.junit.platform.commons.util.ClasspathFilters.CLASS_FILE_SUFFIX;
+import static org.junit.platform.commons.util.SearchPathUtils.PACKAGE_SEPARATOR_CHAR;
+import static org.junit.platform.commons.util.SearchPathUtils.PACKAGE_SEPARATOR_STRING;
+import static org.junit.platform.commons.util.SearchPathUtils.determineSimpleClassName;
 import static org.junit.platform.commons.util.StringUtils.isNotBlank;
 
 import java.io.IOException;
@@ -57,8 +59,6 @@ class DefaultClasspathScanner implements ClasspathScanner {
 	private static final char CLASSPATH_RESOURCE_PATH_SEPARATOR = '/';
 	private static final String CLASSPATH_RESOURCE_PATH_SEPARATOR_STRING = String.valueOf(
 		CLASSPATH_RESOURCE_PATH_SEPARATOR);
-	private static final char PACKAGE_SEPARATOR_CHAR = '.';
-	private static final String PACKAGE_SEPARATOR_STRING = String.valueOf(PACKAGE_SEPARATOR_CHAR);
 
 	/**
 	 * Malformed class name InternalError like reported in #401.
@@ -132,7 +132,7 @@ class DefaultClasspathScanner implements ClasspathScanner {
 	private List<Class<?>> findClassesForUri(URI baseUri, String basePackageName, ClassFilter classFilter) {
 		List<Class<?>> classes = new ArrayList<>();
 		// @formatter:off
-		walkFilesForUri(baseUri, ClasspathFilters.classFiles(),
+		walkFilesForUri(baseUri, SearchPathUtils::isClassOrSourceFile,
 				(baseDir, file) ->
 						processClassFileSafely(baseDir, basePackageName, classFilter, file, classes::add));
 		// @formatter:on
@@ -156,7 +156,7 @@ class DefaultClasspathScanner implements ClasspathScanner {
 	private List<Resource> findResourcesForUri(URI baseUri, String basePackageName, ResourceFilter resourceFilter) {
 		List<Resource> resources = new ArrayList<>();
 		// @formatter:off
-		walkFilesForUri(baseUri, ClasspathFilters.resourceFiles(),
+		walkFilesForUri(baseUri, SearchPathUtils::isResourceFile,
 				(baseDir, file) ->
 						processResourceFileSafely(baseDir, basePackageName, resourceFilter, file, resources::add));
 		// @formatter:on
@@ -182,10 +182,10 @@ class DefaultClasspathScanner implements ClasspathScanner {
 		}
 	}
 
-	private void processClassFileSafely(Path baseDir, String basePackageName, ClassFilter classFilter, Path classFile,
+	private void processClassFileSafely(Path baseDir, String basePackageName, ClassFilter classFilter, Path file,
 			Consumer<Class<?>> classConsumer) {
 		try {
-			String fullyQualifiedClassName = determineFullyQualifiedClassName(baseDir, basePackageName, classFile);
+			String fullyQualifiedClassName = determineFullyQualifiedClassName(baseDir, basePackageName, file);
 			if (classFilter.match(fullyQualifiedClassName)) {
 				try {
 					// @formatter:off
@@ -196,12 +196,12 @@ class DefaultClasspathScanner implements ClasspathScanner {
 					// @formatter:on
 				}
 				catch (InternalError internalError) {
-					handleInternalError(classFile, fullyQualifiedClassName, internalError);
+					handleInternalError(file, fullyQualifiedClassName, internalError);
 				}
 			}
 		}
 		catch (Throwable throwable) {
-			handleThrowable(classFile, throwable);
+			handleThrowable(file, throwable);
 		}
 	}
 
@@ -221,12 +221,12 @@ class DefaultClasspathScanner implements ClasspathScanner {
 		}
 	}
 
-	private String determineFullyQualifiedClassName(Path baseDir, String basePackageName, Path classFile) {
+	private String determineFullyQualifiedClassName(Path baseDir, String basePackageName, Path file) {
 		// @formatter:off
 		return Stream.of(
 					basePackageName,
-					determineSubpackageName(baseDir, classFile),
-					determineSimpleClassName(classFile)
+					determineSubpackageName(baseDir, file),
+					determineSimpleClassName(file)
 				)
 				.filter(value -> !value.isEmpty()) // Handle default package appropriately.
 				.collect(joining(PACKAGE_SEPARATOR_STRING));
@@ -253,24 +253,14 @@ class DefaultClasspathScanner implements ClasspathScanner {
 		// @formatter:on
 	}
 
-	private String determineSimpleClassName(Path classFile) {
-		String fileName = classFile.getFileName().toString();
-		return fileName.substring(0, fileName.length() - CLASS_FILE_SUFFIX.length());
-	}
-
 	private String determineSimpleResourceName(Path resourceFile) {
 		return resourceFile.getFileName().toString();
 	}
 
-	private String determineSubpackageName(Path baseDir, Path classFile) {
-		Path relativePath = baseDir.relativize(classFile.getParent());
+	private String determineSubpackageName(Path baseDir, Path file) {
+		Path relativePath = baseDir.relativize(file.getParent());
 		String pathSeparator = baseDir.getFileSystem().getSeparator();
-		String subpackageName = relativePath.toString().replace(pathSeparator, PACKAGE_SEPARATOR_STRING);
-		if (subpackageName.endsWith(pathSeparator)) {
-			// Workaround for JDK bug: https://bugs.openjdk.java.net/browse/JDK-8153248
-			subpackageName = subpackageName.substring(0, subpackageName.length() - pathSeparator.length());
-		}
-		return subpackageName;
+		return relativePath.toString().replace(pathSeparator, PACKAGE_SEPARATOR_STRING);
 	}
 
 	private void handleInternalError(Path classFile, String fullyQualifiedClassName, InternalError ex) {
