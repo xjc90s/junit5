@@ -250,9 +250,10 @@ class LauncherFactoryTests {
 	@Test
 	void discoversLauncherSessionListenerViaServiceApiByDefault() {
 		withTestServices(() -> {
-			try (var session = (DefaultLauncherSession) LauncherFactory.openSession()) {
-				assertThat(session.getListener()).isEqualTo(new TestLauncherSessionListener());
+			try (var session = LauncherFactory.openSession()) {
+				assertThat(TestLauncherSessionListener.session).isSameAs(session);
 			}
+			assertThat(TestLauncherSessionListener.session).isNull();
 		});
 	}
 
