@@ -1,9 +1,13 @@
 [[release-notes-6.1.0-M1]]
 == 6.1.0-M1
 
-*Date of Release:* ❓
+*Date of Release:* November 17, 2025
 
-*Scope:* ❓
+*Scope:*
+
+* New `org.junit.start` module for usage in compact source files
+* Execution mode configuration support for dynamic tests and containers
+* New parallel test executor implementation
 
 For a complete list of all _closed_ issues and pull requests for this release, consult the
 link:{junit-framework-repo}+/milestone/104?closed=1+[6.1.0-M1] milestone page in the JUnit
@@ -12,11 +16,6 @@ repository on GitHub.
 
 [[release-notes-6.1.0-M1-junit-platform]]
 === JUnit Platform
-
-[[release-notes-6.1.0-M1-junit-platform-bug-fixes]]
-==== Bug Fixes
-
-* ❓
 
 [[release-notes-6.1.0-M1-junit-platform-deprecations-and-breaking-changes]]
 ==== Deprecations and Breaking Changes
@@ -46,16 +45,6 @@ repository on GitHub.
 [[release-notes-6.1.0-M1-junit-jupiter]]
 === JUnit Jupiter
 
-[[release-notes-6.1.0-M1-junit-jupiter-bug-fixes]]
-==== Bug Fixes
-
-* ❓
-
-[[release-notes-6.1.0-M1-junit-jupiter-deprecations-and-breaking-changes]]
-==== Deprecations and Breaking Changes
-
-* ❓
-
 [[release-notes-6.1.0-M1-junit-jupiter-new-features-and-improvements]]
 ==== New Features and Improvements
 
@@ -81,17 +70,4 @@ repository on GitHub.
 [[release-notes-6.1.0-M1-junit-vintage]]
 === JUnit Vintage
 
-[[release-notes-6.1.0-M1-junit-vintage-bug-fixes]]
-==== Bug Fixes
-
-* ❓
-
-[[release-notes-6.1.0-M1-junit-vintage-deprecations-and-breaking-changes]]
-==== Deprecations and Breaking Changes
-
-* ❓
-
-[[release-notes-6.1.0-M1-junit-vintage-new-features-and-improvements]]
-==== New Features and Improvements
-
-* ❓
+No changes.
