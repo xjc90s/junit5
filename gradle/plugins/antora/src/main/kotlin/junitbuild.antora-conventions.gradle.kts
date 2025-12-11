@@ -43,8 +43,10 @@ val generateAntoraPlaybook by tasks.registering(Copy::class) {
 
 node {
 	download = buildParameters.antora.downloadNode
-	version = providers.fileContents(layout.projectDirectory.file(".tool-versions")).asText.map {
-		it.substringAfter("nodejs").trim()
+	version = providers.fileContents(layout.settingsDirectory.file(".tool-versions")).asText.map {
+		it.lineSequence()
+			.single { line -> line.startsWith("nodejs") }
+			.substringAfter(" ").trim()
 	}
 }
 
