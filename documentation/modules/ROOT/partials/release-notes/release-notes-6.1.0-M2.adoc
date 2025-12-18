@@ -56,7 +56,7 @@ easier to dynamically build arguments from collections when using
 ** `Arguments.argumentSetFrom(String, Iterable<?>)`
 ** `Arguments.toList()` — returns a mutable `List<@Nullable Object>`
 * Exclude competing `@Deprecated` factory methods in
-  xref:writing-tests/parameterized-classes-and-tests.adoc#tests-argument-conversion-implicit-fallback[fallback String-to-Object]
+  xref:writing-tests/parameterized-classes-and-tests.adoc#argument-conversion-implicit-fallback[fallback String-to-Object]
   converter.
 * Trim internal stack frames from `AssertionFailedError` stack traces.
 * Introduce new `trimStacktrace(Class<?>)` and `retainStackTraceElements(int)`
