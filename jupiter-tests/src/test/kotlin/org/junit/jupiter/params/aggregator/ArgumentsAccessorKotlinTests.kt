@@ -46,8 +46,8 @@ class ArgumentsAccessorKotlinTests {
 
     @Test
     fun `get() with index and class reference`() {
-        assertEquals(1, defaultArgumentsAccessor(1, 1).get(0, Integer::class.java))
-        assertEquals('A', defaultArgumentsAccessor(1, 'A').get(0, Character::class.java))
+        assertEquals(1, defaultArgumentsAccessor(1, 1).get(0, Int::class.java))
+        assertEquals('A', defaultArgumentsAccessor(1, 'A').get(0, Char::class.java))
     }
 
     fun defaultArgumentsAccessor(
