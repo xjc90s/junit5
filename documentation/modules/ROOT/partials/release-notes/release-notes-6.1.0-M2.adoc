@@ -16,8 +16,6 @@ repository on GitHub.
 ==== Bug Fixes
 
 * Clarify `TestDescriptor` implementation requirements.
-* Enable recursive updates when using `NamespacedHierarchicalStore.computeIfAbsent(N, K, Function)`.
-  This provides parity with the deprecated `NamespacedHierarchicalStore.getOrComputeIfAbsent(N, K, Function)`
 
 [[v6.1.0-M2-junit-platform-deprecations-and-breaking-changes]]
 ==== Deprecations and Breaking Changes
