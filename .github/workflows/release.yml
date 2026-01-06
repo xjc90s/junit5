@@ -200,7 +200,6 @@ jobs:
         with:
           repository: ${{ github.repository_owner }}/junit-examples
           token: ${{ secrets.JUNIT_BUILDS_GITHUB_TOKEN_EXAMPLES_REPO }}
-          fetch-depth: 1
           persist-credentials: true
       - name: Set up JDK
         uses: actions/setup-java@f2beeb24e141e01a676f977032f5a29d81c9e27e # v5.1.0
