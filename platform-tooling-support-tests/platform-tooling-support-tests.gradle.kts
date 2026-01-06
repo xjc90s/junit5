@@ -24,7 +24,7 @@ spotless {
 			include("**/*.java")
 		}.forEach { file ->
 			suppressLintsFor { // due to compact source files and module imports
-				path = file.toRelativeString(project.projectDir)
+				path = file.toRelativeString(project.projectDir).replace('\\', '/')
 			}
 		}
 	}
