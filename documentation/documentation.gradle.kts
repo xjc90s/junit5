@@ -8,7 +8,6 @@ import junitbuild.javadoc.JavadocValuesOption
 import junitbuild.javadoc.ModuleSpecificJavadocFileOption
 import junitbuild.javadoc.VersionNumber
 import org.gradle.api.tasks.PathSensitivity.RELATIVE
-import java.net.URI
 import java.nio.file.Files
 import kotlin.io.path.writeLines
 
@@ -219,8 +218,6 @@ tasks {
 		mainClass = "org.junit.api.tools.ApiReportGenerator"
 		systemProperty("api.moduleNames", modularProjects.map { it.javaModuleName }.sorted().joinToString(","))
 		jvmArgumentProviders += ClasspathSystemPropertyProvider("api.modulePath", apiReportClasspath.get())
-		val deprecatedApisTableFile = deprecatedApisTableFile
-		val experimentalApisTableFile = experimentalApisTableFile
 		argumentProviders += CommandLineArgumentProvider {
 			listOf(
 				"DEPRECATED=${deprecatedApisTableFile.get().asFile.absolutePath}",
@@ -258,28 +255,21 @@ tasks {
 
 	val downloadJavadocElementLists by registering {
 		outputs.cacheIf { true }
-		val elementListsDir = elementListsDir
 		outputs.dir(elementListsDir).withPropertyName("elementListsDir")
-		val externalModulesWithoutModularJavadoc = externalModulesWithoutModularJavadoc
 		inputs.property("externalModulesWithoutModularJavadoc", externalModulesWithoutModularJavadoc)
 		doFirst {
 			externalModulesWithoutModularJavadoc.forEach { (moduleName, baseUrl) ->
-				val resource = URI.create("${baseUrl}element-list").toURL().openStream().use { stream ->
-					elementListsDir.get().asFile.resolve(moduleName).apply {
-						mkdir()
-						resolve("element-list").printWriter().use {
-							it.println("module:$moduleName")
-							stream.reader().copyTo(it)
-						}
-					}
+				val resource = resources.text.fromUri("${baseUrl}element-list")
+				elementListsDir.get().asFile.resolve(moduleName).apply {
+					mkdir()
+					resolve("element-list").writeText("module:$moduleName\n${resource.asString()}")
 				}
 			}
 		}
 	}
 
 	val mergeJavadocSinceValues by registering {
-		val allJavadocSinceValueFiles = allJavadocSinceValuesClasspath.map { it.files }
-		inputs.files(allJavadocSinceValueFiles).withPathSensitivity(PathSensitivity.NONE)
+		inputs.files(allJavadocSinceValuesClasspath).withPathSensitivity(PathSensitivity.NONE)
 		val outputFile = layout.buildDirectory.file("docs/aggregated-javadoc-since-values.txt")
 		outputs.file(outputFile)
 		outputs.cacheIf { true }
@@ -287,7 +277,7 @@ tasks {
 			val initialVersions = setOf("1.0", "4.12", "5.0")
 			val noPublicItems = setOf("1.3.1", "5.0.3", "5.4.1", "5.11.3")
 			val excludes = initialVersions + noPublicItems
-			val values = allJavadocSinceValueFiles.get().asSequence()
+			val values = allJavadocSinceValuesClasspath.get().files.asSequence()
 				.flatMap { it.readLines().asSequence() }
 				.filter { it.isNotBlank() && it !in excludes }
 				.sortedBy { VersionNumber(it) }
@@ -388,7 +378,6 @@ tasks {
 		description = "Fix links to external API specs in the locally aggregated Javadoc HTML files"
 
 		val inputDir = aggregateJavadocs.map { it.destinationDir!! }
-		val externalModulesWithoutModularJavadoc = externalModulesWithoutModularJavadoc
 		inputs.property("externalModulesWithoutModularJavadoc", externalModulesWithoutModularJavadoc)
 		from(inputDir.map { File(it, "element-list") }) {
 			// For compatibility with pre JDK 10 versions of the Javadoc tool

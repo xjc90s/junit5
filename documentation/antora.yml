@@ -6,7 +6,7 @@ nav:
 ext:
   collector:
     run:
-      command: gradlew --quiet --configuration-cache :documentation:generateAntoraResources
+      command: gradlew --quiet :documentation:generateAntoraResources
       local: true
     scan:
     - dir: ./build/generated-antora-resources
