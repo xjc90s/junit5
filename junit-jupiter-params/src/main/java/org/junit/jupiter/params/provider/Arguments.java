@@ -178,15 +178,14 @@ public interface Arguments {
 	 * {@code name} and {@code arguments}.
 	 *
 	 * <p>Favor this method over {@link Arguments#of Arguments.of(...)} and
-	 * {@link Arguments#arguments arguments(...)} when you wish to assign a
-	 * name to the entire set of arguments.
+	 * {@link Arguments#arguments arguments(...)} when you wish to assign a name
+	 * to the entire set of arguments.
 	 *
 	 * <p>This method is well suited to be used as a static import &mdash; for
 	 * example, via:
 	 * {@code import static org.junit.jupiter.params.provider.Arguments.argumentSet;}.
 	 *
-	 * @param name the name of the argument set; must not be {@code null} or
-	*  blank
+	 * @param name the name of the argument set; must not be {@code null} or blank
 	 * @param arguments the arguments to be used for an invocation of the test
 	 * method; must not be {@code null} but may contain {@code null}
 	 * @return an {@code ArgumentSet}; never {@code null}
@@ -272,8 +271,7 @@ public interface Arguments {
 
 		/**
 		 * Get the name of this {@code ArgumentSet}.
-		 * @return the name of this {@code ArgumentSet}; never {@code null} or
-		 *         blank
+		 * @return the name of this {@code ArgumentSet}; never {@code null} or blank
 		 */
 		public String getName() {
 			return this.name;
