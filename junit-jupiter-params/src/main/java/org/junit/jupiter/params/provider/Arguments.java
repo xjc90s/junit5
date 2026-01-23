@@ -204,9 +204,9 @@ public interface Arguments {
 	 * Factory method for creating an {@link ArgumentSet} based on the supplied
 	 * {@code name} and {@link Iterable} of {@code arguments}.
 	 *
-	 * <p>Favor this method over {@link Arguments#from(Iterable) Arguments.from(...)} and
-	 * {@link Arguments#argumentsFrom(Iterable) argumentsFrom(...)} when you wish to assign a
-	 * name to the entire set of arguments.
+	 * <p>Favor this method over {@link Arguments#from(Iterable) Arguments.from(...)}
+	 * and {@link Arguments#argumentsFrom(Iterable) argumentsFrom(...)} when you
+	 * wish to assign a name to the entire set of arguments.
 	 *
 	 * <p>This method is well suited to be used as a static import &mdash; for
 	 * example, via:
@@ -218,8 +218,7 @@ public interface Arguments {
 	 * {@link java.util.SequencedCollection} (on Java 21 or higher),
 	 * {@link java.util.List}, or similar.
 	 *
-	 * @param name the name of the argument set; must not be {@code null}
-	 * or blank
+	 * @param name the name of the argument set; must not be {@code null} or blank
 	 * @param arguments the arguments to be used for an invocation of the test
 	 * method; must not be {@code null} but may contain {@code null}
 	 * @return an {@code ArgumentSet}; never {@code null}
@@ -231,8 +230,7 @@ public interface Arguments {
 	 */
 	@API(status = EXPERIMENTAL, since = "6.1")
 	static ArgumentSet argumentSetFrom(String name, Iterable<? extends @Nullable Object> arguments) {
-		Preconditions.notBlank(name, "name must not be null or blank");
-		Preconditions.notNull(arguments, "arguments list must not be null");
+		Preconditions.notNull(arguments, "arguments must not be null");
 		return argumentSet(name, toArray(arguments));
 	}
 
