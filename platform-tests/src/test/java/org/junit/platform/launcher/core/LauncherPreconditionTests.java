@@ -94,14 +94,14 @@ class LauncherPreconditionTests {
 	@Test
 	void rejectNullElementsInLauncherDiscoveryListeners() {
 		var listener = mock(LauncherDiscoveryListener.class);
-		assertPreconditionViolationContainsNoNullElementsFor("listener",
+		assertPreconditionViolationContainsNoNullElementsFor("listener array",
 			() -> launcher.registerLauncherDiscoveryListeners(listener, null));
 	}
 
 	@Test
 	void rejectNullElementsInTestExecutionListeners() {
 		var listener = mock(TestExecutionListener.class);
-		assertPreconditionViolationContainsNoNullElementsFor("listener",
+		assertPreconditionViolationContainsNoNullElementsFor("listener array",
 			() -> launcher.registerTestExecutionListeners(listener, null));
 	}
 
@@ -109,7 +109,7 @@ class LauncherPreconditionTests {
 	void rejectNullElementsInListenersWhenExecutingDiscoveryRequest() {
 		var request = mock(LauncherDiscoveryRequest.class);
 		var listener = mock(TestExecutionListener.class);
-		assertPreconditionViolationContainsNoNullElementsFor("listener",
+		assertPreconditionViolationContainsNoNullElementsFor("listener array",
 			() -> launcher.execute(request, listener, null));
 	}
 
@@ -117,7 +117,7 @@ class LauncherPreconditionTests {
 	void rejectNullElementsInListenersWhenExecutingTestPlan() {
 		var testPlan = mock(TestPlan.class);
 		var listener = mock(TestExecutionListener.class);
-		assertPreconditionViolationContainsNoNullElementsFor("listener",
+		assertPreconditionViolationContainsNoNullElementsFor("listener array",
 			() -> launcher.execute(testPlan, listener, null));
 	}
 
