@@ -44,7 +44,7 @@ import org.junit.jupiter.api.parallel.Resources;
  * @see WritesSystemProperty @WritesSystemProperty
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.CONSTRUCTOR, ElementType.METHOD, ElementType.PACKAGE, ElementType.TYPE })
+@Target({ ElementType.TYPE, ElementType.METHOD })
 @Inherited
 @ResourceLock(value = Resources.SYSTEM_PROPERTIES, mode = ResourceAccessMode.READ)
 @API(status = EXPERIMENTAL, since = "6.1")
