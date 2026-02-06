@@ -122,6 +122,7 @@ class ColorPaletteTests {
 
 		private static final String ESC = "\u001B[";
 		private static final String RESET = ESC + "0m";
+		private static final String NEW_LINE = System.lineSeparator();
 
 		@Test
 		void verbose_default() {
@@ -135,9 +136,9 @@ class ColorPaletteTests {
 			String output = stringWriter.toString();
 			// @formatter:off
 			assertThat(output).contains(
-				withAnsi("{green}[OK] SUCCESSFUL"),
-				withAnsi("{red}[X] FAILED"),
-				withAnsi("{yellow}[A] ABORTED"),
+				withAnsi("{green}[OK] SUCCESSFUL{NL}{reset}"),
+				withAnsi("{red}[X] FAILED{NL}{reset}"),
+				withAnsi("{yellow}[A] ABORTED{NL}{reset}"),
 				withAnsi("{magenta}[S] SKIPPED")
 			);
 			// @formatter:on
@@ -155,9 +156,9 @@ class ColorPaletteTests {
 			String output = stringWriter.toString();
 			// @formatter:off
 			assertThat(output).contains(
-				withAnsi("{bold}[OK] SUCCESSFUL"),
-				withAnsi("{reverse}[X] FAILED"),
-				withAnsi("{underline}[A] ABORTED"),
+				withAnsi("{bold}[OK] SUCCESSFUL{NL}{reset}"),
+				withAnsi("{reverse}[X] FAILED{NL}{reset}"),
+				withAnsi("{underline}[A] ABORTED{NL}{reset}"),
 				withAnsi("{strikethrough}[S] SKIPPED")
 			);
 			// @formatter:on
@@ -174,10 +175,10 @@ class ColorPaletteTests {
 			String output = stringWriter.toString();
 			// @formatter:off
 			assertThat(output).contains(
-				withAnsi("{green}[OK]"),
-				withAnsi("{red}[X]"),
-				withAnsi("{yellow}[A]"),
-				withAnsi("{magenta}[S]")
+				withAnsi("{blue}My Test{reset} {green}[OK]{reset}"),
+				withAnsi("{red}My Test{reset} {red}[X]{reset}"),
+				withAnsi("{yellow}My Test{reset} {yellow}[A]{reset}"),
+				withAnsi("{magenta}My Test{reset} {magenta}[S]{reset}")
 			);
 			// @formatter:on
 		}
@@ -193,10 +194,10 @@ class ColorPaletteTests {
 			String output = stringWriter.toString();
 			// @formatter:off
 			assertThat(output).contains(
-				withAnsi("{bold}[OK]"),
-				withAnsi("{reverse}[X]"),
-				withAnsi("{underline}[A]"),
-				withAnsi("{strikethrough}[S]")
+				withAnsi("{bold}[OK]{reset}"),
+				withAnsi("{reverse}[X]{reset}"),
+				withAnsi("{underline}[A]{reset}"),
+				withAnsi("{strikethrough}[S]{reset}")
 			);
 			// @formatter:on
 		}
@@ -212,10 +213,10 @@ class ColorPaletteTests {
 			String output = stringWriter.toString();
 			// @formatter:off
 			assertThat(output).contains(
-				withAnsi("{green}Finished:"),
-				withAnsi("{red}Finished:"),
-				withAnsi("{yellow}Finished:"),
-				withAnsi("{magenta}Skipped:")
+				withAnsi("{green}Finished:    My Test ([engine:demo-engine]){reset}"),
+				withAnsi("{red}Finished:    My Test ([engine:demo-engine]){reset}"),
+				withAnsi("{yellow}Finished:    My Test ([engine:demo-engine]){reset}"),
+				withAnsi("{magenta}Skipped:     My Test ([engine:demo-engine]){reset}")
 			);
 			// @formatter:on
 		}
@@ -231,10 +232,10 @@ class ColorPaletteTests {
 			String output = stringWriter.toString();
 			// @formatter:off
 			assertThat(output).contains(
-				withAnsi("{bold}Finished:"),
-				withAnsi("{reverse}Finished:"),
-				withAnsi("{underline}Finished:"),
-				withAnsi("{strikethrough}Skipped:")
+				withAnsi("{bold}Finished:    My Test ([engine:demo-engine]){reset}"),
+				withAnsi("{reverse}Finished:    My Test ([engine:demo-engine]){reset}"),
+				withAnsi("{underline}Finished:    My Test ([engine:demo-engine]){reset}"),
+				withAnsi("{strikethrough}Skipped:     My Test ([engine:demo-engine]){reset}")
 			);
 			// @formatter:on
 		}
@@ -242,6 +243,7 @@ class ColorPaletteTests {
 		private static String withAnsi(String template) {
 			// @formatter:off
 			return template
+					.replace("{blue}", ESC + "34m")
 					.replace("{green}", ESC + "32m")
 					.replace("{red}", ESC + "31m")
 					.replace("{yellow}", ESC + "33m")
@@ -250,7 +252,8 @@ class ColorPaletteTests {
 					.replace("{reverse}", ESC + "7m")
 					.replace("{underline}", ESC + "4m")
 					.replace("{strikethrough}", ESC + "9m")
-					.replace("{reset}", RESET);
+					.replace("{reset}", RESET)
+					.replace("{NL}", NEW_LINE);
 			// @formatter:on
 		}
 
