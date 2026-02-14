@@ -64,12 +64,17 @@ jobs:
               }
             } else {
               if (!(newLabels.includes("type: task") || newLabels.includes("type: question")) && !issue.data.milestone) {
-                const collaborator = await github.rest.repos.checkCollaborator({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  username: context.actor,
-                });
-                console.log(collaborator);
+                let collaborator;
+                try {
+                  await github.rest.repos.checkCollaborator({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    username: context.actor,
+                  });
+                  collaborator = true;
+                } catch (error) {
+                  collaborator = false;
+                }
                 if (collaborator) {
                   await github.rest.issues.createComment({
                     issue_number: issue.data.number,
