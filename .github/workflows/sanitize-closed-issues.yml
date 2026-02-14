@@ -67,7 +67,7 @@ jobs:
                 const collaborator = await github.rest.repos.checkCollaborator({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  username: context.sender,
+                  username: context.actor,
                 });
                 console.log(collaborator);
                 if (collaborator) {
