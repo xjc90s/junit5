@@ -75,7 +75,7 @@ jobs:
                     issue_number: issue.data.number,
                     owner: context.repo.owner,
                     repo: context.repo.repo,
-                    body: "Please assign a milestone to this issue or label it with `type: task` or `type: question`.",
+                    body: "Please assign a milestone to this issue or label it with `type: task` or `type: question` – or assign a status label and close it as _not planned_.",
                   });
                   await github.rest.issues.update({
                     issue_number: issue.data.number,
