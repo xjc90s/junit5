@@ -82,3 +82,13 @@ hr {
 dt {
     font-weight: bold;
 }
+
+tt,
+code,
+pre,
+.module-signature,
+.package-signature,
+.type-signature,
+.member-signature {
+    font-variant-ligatures: none;
+}
