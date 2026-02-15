@@ -145,7 +145,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          max_attempts: 6
+          max_attempts: 10
           retry_wait_seconds: 5
           timeout_seconds: 20
           command: gh workflow run deploy-docs.yml --repo junit-team/junit-framework --ref docs-site
