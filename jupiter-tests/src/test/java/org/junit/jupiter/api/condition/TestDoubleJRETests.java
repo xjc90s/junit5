@@ -25,6 +25,7 @@ public class TestDoubleJRETests {
 
 	@Test
 	@EnabledForJreRange(min = JAVA_23) // "23" because "22" is the maximum available in TestDoubleJRE
+	@SuppressWarnings("deprecation")
 	void currentJreIsOtherForUnsupportedJre() {
 		assertEquals(TestDoubleJRE.OTHER, TestDoubleJRE.currentJre());
 		assertTrue(TestDoubleJRE.OTHER.isCurrentVersion());
