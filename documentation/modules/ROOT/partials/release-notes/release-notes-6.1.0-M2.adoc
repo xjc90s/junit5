@@ -55,6 +55,8 @@ repository on GitHub.
   annotation attributes of `{EnabledOnJre}`, `{DisabledOnJre}`, `{EnabledForJreRange}`,
   and `{DisabledForJreRange}` which allow referencing JRE versions later than those
   supported by the `JRE` enum.
+* The `org.junit.jupiter.engine.Constants` class and its constants are now deprecated in
+  favor `org.junit.jupiter.api.Constants`.
 
 [[v6.1.0-M2-junit-jupiter-new-features-and-improvements]]
 ==== New Features and Improvements
@@ -85,6 +87,8 @@ repository on GitHub.
   in `@ParameterizedTest` methods when `kotlin-reflect` is on the classpath. Note,
   however, that primitive-wrapper inline value classes (such as `UInt` or custom value
   classes wrapping primitives) are not yet supported.
+* The new `org.junit.jupiter.api.Constants` class now provides for constants for
+  xref:running-tests/configuration-parameters.adoc[] specific to the Jupiter engine.
 
 
 [[v6.1.0-M2-junit-vintage]]
