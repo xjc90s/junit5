@@ -136,16 +136,4 @@ jobs:
     name: Deploy Documentation
     needs: build_documentation
     if: github.event_name == 'push' && github.repository == 'junit-team/junit-framework' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-    steps:
-      - name: Trigger documentation site deployment
-        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          max_attempts: 10
-          retry_wait_seconds: 5
-          timeout_seconds: 20
-          command: gh workflow run deploy-docs.yml --repo junit-team/junit-framework --ref docs-site
+    uses: ./.github/workflows/deploy-docs.yml
