@@ -137,3 +137,5 @@ jobs:
     needs: build_documentation
     if: github.event_name == 'push' && github.repository == 'junit-team/junit-framework' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/deploy-docs.yml
+    permissions:
+      actions: write
