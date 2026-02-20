@@ -1,5 +1,4 @@
 import buildparameters.BuildParametersExtension
-import org.gradle.api.initialization.resolve.RepositoriesMode.FAIL_ON_PROJECT_REPOS
 
 pluginManagement {
 	includeBuild("gradle/plugins")
@@ -58,8 +57,7 @@ buildCache {
 	if (useDevelocityInstance) {
 		remote(develocity.buildCache) {
 			server = buildCacheServer.orNull
-			val authenticated = !System.getenv("DEVELOCITY_ACCESS_KEY").isNullOrEmpty()
-			isPush = buildParameters.ci && authenticated
+			isPush = buildParameters.junit.develocity.buildCache.pushEnabled
 		}
 	} else {
 		remote<HttpBuildCache> {

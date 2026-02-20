@@ -39,6 +39,11 @@ buildParameters {
 					description =
 						"Remote build cache server address (protocol and hostname), e.g. https://eu-build-cache-ge.junit.org"
 				}
+				bool("pushEnabled") {
+					description =
+						"Whether to push to the remote build cache"
+					defaultValue = false
+				}
 			}
 			group("predictiveTestSelection") {
 				bool("enabled") {

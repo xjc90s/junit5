@@ -27,6 +27,7 @@ runs:
       run: | # zizmor: ignore[template-injection]
         ./gradlew \
         -Dorg.gradle.java.installations.auto-download=false \
+        -Pjunit.develocity.buildCache.pushEnabled=${{ github.repository == 'junit-team/junit-framework' }} \
         -Pjunit.develocity.predictiveTestSelection.enabled=true \
         -Pjunit.develocity.predictiveTestSelection.selectRemainingTests=${{ github.event_name != 'pull_request' }} \
         "-Dscan.value.GitHub job=${{ github.job }}" \
