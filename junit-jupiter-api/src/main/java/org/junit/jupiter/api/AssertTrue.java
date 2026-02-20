@@ -12,7 +12,6 @@ package org.junit.jupiter.api;
 
 import static org.junit.jupiter.api.AssertionFailureBuilder.assertionFailure;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
@@ -47,18 +46,6 @@ class AssertTrue {
 		if (!condition) {
 			failNotTrue(messageSupplier);
 		}
-	}
-
-	static void assertTrue(BooleanSupplier booleanSupplier) {
-		assertTrue(booleanSupplier.getAsBoolean(), (String) null);
-	}
-
-	static void assertTrue(BooleanSupplier booleanSupplier, @Nullable String message) {
-		assertTrue(booleanSupplier.getAsBoolean(), message);
-	}
-
-	static void assertTrue(BooleanSupplier booleanSupplier, Supplier<@Nullable String> messageSupplier) {
-		assertTrue(booleanSupplier.getAsBoolean(), messageSupplier);
 	}
 
 	private static void failNotTrue(@Nullable Object messageOrSupplier) {

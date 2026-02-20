@@ -205,18 +205,27 @@ public class Assertions {
 	}
 
 	/**
-	 * <em>Assert</em> that the boolean condition supplied by {@code booleanSupplier} is {@code true}.
+	 * <em>Assert</em> that the boolean condition supplied by
+	 * {@code booleanSupplier} is {@code true}.
+	 *
+	 * <p>The supplier will be called exactly once so calling this method is
+	 * equivalent to calling {@code assertTrue(booleanSupplier.get())}.
 	 */
 	public static void assertTrue(BooleanSupplier booleanSupplier) {
-		AssertTrue.assertTrue(booleanSupplier);
+		assertTrue(booleanSupplier.getAsBoolean());
 	}
 
 	/**
-	 * <em>Assert</em> that the boolean condition supplied by {@code booleanSupplier} is {@code true}.
+	 * <em>Assert</em> that the boolean condition supplied by
+	 * {@code booleanSupplier} is {@code true}.
+	 *
 	 * <p>Fails with the supplied failure {@code message}.
+	 *
+	 * <p>The supplier will be called exactly once so calling this method is
+	 * equivalent to calling {@code assertTrue(booleanSupplier.get(), message)}.
 	 */
 	public static void assertTrue(BooleanSupplier booleanSupplier, @Nullable String message) {
-		AssertTrue.assertTrue(booleanSupplier, message);
+		assertTrue(booleanSupplier.getAsBoolean(), message);
 	}
 
 	/**
@@ -229,11 +238,18 @@ public class Assertions {
 	}
 
 	/**
-	 * <em>Assert</em> that the boolean condition supplied by {@code booleanSupplier} is {@code true}.
-	 * <p>If necessary, the failure message will be retrieved lazily from the supplied {@code messageSupplier}.
+	 * <em>Assert</em> that the boolean condition supplied by
+	 * {@code booleanSupplier} is {@code true}.
+	 *
+	 * <p>If necessary, the failure message will be retrieved lazily from the
+	 * supplied {@code messageSupplier}.
+	 *
+	 * <p>The {@code booleanSupplier} will be called exactly once so calling
+	 * this method is equivalent to calling
+	 * {@code assertTrue(booleanSupplier.get(), messageSupplier)}.
 	 */
 	public static void assertTrue(BooleanSupplier booleanSupplier, Supplier<@Nullable String> messageSupplier) {
-		AssertTrue.assertTrue(booleanSupplier, messageSupplier);
+		assertTrue(booleanSupplier.getAsBoolean(), messageSupplier);
 	}
 
 	// --- assertFalse ---------------------------------------------------------
