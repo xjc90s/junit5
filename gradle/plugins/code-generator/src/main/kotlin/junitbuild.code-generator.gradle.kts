@@ -1,5 +1,6 @@
 import junitbuild.extensions.dependencyFromLibs
 import junitbuild.generator.GenerateJreRelatedSourceCode
+import java.time.Year
 
 plugins {
 	java
@@ -24,6 +25,7 @@ val generateCode by tasks.registering {
 
 tasks.withType<GenerateJreRelatedSourceCode>().configureEach {
 	licenseHeaderFile.convention(license.headerFile)
+	licenseHeaderYear.convention(Year.now())
 	additionalTemplateParameters.convention(emptyMap())
 }
 

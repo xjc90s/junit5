@@ -23,6 +23,7 @@ import org.gradle.api.tasks.TaskAction
 import tools.jackson.core.type.TypeReference
 import tools.jackson.dataformat.yaml.YAMLMapper
 import tools.jackson.module.kotlin.KotlinModule
+import java.time.Year
 
 @CacheableTask
 abstract class GenerateJreRelatedSourceCode : DefaultTask() {
@@ -38,6 +39,9 @@ abstract class GenerateJreRelatedSourceCode : DefaultTask() {
     @get:InputFile
     @get:PathSensitive(PathSensitivity.NONE)
     abstract val licenseHeaderFile: RegularFileProperty
+
+    @get:Input
+    abstract val licenseHeaderYear: Property<Year>
 
     @get:Input
     @get:Optional
@@ -77,12 +81,14 @@ abstract class GenerateJreRelatedSourceCode : DefaultTask() {
             }
             val minRuntimeVersion = 17
             val supportedJres = jres.filter { it.version >= minRuntimeVersion }
+            val licenseHeader = licenseHeaderFile.asFile.get().readText().trimEnd()
+                .replace($$"$YEAR", licenseHeaderYear.get().toString()) + "\n"
             val params = additionalTemplateParameters.get() + mapOf(
                 "minRuntimeVersion" to minRuntimeVersion,
                 "allJres" to jres,
                 "supportedJres" to supportedJres,
                 "supportedJresSortedByStringValue" to supportedJres.sortedBy { it.version.toString() },
-                "licenseHeader" to licenseHeaderFile.asFile.get().readText().trimEnd() + "\n",
+                "licenseHeader" to licenseHeader,
             )
             templates.forEach {
                 val fileName = "${fileNamePrefix.getOrElse("")}${it.nameWithoutExtension}"
