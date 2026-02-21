@@ -1,6 +1,5 @@
 import junitbuild.extensions.dependencyFromLibs
 import junitbuild.extensions.markerCoordinates
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
 
 plugins {
 	`kotlin-dsl`
@@ -22,16 +21,5 @@ dependencies {
 	implementation(libs.plugins.spotless.markerCoordinates)
 	implementation(platform(dependencyFromLibs("log4j-bom"))) {
 		because("Workaround for CVE-2025-68161")
-	}
-}
-
-tasks.compileJava {
-	options.release = 21
-}
-
-kotlin {
-	compilerOptions {
-		jvmTarget = JVM_21
-		freeCompilerArgs.add("-Xjdk-release=21")
 	}
 }

@@ -4,10 +4,6 @@ plugins {
 
 group = "junitbuild"
 
-tasks.compileJava {
-	options.release = 21
-}
-
 buildParameters {
 	pluginId("junitbuild.build-parameters")
 	bool("ci") {
