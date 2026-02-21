@@ -178,7 +178,7 @@ tasks {
 	}
 
 	named<JavaCompile>(tools.compileJavaTaskName) {
-		options.release.set(21)
+		options.release.set(25)
 	}
 
 	named<Checkstyle>("checkstyleTools") {

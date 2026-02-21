@@ -9,7 +9,7 @@ abstract class JavaLibraryExtension {
 
     init {
         mainJavaVersion.convention(JavaVersion.VERSION_17)
-        testJavaVersion.convention(JavaVersion.VERSION_21)
+        testJavaVersion.convention(JavaVersion.VERSION_25)
     }
 
 }

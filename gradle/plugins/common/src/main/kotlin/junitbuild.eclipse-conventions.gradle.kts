@@ -14,8 +14,8 @@ val extension = extensions.create<EclipseConventionsExtension>("eclipseConventio
 
 eclipse {
 	jdt {
-		sourceCompatibility = JavaVersion.VERSION_21
-		targetCompatibility = JavaVersion.VERSION_21
+		sourceCompatibility = JavaVersion.VERSION_25
+		targetCompatibility = JavaVersion.VERSION_25
 		file {
 			// Set properties for org.eclipse.jdt.core.prefs
 			withProperties {

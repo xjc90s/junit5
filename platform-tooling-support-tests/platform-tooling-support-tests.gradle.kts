@@ -14,7 +14,7 @@ plugins {
 }
 
 javaLibrary {
-	mainJavaVersion = JavaVersion.VERSION_21
+	mainJavaVersion = JavaVersion.VERSION_25
 }
 
 spotless {
