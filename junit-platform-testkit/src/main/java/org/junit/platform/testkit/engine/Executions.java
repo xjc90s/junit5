@@ -125,8 +125,8 @@ public final class Executions {
 
 	/**
 	 * Get the skipped {@link Executions} contained in this {@code Executions} object.
-	 * <p>
-	 * Executions that are not skipped are {@linkplain #finished() finished}.
+	 *
+	 * <p>Executions that are not skipped are {@linkplain #finished() finished}.
 	 *
 	 * @return the filtered {@code Executions}; never {@code null}
 	 */
@@ -136,24 +136,24 @@ public final class Executions {
 
 	/**
 	 * Get the started {@link Executions} contained in this {@code Executions} object.
-	 * <p>
-	 * Executions that are not started are {@linkplain #skipped() skipped}.
+	 *
+	 * <p>Executions that are not started are {@linkplain #skipped() skipped}.
 	 *
 	 * @return the filtered {@code Executions}; never {@code null}
 	 *
 	 * @deprecated by definition, all started executions are also finished executions.
 	 * Use {@link #finished()} instead.
 	 */
-	@Deprecated(since = "6.1", forRemoval = true)
 	@API(status = DEPRECATED, since = "6.1")
+	@Deprecated(since = "6.1", forRemoval = true)
 	public Executions started() {
 		return new Executions(executionsByTerminationInfo(TerminationInfo::notSkipped), this.category + " Started");
 	}
 
 	/**
 	 * Get the finished {@link Executions} contained in this {@code Executions} object.
-	 * <p>
-	 * Executions that are not finished are {@linkplain #skipped() skipped}.
+	 *
+	 * <p>Executions that are not finished are {@linkplain #skipped() skipped}.
 	 *
 	 * @return the filtered {@code Executions}; never {@code null}
 	 */
@@ -163,8 +163,9 @@ public final class Executions {
 
 	/**
 	 * Get the aborted {@link Executions} contained in this {@code Executions} object.
-	 * <p>
-	 * The aborted executions are a subset of the {@linkplain #finished() finished} executions.
+	 *
+	 * <p>The aborted executions are a subset of the {@linkplain #finished() finished}
+	 * executions.
 	 *
 	 * @return the filtered {@code Executions}; never {@code null}
 	 */
@@ -174,8 +175,9 @@ public final class Executions {
 
 	/**
 	 * Get the succeeded {@link Executions} contained in this {@code Executions} object.
-	 * <p>
-	 * The succeeded executions are a subset of the {@linkplain #finished() finished} executions.
+	 *
+	 * <p>The succeeded executions are a subset of the {@linkplain #finished() finished}
+	 * executions.
 	 *
 	 * @return the filtered {@code Executions}; never {@code null}
 	 */
@@ -185,8 +187,9 @@ public final class Executions {
 
 	/**
 	 * Get the failed {@link Executions} contained in this {@code Executions} object.
-	 * <p>
-	 * The failed executions are a subset of the {@linkplain #finished() finished} executions.
+	 *
+	 * <p>The failed executions are a subset of the {@linkplain #finished() finished}
+	 * executions.
 	 *
 	 * @return the filtered {@code Executions}; never {@code null}
 	 */
