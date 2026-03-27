@@ -71,7 +71,7 @@ import org.junit.platform.launcher.listeners.discovery.LauncherDiscoveryListener
  *        selectUniqueId("unique-id-2")
  *    )
  *    .selectors(
- *        selectClasspathRoots(Set.of(Paths.get("/my/local/path1")))
+ *        selectClasspathRoots(Set.of(Path.of("/my/local/path1")))
  *    )
  *   .filters(
  *        includeEngines("junit-jupiter", "spek"),
