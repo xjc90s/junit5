@@ -22,4 +22,12 @@ dependencies {
 	implementation(platform(dependencyFromLibs("log4j-bom"))) {
 		because("Workaround for CVE-2025-68161")
 	}
+	constraints {
+		implementation("org.codehaus.plexus:plexus-utils") {
+			version {
+				require("4.0.3")
+			}
+			because("Workaround for CVE-2025-67030 (used by shadow plugin)")
+		}
+	}
 }
