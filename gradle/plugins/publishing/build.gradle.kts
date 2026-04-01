@@ -6,9 +6,7 @@ plugins {
 
 dependencies {
 	implementation("junitbuild.base:dsl-extensions")
-	implementation(libs.plugins.jreleaser.markerCoordinates) {
-		exclude("org.codehaus.plexus", "plexus-utils") // workaround for CVE-2025-67030
-	}
+	implementation(libs.plugins.jreleaser.markerCoordinates)
 	constraints {
 		implementation("org.eclipse.jgit:org.eclipse.jgit") {
 			version {
@@ -27,6 +25,12 @@ dependencies {
 				require("2.21.1")
 			}
 			because("Workaround for GHSA-72hv-8253-57qq")
+		}
+		implementation("org.codehaus.plexus:plexus-utils") {
+			version {
+				require("4.0.3")
+			}
+			because("Workaround for CVE-2025-67030")
 		}
 	}
 }
