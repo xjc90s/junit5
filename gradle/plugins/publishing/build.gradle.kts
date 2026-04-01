@@ -7,7 +7,7 @@ plugins {
 dependencies {
 	implementation("junitbuild.base:dsl-extensions")
 	implementation(libs.plugins.jreleaser.markerCoordinates) {
-		exclude(" org.codehaus.plexus", "plexus-utils") // workaround for CVE-2025-67030
+		exclude("org.codehaus.plexus", "plexus-utils") // workaround for CVE-2025-67030
 	}
 	constraints {
 		implementation("org.eclipse.jgit:org.eclipse.jgit") {
