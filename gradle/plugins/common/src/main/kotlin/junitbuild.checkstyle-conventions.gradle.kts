@@ -13,6 +13,12 @@ dependencies {
 			}
 			because("Workaround for CVE-2025-48924")
 		}
+		checkstyle("org.codehaus.plexus:plexus-utils") {
+			version {
+				require("4.0.3")
+			}
+			because("Workaround for CVE-2025-67030")
+		}
 	}
 }
 
