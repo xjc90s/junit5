@@ -34,9 +34,11 @@ tasks.test {
 val initializeAtBuildTime = mapOf(
 	// These need to be added to native-build-tools
 	"5.14.1" to listOf(
+		// https://github.com/graalvm/native-build-tools/pull/794
 		"org.junit.jupiter.engine.discovery.MethodSegmentResolver"
 	),
 	"6.1" to listOf(
+		// https://github.com/graalvm/native-build-tools/pull/867
 		"org.junit.platform.launcher.core.DiscoveryIssueReportingDiscoveryListener",
 	),
 )
