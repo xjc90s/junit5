@@ -15,6 +15,7 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static java.util.Objects.requireNonNull;
+import static org.assertj.core.api.Assertions.allOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -24,6 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.junit.jupiter.api.Constants.DEFAULT_TEMP_DIR_DELETION_STRATEGY_PROPERTY_NAME;
+import static org.junit.jupiter.api.Constants.DEFAULT_TEMP_DIR_FACTORY_PROPERTY_NAME;
+import static org.junit.jupiter.api.Constants.DEFAULT_TEST_INSTANCE_LIFECYCLE_PROPERTY_NAME;
+import static org.junit.jupiter.api.io.FailingTempDirDeletionStrategy.UNDELETABLE_PATH;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 import static org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder.request;
 import static org.junit.platform.testkit.engine.EventConditions.finishedWithFailure;
@@ -46,6 +51,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.google.common.jimfs.Configuration;
@@ -59,7 +65,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Constants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Nested;
@@ -72,22 +77,22 @@ import org.junit.jupiter.api.TestReporter;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.AnnotatedElementContext;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionConfigurationException;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.FailingTempDirDeletionStrategy;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.io.TempDirDeletionStrategy.DeletionException;
 import org.junit.jupiter.api.io.TempDirFactory;
 import org.junit.jupiter.api.io.TempDirFactory.Standard;
 import org.junit.jupiter.engine.AbstractJupiterTestEngineTests;
-import org.junit.jupiter.engine.extension.TempDirectory.FileOperations;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.platform.commons.PreconditionViolationException;
 import org.junit.platform.engine.DiscoveryIssue;
 import org.junit.platform.engine.DiscoveryIssue.Severity;
+import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.testkit.engine.EngineExecutionResults;
 
@@ -97,14 +102,14 @@ import org.junit.platform.testkit.engine.EngineExecutionResults;
  *
  * @since 5.8
  */
-@DisplayName("TempDirectory extension (per declaration)")
+@DisplayName("TempDirectory extension")
 class TempDirectoryTests extends AbstractJupiterTestEngineTests {
 
 	private EngineExecutionResults executeTestsForClassWithDefaultFactory(Class<?> testClass,
 			Class<? extends TempDirFactory> factoryClass) {
 		return executeTests(request() //
 				.selectors(selectClass(testClass)) //
-				.configurationParameter(TempDir.DEFAULT_FACTORY_PROPERTY_NAME, factoryClass.getName()) //
+				.configurationParameter(DEFAULT_TEMP_DIR_FACTORY_PROPERTY_NAME, factoryClass.getName()) //
 				.build());
 	}
 
@@ -121,8 +126,7 @@ class TempDirectoryTests extends AbstractJupiterTestEngineTests {
 	void resolvesSeparateTempDirsForEachAnnotationDeclaration(TestInstance.Lifecycle lifecycle) {
 		var results = executeTests(request() //
 				.selectors(selectClass(AllPossibleDeclarationLocationsTestCase.class)) //
-				.configurationParameter(Constants.DEFAULT_TEST_INSTANCE_LIFECYCLE_PROPERTY_NAME,
-					lifecycle.name()).build());
+				.configurationParameter(DEFAULT_TEST_INSTANCE_LIFECYCLE_PROPERTY_NAME, lifecycle.name()).build());
 
 		results.containerEvents().assertStatistics(stats -> stats.started(2).succeeded(2));
 		results.testEvents().assertStatistics(stats -> stats.started(2).succeeded(2));
@@ -248,19 +252,43 @@ class TempDirectoryTests extends AbstractJupiterTestEngineTests {
 	void onlyAttemptsToDeleteUndeletablePathsOnce(Class<?> testClass) {
 		var results = executeTestsForClass(testClass);
 
-		var tempDir = results.testEvents().reportingEntryPublished().stream().map(
-			it -> it.getPayload(ReportEntry.class).orElseThrow()).map(
-				it -> Path.of(it.getKeyValuePairs().get(UndeletableTestCase.TEMP_DIR))).findAny().orElseThrow();
+		var tempDir = determineTempDirFromReportEntries(results, UndeletableTestCase.TEMP_DIR);
 
+		assertFailedDueToDeletionException(results, tempDir);
+	}
+
+	@Test
+	@DisplayName("applies globally configured deletion strategy")
+	void appliesGloballyConfiguredDeletionStrategy() {
+		var results = executeTests(builder -> builder //
+				.selectors(selectClass(UndeletableWithDefaultDeletionStrategyTestCase.class)) //
+				.configurationParameter(DEFAULT_TEMP_DIR_DELETION_STRATEGY_PROPERTY_NAME,
+					FailingTempDirDeletionStrategy.class.getName()));
+
+		var tempDir = determineTempDirFromReportEntries(results,
+			UndeletableWithDefaultDeletionStrategyTestCase.TEMP_DIR);
+
+		assertFailedDueToDeletionException(results, tempDir);
+	}
+
+	private static void assertFailedDueToDeletionException(EngineExecutionResults results, Path tempDir) {
 		assertSingleFailedTest(results, //
 			cause( //
-				instanceOf(IOException.class), //
+				instanceOf(DeletionException.class), //
 				message("Failed to delete temp directory " + tempDir.toAbsolutePath() + ". " + //
 						"The following paths could not be deleted (see suppressed exceptions for details): <root>, undeletable"), //
 				suppressed(0, instanceOf(DirectoryNotEmptyException.class)), //
 				suppressed(1, instanceOf(IOException.class), message("Simulated failure")) //
 			) //
 		);
+	}
+
+	private static Path determineTempDirFromReportEntries(EngineExecutionResults results, String key) {
+		return results.testEvents().reportingEntryPublished().stream() //
+				.map(it -> it.getPayload(ReportEntry.class).orElseThrow()) //
+				.map(it -> Path.of(it.getKeyValuePairs().get(key))) //
+				.findAny() //
+				.orElseThrow();
 	}
 
 	@Test
@@ -541,7 +569,12 @@ class TempDirectoryTests extends AbstractJupiterTestEngineTests {
 	@SuppressWarnings("varargs")
 	private static void assertSingleFailedTest(EngineExecutionResults results, Condition<Throwable>... conditions) {
 		results.testEvents().assertStatistics(stats -> stats.started(1).failed(1).succeeded(0));
-		results.testEvents().assertThatEvents().haveExactly(1, finishedWithFailure(conditions));
+		var failures = results.testEvents().stream().filter(finishedWithFailure()::matches) //
+				.map(e -> e.getPayload(TestExecutionResult.class).flatMap(TestExecutionResult::getThrowable).orElse(
+					null)) //
+				.filter(Objects::nonNull).toList();
+		assertThat(failures).hasSize(1);
+		assertThat(failures.getFirst()).has(allOf(conditions));
 	}
 
 	// -------------------------------------------------------------------------
@@ -1225,7 +1258,7 @@ class TempDirectoryTests extends AbstractJupiterTestEngineTests {
 		}
 
 		private static Map<String, Path> getTempDirs(TestInfo testInfo) {
-			return tempDirs.computeIfAbsent(testInfo.getDisplayName(), __ -> new LinkedHashMap<>());
+			return tempDirs.computeIfAbsent(testInfo.getDisplayName(), _ -> new LinkedHashMap<>());
 		}
 
 		private static void assertAllTempDirsExist(TestInfo testInfo) {
@@ -1235,22 +1268,9 @@ class TempDirectoryTests extends AbstractJupiterTestEngineTests {
 
 	static class UndeletableTestCase {
 
-		static final Path UNDELETABLE_PATH = Path.of("undeletable");
 		static final String TEMP_DIR = "TEMP_DIR";
 
-		@RegisterExtension
-		BeforeEachCallback injector = context -> context //
-				.getStore(TempDirectory.NAMESPACE) //
-				.put(TempDirectory.FILE_OPERATIONS_KEY, (FileOperations) path -> {
-					if (path.endsWith(UNDELETABLE_PATH)) {
-						throw new IOException("Simulated failure");
-					}
-					else {
-						Files.delete(path);
-					}
-				});
-
-		@TempDir
+		@TempDir(deletionStrategy = FailingTempDirDeletionStrategy.class)
 		Path tempDir;
 
 		@BeforeEach
@@ -1267,6 +1287,24 @@ class TempDirectoryTests extends AbstractJupiterTestEngineTests {
 	}
 
 	static class UndeletableFileTestCase extends UndeletableTestCase {
+		@Test
+		void test() throws Exception {
+			Files.createFile(tempDir.resolve(UNDELETABLE_PATH));
+		}
+	}
+
+	static class UndeletableWithDefaultDeletionStrategyTestCase extends UndeletableTestCase {
+
+		static final String TEMP_DIR = "TEMP_DIR";
+
+		@TempDir
+		Path tempDir;
+
+		@BeforeEach
+		void reportTempDir(TestReporter reporter) {
+			reporter.publishEntry(TEMP_DIR, tempDir.toString());
+		}
+
 		@Test
 		void test() throws Exception {
 			Files.createFile(tempDir.resolve(UNDELETABLE_PATH));

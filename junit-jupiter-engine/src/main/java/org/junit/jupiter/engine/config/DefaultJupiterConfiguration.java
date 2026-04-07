@@ -17,6 +17,9 @@ import static org.junit.jupiter.api.Constants.DEACTIVATE_CONDITIONS_PATTERN_PROP
 import static org.junit.jupiter.api.Constants.DEFAULT_CLASSES_EXECUTION_MODE_PROPERTY_NAME;
 import static org.junit.jupiter.api.Constants.DEFAULT_DISPLAY_NAME_GENERATOR_PROPERTY_NAME;
 import static org.junit.jupiter.api.Constants.DEFAULT_EXECUTION_MODE_PROPERTY_NAME;
+import static org.junit.jupiter.api.Constants.DEFAULT_TEMP_DIR_CLEANUP_MODE_PROPERTY_NAME;
+import static org.junit.jupiter.api.Constants.DEFAULT_TEMP_DIR_DELETION_STRATEGY_PROPERTY_NAME;
+import static org.junit.jupiter.api.Constants.DEFAULT_TEMP_DIR_FACTORY_PROPERTY_NAME;
 import static org.junit.jupiter.api.Constants.DEFAULT_TEST_CLASS_INSTANCE_CONSTRUCTION_EXTENSION_CONTEXT_SCOPE_PROPERTY_NAME;
 import static org.junit.jupiter.api.Constants.DEFAULT_TEST_CLASS_ORDER_PROPERTY_NAME;
 import static org.junit.jupiter.api.Constants.DEFAULT_TEST_INSTANCE_LIFECYCLE_PROPERTY_NAME;
@@ -28,8 +31,6 @@ import static org.junit.jupiter.api.Constants.EXTENSIONS_TIMEOUT_THREAD_DUMP_ENA
 import static org.junit.jupiter.api.Constants.PARALLEL_CONFIG_EXECUTOR_SERVICE_PROPERTY_NAME;
 import static org.junit.jupiter.api.Constants.PARALLEL_EXECUTION_ENABLED_PROPERTY_NAME;
 import static org.junit.jupiter.api.io.CleanupMode.ALWAYS;
-import static org.junit.jupiter.api.io.TempDir.DEFAULT_CLEANUP_MODE_PROPERTY_NAME;
-import static org.junit.jupiter.api.io.TempDir.DEFAULT_FACTORY_PROPERTY_NAME;
 import static org.junit.jupiter.engine.config.FilteringConfigurationParameterConverter.exclude;
 import static org.junit.platform.engine.support.hierarchical.ParallelHierarchicalTestExecutorServiceFactory.ParallelExecutorServiceType.FORK_JOIN_POOL;
 import static org.junit.platform.engine.support.hierarchical.ParallelHierarchicalTestExecutorServiceFactory.ParallelExecutorServiceType.WORKER_THREAD_POOL;
@@ -49,6 +50,7 @@ import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.TestInstantiationAwareExtension.ExtensionContextScope;
 import org.junit.jupiter.api.io.CleanupMode;
+import org.junit.jupiter.api.io.TempDirDeletionStrategy;
 import org.junit.jupiter.api.io.TempDirFactory;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.platform.commons.util.ClassNamePatternFilterUtils;
@@ -94,6 +96,9 @@ public class DefaultJupiterConfiguration implements JupiterConfiguration {
 
 	private static final InstantiatingConfigurationParameterConverter<TempDirFactory> tempDirFactoryConverter = //
 		new InstantiatingConfigurationParameterConverter<>(TempDirFactory.class, "temp dir factory");
+
+	private static final InstantiatingConfigurationParameterConverter<TempDirDeletionStrategy> tempDirDeletionStrategyConverter = //
+		new InstantiatingConfigurationParameterConverter<>(TempDirDeletionStrategy.class, "temp dir deletion strategy");
 
 	private static final ConfigurationParameterConverter<ExtensionContextScope> extensionContextScopeConverter = //
 		new EnumConfigurationParameterConverter<>(ExtensionContextScope.class, "extension context scope");
@@ -221,14 +226,22 @@ public class DefaultJupiterConfiguration implements JupiterConfiguration {
 
 	@Override
 	public CleanupMode getDefaultTempDirCleanupMode() {
-		return cleanupModeConverter.getOrDefault(configurationParameters, DEFAULT_CLEANUP_MODE_PROPERTY_NAME, ALWAYS);
+		return cleanupModeConverter.getOrDefault(configurationParameters, DEFAULT_TEMP_DIR_CLEANUP_MODE_PROPERTY_NAME,
+			ALWAYS);
 	}
 
 	@Override
 	public Supplier<TempDirFactory> getDefaultTempDirFactorySupplier() {
 		Supplier<Optional<TempDirFactory>> supplier = tempDirFactoryConverter.supply(configurationParameters,
-			DEFAULT_FACTORY_PROPERTY_NAME);
+			DEFAULT_TEMP_DIR_FACTORY_PROPERTY_NAME);
 		return () -> supplier.get().orElse(TempDirFactory.Standard.INSTANCE);
+	}
+
+	@Override
+	public Supplier<TempDirDeletionStrategy> getDefaultTempDirDeletionStrategySupplier() {
+		Supplier<Optional<TempDirDeletionStrategy>> supplier = tempDirDeletionStrategyConverter.supply(
+			configurationParameters, DEFAULT_TEMP_DIR_DELETION_STRATEGY_PROPERTY_NAME);
+		return () -> supplier.get().orElse(TempDirDeletionStrategy.Standard.INSTANCE);
 	}
 
 	@SuppressWarnings("deprecation")

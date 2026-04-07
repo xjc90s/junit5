@@ -10,11 +10,11 @@
 
 package org.junit.jupiter.api.io;
 
+import static org.apiguardian.api.API.Status.EXPERIMENTAL;
 import static org.apiguardian.api.API.Status.MAINTAINED;
 import static org.apiguardian.api.API.Status.STABLE;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -62,17 +62,16 @@ import org.junit.jupiter.api.extension.ParameterResolutionException;
  * {@code static} field or on a parameter of a
  * {@link org.junit.jupiter.api.BeforeAll @BeforeAll} method.
  *
- * <h2>Clean Up</h2>
+ * <h2>Cleanup/Deletion</h2>
  *
  * <p>By default, when the end of the scope of a temporary directory is reached,
  * &mdash; when the test method or class has finished execution &mdash; JUnit will
  * attempt to clean up the temporary directory by recursively deleting all files
  * and directories in the temporary directory and, finally, the temporary directory
- * itself. Symbolic and other types of links, such as junctions on Windows, are
- * not followed. A warning is logged when deleting a link that targets a
- * location outside the temporary directory. In case deletion of a file or
- * directory fails, an {@link IOException} will be thrown that will cause the
- * test or test class to fail.
+ * itself.
+ *
+ * <p>Two attributes allow customizing <em>when</em> (see {@link #cleanup()})
+ * and <em>how</em> (see {@link #deletionStrategy()}) to clean up.
  *
  * <p>The {@link #cleanup} attribute allows you to configure the {@link CleanupMode}.
  * If the cleanup mode is set to {@link CleanupMode#NEVER NEVER}, the temporary
@@ -82,6 +81,13 @@ import org.junit.jupiter.api.extension.ParameterResolutionException;
  * {@link CleanupMode#ALWAYS ALWAYS} clean up mode will be used, but this can be
  * configured globally by setting the {@value #DEFAULT_CLEANUP_MODE_PROPERTY_NAME}
  * configuration parameter.
+ *
+ * <p>The {@link #deletionStrategy()} attribute defines the strategy for
+ * performing the cleanup and dealing with errors such as undeletable files.
+ * By default, the {@link TempDirDeletionStrategy.Standard Standard} strategy is
+ * used which will cause a test or test class to fail in case deletion of a file
+ * or directory fails. This can be configured globally by setting the
+ * {@value #DEFAULT_DELETION_STRATEGY_PROPERTY_NAME} configuration parameter.
  *
  * @since 5.4
  */
@@ -127,8 +133,10 @@ public @interface TempDir {
 	Class<? extends TempDirFactory> factory() default TempDirFactory.class;
 
 	/**
-	 * The name of the configuration parameter that is used to configure the
-	 * default {@link CleanupMode}.
+	 * Property name used to configure the default {@link CleanupMode}: {@value}
+	 *
+	 * <p>Supported values include names of enum constants defined in
+	 * {@link CleanupMode}, ignoring case.
 	 *
 	 * <p>If this configuration parameter is not set, {@link CleanupMode#ALWAYS}
 	 * will be used as the default.
@@ -139,11 +147,47 @@ public @interface TempDir {
 	String DEFAULT_CLEANUP_MODE_PROPERTY_NAME = "junit.jupiter.tempdir.cleanup.mode.default";
 
 	/**
-	 * How the temporary directory gets cleaned up after the test completes.
+	 * In which cases the temporary directory gets cleaned up after the test completes.
 	 *
 	 * @since 5.9
 	 */
 	@API(status = STABLE, since = "5.11")
 	CleanupMode cleanup() default CleanupMode.DEFAULT;
+
+	/**
+	 * Property name used to set the default deletion strategy class name:
+	 * {@value}
+	 *
+	 * <h4>Supported Values</h4>
+	 *
+	 * <p>Supported values include fully qualified class names for types that
+	 * implement {@link TempDirDeletionStrategy}.
+	 *
+	 * <p>If not specified, the default is {@link TempDirDeletionStrategy.Standard}.
+	 *
+	 * @since 6.1
+	 */
+	@API(status = EXPERIMENTAL, since = "6.1")
+	String DEFAULT_DELETION_STRATEGY_PROPERTY_NAME = "junit.jupiter.tempdir.deletion.strategy.default";
+
+	/**
+	 * Deletion strategy for the temporary directory.
+	 *
+	 * <p>Defaults to {@link TempDirDeletionStrategy.Standard}.
+	 *
+	 * <p>As an alternative to setting this attribute, a global
+	 * {@link TempDirDeletionStrategy} can be configured for the entire test
+	 * suite via the {@value #DEFAULT_DELETION_STRATEGY_PROPERTY_NAME}
+	 * configuration parameter. See the User Guide for details. Note, however,
+	 * that a {@code @TempDir} declaration with a custom
+	 * {@code deletionStrategy} always overrides a global
+	 * {@code TempDirDeletionStrategy}.
+	 *
+	 * @return the type of {@code TempDirDeletionStrategy} to use
+	 * @since 6.1
+	 * @see TempDirDeletionStrategy
+	 */
+	@API(status = EXPERIMENTAL, since = "6.1")
+	Class<? extends TempDirDeletionStrategy> deletionStrategy() default TempDirDeletionStrategy.class;
 
 }
