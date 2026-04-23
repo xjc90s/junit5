@@ -87,8 +87,8 @@ public class SystemPropertyExtensionDemo {
 
 		@Nested
 		@Order(1)
-		@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 		// tag::systemproperty_class_restore_setup[]
+		@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 		@RestoreSystemProperties
 		class MySystemPropertyRestoreTest {
 
@@ -133,7 +133,6 @@ public class SystemPropertyExtensionDemo {
 			}
 
 		}
-
 		// end::systemproperty_class_restore_isolated_class[]
 	}
 
