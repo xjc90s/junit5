@@ -1,19 +1,19 @@
-[[v6.1.0-M2]]
-== 6.1.0-M2
+[[v6.1.0-RC1]]
+== 6.1.0-RC1
 
 *Date of Release:* ❓
 
 *Scope:* ❓
 
 For a complete list of all _closed_ issues and pull requests for this release, consult the
-link:{junit-framework-repo}+/milestone/112?closed=1+[6.1.0-M2] milestone page in the JUnit
+link:{junit-framework-repo}+/milestone/112?closed=1+[6.1.0-RC1] milestone page in the JUnit
 repository on GitHub.
 
 
-[[v6.1.0-M2-junit-platform]]
+[[v6.1.0-RC1-junit-platform]]
 === JUnit Platform
 
-[[v6.1.0-M2-junit-platform-bug-fixes]]
+[[v6.1.0-RC1-junit-platform-bug-fixes]]
 ==== Bug Fixes
 
 * A deadlock issue in `NamespacedHierarchicalStore.computeIfAbsent(N, K, Function)` has
@@ -23,13 +23,13 @@ repository on GitHub.
 * Missing precondition checks have been added to `Launcher` implementations.
 * Failures to resolve selectors are now propagated by the Suite Engine.
 
-[[v6.1.0-M2-junit-platform-deprecations-and-breaking-changes]]
+[[v6.1.0-RC1-junit-platform-deprecations-and-breaking-changes]]
 ==== Deprecations and Breaking Changes
 
 * In the `EngineTestKit`, `Executions.started()` has been deprecated in favor of
   `Executions.finished()`, since started executions are always finished.
 
-[[v6.1.0-M2-junit-platform-new-features-and-improvements]]
+[[v6.1.0-RC1-junit-platform-new-features-and-improvements]]
 ==== New Features and Improvements
 
 * `TestDescriptor` implementation requirements have now been clarified in the
@@ -43,10 +43,10 @@ repository on GitHub.
   `junit.platform.execution.memory.cleanup.enabled` configuration parameter.
 
 
-[[v6.1.0-M2-junit-jupiter]]
+[[v6.1.0-RC1-junit-jupiter]]
 === JUnit Jupiter
 
-[[v6.1.0-M2-junit-jupiter-bug-fixes]]
+[[v6.1.0-RC1-junit-jupiter-bug-fixes]]
 ==== Bug Fixes
 
 * Recursive updates are now supported when using `computeIfAbsent(K, Function, Class)` in
@@ -57,7 +57,7 @@ repository on GitHub.
 * Legacy XML reports now include parent display names to make it easier to distinguish
   between invocations for different parameters.
 
-[[v6.1.0-M2-junit-jupiter-deprecations-and-breaking-changes]]
+[[v6.1.0-RC1-junit-jupiter-deprecations-and-breaking-changes]]
 ==== Deprecations and Breaking Changes
 
 * The `OTHER` constant of `{JRE}` has been deprecated in favor of the `int`/`int[]`
@@ -67,7 +67,7 @@ repository on GitHub.
 * The `org.junit.jupiter.engine.Constants` class and its constants are now deprecated in
   favor of `org.junit.jupiter.api.Constants`.
 
-[[v6.1.0-M2-junit-jupiter-new-features-and-improvements]]
+[[v6.1.0-RC1-junit-jupiter-new-features-and-improvements]]
 ==== New Features and Improvements
 
 * `JAVA_27` has been added to the `JRE` enum for use with `JRE`-based execution conditions.
@@ -110,20 +110,20 @@ repository on GitHub.
   with an `{ArgumentConverter}` that supports the specified type.
 
 
-[[v6.1.0-M2-junit-vintage]]
+[[v6.1.0-RC1-junit-vintage]]
 === JUnit Vintage
 
-[[v6.1.0-M2-junit-vintage-bug-fixes]]
+[[v6.1.0-RC1-junit-vintage-bug-fixes]]
 ==== Bug Fixes
 
 * ❓
 
-[[v6.1.0-M2-junit-vintage-deprecations-and-breaking-changes]]
+[[v6.1.0-RC1-junit-vintage-deprecations-and-breaking-changes]]
 ==== Deprecations and Breaking Changes
 
 * ❓
 
-[[v6.1.0-M2-junit-vintage-new-features-and-improvements]]
+[[v6.1.0-RC1-junit-vintage-new-features-and-improvements]]
 ==== New Features and Improvements
 
 * ❓
