@@ -44,6 +44,9 @@ val initializeAtBuildTime = mapOf(
 )
 
 graalvmNative {
+	metadataRepository {
+		enabled = false
+	}
 	binaries {
 		named("test") {
 			buildArgs.add("-H:+ReportExceptionStackTraces")
