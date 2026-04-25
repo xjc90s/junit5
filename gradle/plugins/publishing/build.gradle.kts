@@ -32,9 +32,14 @@ dependencies {
 			}
 			because("Workaround for CVE-2025-67030")
 		}
-	}
-	// Source: https://mvnrepository.com/artifact/org.bouncycastle/bc-jdk18on-bom
-	implementation(platform("org.bouncycastle:bc-jdk18on-bom:1.84")) {
-		because("Workaround for CVE-2026-3505")
+		sequenceOf("bcpkix-jdk18on", "bcutil-jdk18on", "bcprov-jdk18on", "bcpg-jdk18on")
+			.forEach { artifactId ->
+				implementation("org.bouncycastle:$artifactId") {
+					version {
+						require("1.84")
+					}
+					because("Workaround for CVE-2026-3505")
+				}
+			}
 	}
 }
