@@ -46,7 +46,6 @@ class AssertInstanceOf {
 		return assertInstanceOf(expectedType, actualValue, (Object) messageSupplier);
 	}
 
-	@SuppressWarnings("NullAway")
 	private static <T> T assertInstanceOf(Class<T> expectedType, @Nullable Object actualValue,
 			@Nullable Object messageOrSupplier) {
 		if (!expectedType.isInstance(actualValue)) {

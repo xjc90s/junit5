@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 
 import org.apiguardian.api.API;
 import org.jspecify.annotations.Nullable;
+import org.junit.platform.commons.annotation.Contract;
 import org.junit.platform.commons.util.Preconditions;
 import org.junit.platform.commons.util.StringUtils;
 import org.opentest4j.AssertionFailedError;
@@ -180,6 +181,7 @@ public class AssertionFailureBuilder {
 	 *
 	 * @throws AssertionFailedError always
 	 */
+	@Contract(" -> fail")
 	public void buildAndThrow() throws AssertionFailedError {
 		throw build();
 	}
