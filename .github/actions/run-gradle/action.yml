@@ -25,6 +25,8 @@ runs:
       with:
         cache-encryption-key: ${{ inputs.encryptionKey }}
     - uses: testlens-app/setup-testlens@0232fb63c43e5b93421545ba67bbb2981790a87f # v1.8.0
+      with:
+        write-log-files: true
     - shell: bash
       env:
         JAVA_HOME: ${{ steps.setup-gradle-jdk.outputs.path }}
@@ -56,3 +58,8 @@ runs:
         if [ -n "$error_code" ]; then
           exit "$error_code"
         fi
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      if: ${{ always() }}
+      with:
+        name: TestLens logs (${{ github.job }} - ${{ job.check_run_id }})
+        path: '**/build/**/testlens-logs/**'
