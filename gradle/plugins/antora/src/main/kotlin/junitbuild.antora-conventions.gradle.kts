@@ -70,7 +70,10 @@ tasks.register<NpxTask>("antora") {
 	description = "Runs Antora to generate a documentation site described by the playbook file."
 
 	command = "antora"
-	args.addAll("--clean", "--stacktrace", "--fetch", "--log-format=pretty", "--log-level=all")
+	args.addAll("--clean", "--stacktrace", "--log-format=pretty", "--log-level=all")
+	if (!gradle.startParameter.isOffline) {
+		args.add("--fetch")
+	}
 
 	args.add("--to-dir")
 	args.add(siteDir.map { it.asFile.toRelativeString(layout.projectDirectory.asFile) })
