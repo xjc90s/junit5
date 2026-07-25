@@ -282,6 +282,8 @@ fun Test.configureToolingSupportTests() {
 	systemProperty("junit.platform.output.capture.stdout", "false")
 	systemProperty("junit.platform.output.capture.stderr", "false")
 
+	systemProperty("junit.moduleDirectories", modularProjects.map { it.name }.joinToString(","))
+
 	val gradleJavaVersion = JavaVersion.current().majorVersion.toInt()
 	jvmArgumentProviders += JavaHomeDir(project, gradleJavaVersion, develocity.testDistribution.enabled)
 	systemProperty("gradle.java.version", gradleJavaVersion)
