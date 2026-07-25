@@ -55,6 +55,12 @@ node {
 	workDir = layout.settingsDirectory.dir(".gradle/nodejs")
 }
 
+tasks.nodeSetup {
+	if (buildParameters.antora.downloadNode) {
+		notCompatibleWithConfigurationCache("https://github.com/node-gradle/gradle-node-plugin/issues/350")
+	}
+}
+
 tasks.npmInstall {
 	args.addAll("--no-audit", "--no-package-lock", "--no-fund")
 }
