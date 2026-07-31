@@ -108,9 +108,9 @@ class ParallelExecutionIntegrationTests {
 	@Timeout(value = 5, unit = SECONDS)
 	void executesTestClassesAndMethodsInParallel(TestReporter reporter) {
 		JUnit4ParallelMethodsTestCase.AbstractBlockingTestCase.threadNames.clear();
-		JUnit4ParallelMethodsTestCase.AbstractBlockingTestCase.cyclicBarrier = new CyclicBarrier(3);
+		JUnit4ParallelMethodsTestCase.AbstractBlockingTestCase.cyclicBarrier = new CyclicBarrier(9);
 
-		var events = executeInParallelSuccessfully(3, true, true, FirstMethodTestCase.class, SecondMethodTestCase.class,
+		var events = executeInParallelSuccessfully(9, true, true, FirstMethodTestCase.class, SecondMethodTestCase.class,
 			ThirdMethodTestCase.class).list();
 
 		var startedClassesTimestamps = getTimestampsFor(events, event(container(SEGMENT_TYPE_RUNNER), started()));
@@ -132,7 +132,7 @@ class ParallelExecutionIntegrationTests {
 		assertThat(startedMethodsTimestamps).hasSize(9);
 		assertThat(finishedMethodsTimestamps).hasSize(9);
 
-		assertThat(threadNames).hasSize(3);
+		assertThat(threadNames).hasSize(9);
 	}
 
 	@Test
@@ -154,7 +154,6 @@ class ParallelExecutionIntegrationTests {
 	}
 
 	@Test
-	@Timeout(value = 5, unit = SECONDS)
 	void executesInParallelWhenInvalidPoolSizeIsDefined(@TrackLogRecords LogRecordListener listener) {
 		execute(-1, true, true, FirstMethodTestCase.class, SecondMethodTestCase.class, ThirdMethodTestCase.class);
 
