@@ -1,7 +1,3 @@
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
-import org.gradle.kotlin.dsl.extra
-
 pluginManagement {
 	includeBuild("gradle/base")
 	includeBuild("gradle/plugins")
