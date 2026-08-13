@@ -16,6 +16,15 @@
         '// renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+?)(?: versioning=(?<versioning>\\S+))?\\n\\s*\\w+ = "(?<currentValue>[^"]+)"',
       ],
     },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/antora-playbook\\.yml$/'],
+      matchStrings: [
+        'url: https://github\\.com/(?<depName>[^/]+/[^/]+)/releases/download/(?<currentValue>[^/]+)/',
+      ],
+      datasourceTemplate: 'github-releases',
+      versioningTemplate: 'regex:^(?<major>\\d{4})(?<minor>\\d{2})(?<patch>\\d{2})-(?<build>\\d+)$',
+    },
   ],
   packageRules: [
     {
