@@ -8,6 +8,15 @@
     'main',
     'docs-site'
   ],
+  customManagers: [
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/\\.gradle\\.kts$/'],
+      matchStrings: [
+        '// renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+?)(?: versioning=(?<versioning>\\S+))?\\n\\s*\\w+ = "(?<currentValue>[^"]+)"',
+      ],
+    },
+  ],
   packageRules: [
     {
       matchCurrentValue: '/^2\\./',
