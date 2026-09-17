@@ -33,13 +33,18 @@ import org.junit.platform.engine.support.hierarchical.ForkJoinPoolHierarchicalTe
 public final class ParallelHierarchicalTestExecutorServiceFactory {
 
 	/**
+	 * Default value for {@value #EXECUTOR_SERVICE_PROPERTY_NAME} is {@value}.
+	 */
+	@API(status = MAINTAINED, since = "6.2")
+	public static final String EXECUTOR_SERVICE_DEFAULT = "FORK_JOIN_POOL";
+
+	/**
 	 * Property name used to determine the desired
 	 * {@link ParallelExecutorServiceType ParallelExecutorServiceType}.
 	 *
-	 * <p>Value must be
-	 * {@link ParallelExecutorServiceType#FORK_JOIN_POOL FORK_JOIN_POOL} or
-	 * {@link ParallelExecutorServiceType#WORKER_THREAD_POOL WORKER_THREAD_POOL},
-	 * ignoring case.
+	 * <p>Value must be one names of enum constants defined in
+	 * {@link ParallelExecutorServiceType}, ignoring case. If not
+	 * specified, the default is {@value #EXECUTOR_SERVICE_DEFAULT}
 	 */
 	public static final String EXECUTOR_SERVICE_PROPERTY_NAME = "executor-service";
 
@@ -65,7 +70,7 @@ public final class ParallelHierarchicalTestExecutorServiceFactory {
 	 */
 	public static HierarchicalTestExecutorService create(ConfigurationParameters configurationParameters) {
 		var type = configurationParameters.get(EXECUTOR_SERVICE_PROPERTY_NAME, ParallelExecutorServiceType::parse) //
-				.orElse(ParallelExecutorServiceType.FORK_JOIN_POOL);
+				.orElseGet(() -> ParallelExecutorServiceType.parse(EXECUTOR_SERVICE_DEFAULT));
 		var configuration = DefaultParallelExecutionConfigurationStrategy.toConfiguration(configurationParameters);
 		return create(type, configuration);
 	}
